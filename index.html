@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perito Digital – Colegio Perito Moreno</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--rojo:#C0001A;--rojo-oscuro:#8B0013;--rojo-claro:#E8003D;--negro:#0D0D0D;--blanco:#FAFAFA;--gris:#1A1A1A;--gris-medio:#2E2E2E;--gris-claro:#F0F0F0;--acento:#FF1744;--dorado:#C8A84B;--sombra:0 8px 32px rgba(192,0,26,0.18);--sombra-lg:0 20px 60px rgba(0,0,0,0.35)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--negro);color:var(--blanco);min-height:100vh;overflow-x:hidden}
+.bg-pattern{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 10% 20%,rgba(192,0,26,.12) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 80%,rgba(192,0,26,.08) 0%,transparent 60%),repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.012) 40px,rgba(255,255,255,.012) 41px)}
+#login-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0D0D0D 0%,#1a0005 50%,#0D0D0D 100%)}
+.login-card{background:rgba(26,26,26,.97);border:1px solid rgba(192,0,26,.4);border-radius:20px;padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--sombra-lg),0 0 80px rgba(192,0,26,.15);animation:slideUp .6s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
+.login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--rojo),var(--acento),var(--rojo),transparent)}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:32px}
+.login-logo h1{font-family:'Cinzel',serif;font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--blanco) 0%,var(--dorado) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:2px}
+.login-logo p{font-size:11px;color:#888;letter-spacing:3px;text-transform:uppercase}
+.login-tabs{display:flex;background:rgba(255,255,255,.04);border-radius:10px;padding:4px;margin-bottom:28px}
+.login-tab{flex:1;padding:10px;border:none;background:transparent;color:#888;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;transition:all .3s}
+.login-tab.active{background:var(--rojo);color:white;box-shadow:0 4px 12px rgba(192,0,26,.4)}
+.login-form{display:flex;flex-direction:column;gap:16px}
+.form-group label{display:block;font-size:11px;font-weight:600;color:#888;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:13px 15px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:var(--blanco);font-family:'Outfit',sans-serif;font-size:14px;transition:all .3s;outline:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--rojo);background:rgba(192,0,26,.08);box-shadow:0 0 0 3px rgba(192,0,26,.15)}
+.form-group select option{background:#1a1a1a}
+.btn-google{width:100%;padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.05);color:var(--blanco);font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;transition:all .3s}
+.btn-google:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
+.btn-primary{width:100%;padding:15px;border:none;background:linear-gradient(135deg,var(--rojo) 0%,var(--rojo-oscuro) 100%);color:white;font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;border-radius:10px;cursor:pointer;transition:all .3s;box-shadow:0 4px 20px rgba(192,0,26,.4)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(192,0,26,.5)}
+.divider{display:flex;align-items:center;gap:12px;color:#555;font-size:12px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+#app{display:none;position:relative;z-index:1;min-height:100vh}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:255px;background:rgba(10,10,10,.98);border-right:1px solid rgba(192,0,26,.2);display:flex;flex-direction:column;z-index:50;backdrop-filter:blur(20px)}
+.sidebar-header{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+.sidebar-header-text h2{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--blanco);letter-spacing:1px}
+.sidebar-header-text p{font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.sidebar-user{margin:12px;padding:13px;background:rgba(192,0,26,.1);border:1px solid rgba(192,0,26,.2);border-radius:12px}
+.sidebar-user .user-name{font-size:13px;font-weight:600;color:var(--blanco)}
+.sidebar-user .user-role{font-size:10px;color:var(--rojo-claro);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+.sidebar-user .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-oscuro));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-bottom:7px}
+.sidebar-nav{flex:1;padding:6px 10px;overflow-y:auto}
+.nav-section-title{font-size:9px;font-weight:700;color:#3a3a3a;letter-spacing:2px;text-transform:uppercase;padding:14px 8px 6px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;cursor:pointer;transition:all .25s;color:#777;font-size:13px;font-weight:500;margin-bottom:2px;border:1px solid transparent}
+.nav-item:hover{background:rgba(192,0,26,.1);color:var(--blanco)}
+.nav-item.active{background:rgba(192,0,26,.18);color:var(--blanco);border-color:rgba(192,0,26,.25)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--rojo);color:white;font-size:9px;font-weight:700;padding:2px 6px;border-radius:20px}
+.sidebar-footer{padding:14px;border-top:1px solid rgba(255,255,255,.05)}
+.btn-logout{width:100%;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:transparent;color:#555;font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-logout:hover{border-color:var(--rojo);color:var(--rojo)}
+.main-content{margin-left:255px;padding:26px 30px;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+.topbar-title h1{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--blanco)}
+.topbar-title p{font-size:12px;color:#555;margin-top:2px}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.topbar-date{font-size:12px;color:#444;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:7px 12px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:rgba(22,22,22,.9);border:1px solid rgba(255,255,255,.07);border-radius:15px;padding:20px;position:relative;overflow:hidden;transition:transform .3s}
+.stat-card:hover{transform:translateY(-3px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--color,var(--rojo)),transparent)}
+.stat-icon{font-size:26px;margin-bottom:10px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border-radius:11px}
+.stat-value{font-size:30px;font-weight:700;color:var(--blanco);line-height:1}
+.stat-label{font-size:12px;color:#555;margin-top:5px;font-weight:500}
+.stat-change{font-size:11px;margin-top:7px}
+.stat-change.up{color:#4CAF50}.stat-change.down{color:var(--rojo)}
+.section{display:none}.section.active{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.panel{background:rgba(18,18,18,.9);border:1px solid rgba(255,255,255,.07);border-radius:15px;overflow:hidden}
+.panel-header{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between}
+.panel-header h3{font-size:14px;font-weight:600;color:var(--blanco);display:flex;align-items:center;gap:8px}
+.panel-body{padding:18px 20px}
+.mural-post{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:16px;margin-bottom:12px;transition:all .3s}
+.mural-post:hover{border-color:rgba(192,0,26,.3);background:rgba(192,0,26,.04)}
+.mural-post-header{display:flex;align-items:flex-start;gap:11px;margin-bottom:11px}
+.post-avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--rojo),var(--rojo-oscuro));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white}
+.post-meta{flex:1}
+.post-author{font-size:13px;font-weight:600;color:var(--blanco)}
+.post-info{font-size:11px;color:#555;margin-top:2px}
+.post-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:1px;flex-shrink:0}
+.badge-prueba{background:rgba(255,152,0,.2);color:#FFB74D;border:1px solid rgba(255,152,0,.3)}
+.badge-tp{background:rgba(33,150,243,.2);color:#64B5F6;border:1px solid rgba(33,150,243,.3)}
+.badge-lectura{background:rgba(76,175,80,.2);color:#81C784;border:1px solid rgba(76,175,80,.3)}
+.badge-material{background:rgba(156,39,176,.2);color:#CE93D8;border:1px solid rgba(156,39,176,.3)}
+.badge-comunicado{background:rgba(192,0,26,.2);color:#FF6B6B;border:1px solid rgba(192,0,26,.3)}
+.post-content{font-size:13px;color:#BBB;line-height:1.6}
+.post-footer{display:flex;align-items:center;gap:10px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.05)}
+.post-footer-chip{font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,.05);color:#777}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-header{text-align:center;font-size:10px;font-weight:700;color:#444;padding:7px;letter-spacing:1px}
+.cal-day{min-height:68px;padding:7px;border-radius:9px;background:rgba(255,255,255,.02);border:1px solid transparent;transition:all .2s;cursor:pointer}
+.cal-day:hover{border-color:rgba(192,0,26,.3);background:rgba(192,0,26,.05)}
+.cal-day.today{border-color:var(--rojo);background:rgba(192,0,26,.1)}
+.cal-day.other-month{opacity:.25}
+.cal-day-num{font-size:12px;font-weight:600;color:var(--blanco);margin-bottom:3px}
+.cal-day.today .cal-day-num{color:var(--rojo-claro)}
+.cal-event{font-size:9px;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-event.prueba{background:rgba(255,152,0,.3);color:#FFB74D}
+.cal-event.tp{background:rgba(33,150,243,.3);color:#64B5F6}
+.cal-event.lectura{background:rgba(76,175,80,.3);color:#81C784}
+.table-container{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:2px solid rgba(192,0,26,.25)}
+thead th{text-align:left;padding:11px 14px;font-size:10px;font-weight:700;color:#555;letter-spacing:2px;text-transform:uppercase}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;cursor:pointer}
+tbody tr:hover{background:rgba(192,0,26,.05)}
+tbody td{padding:12px 14px;font-size:13px;color:#BBB}
+.td-name{font-weight:600;color:var(--blanco)!important}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px}
+.status-dot.green{background:#4CAF50;box-shadow:0 0 5px rgba(76,175,80,.6)}
+.status-dot.red{background:var(--rojo);box-shadow:0 0 5px rgba(192,0,26,.6)}
+.status-dot.yellow{background:#FFC107}
+.attendance-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:9px}
+.student-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:11px;padding:13px;text-align:center;cursor:pointer;transition:all .25s}
+.student-card.presente{border-color:rgba(76,175,80,.4);background:rgba(76,175,80,.07)}
+.student-card.ausente{border-color:rgba(192,0,26,.4);background:rgba(192,0,26,.07)}
+.student-card.tarde{border-color:rgba(255,193,7,.4);background:rgba(255,193,7,.07)}
+.student-avatar-sm{width:42px;height:42px;border-radius:50%;margin:0 auto 9px;background:linear-gradient(135deg,#2a2a2a,#3a3a3a);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.student-name{font-size:11px;font-weight:600;color:var(--blanco);margin-bottom:7px}
+.attendance-btns{display:flex;gap:3px;justify-content:center}
+.att-btn{padding:4px 7px;border-radius:5px;border:none;cursor:pointer;font-size:10px;font-weight:700;transition:all .2s}
+.att-btn.p{background:rgba(76,175,80,.2);color:#81C784}
+.att-btn.p:hover{background:rgba(76,175,80,.4)}
+.att-btn.a{background:rgba(192,0,26,.2);color:#FF6B6B}
+.att-btn.a:hover{background:rgba(192,0,26,.4)}
+.att-btn.t{background:rgba(255,193,7,.2);color:#FFD54F}
+.att-btn.t:hover{background:rgba(255,193,7,.4)}
+.grade-input{width:55px;padding:5px;text-align:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:7px;color:var(--blanco);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600}
+.grade-input:focus{outline:none;border-color:var(--rojo)}
+.upload-zone{border:2px dashed rgba(192,0,26,.3);border-radius:15px;padding:36px;text-align:center;cursor:pointer;transition:all .3s}
+.upload-zone:hover{border-color:var(--rojo);background:rgba(192,0,26,.04)}
+.upload-icon{font-size:44px;margin-bottom:14px}
+.upload-text{font-size:15px;font-weight:600;color:var(--blanco);margin-bottom:7px}
+.upload-sub{font-size:12px;color:#555}
+.report-bar{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+.report-label{font-size:12px;color:#777;width:130px;flex-shrink:0}
+.report-bar-track{flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.report-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rojo),var(--rojo-claro))}
+.report-val{font-size:12px;font-weight:700;color:var(--blanco);width:34px;text-align:right}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;transition:all .25s}
+.btn-sm{padding:6px 11px;font-size:11px}
+.btn-danger{background:rgba(192,0,26,.13);color:#FF6B6B;border:1px solid rgba(192,0,26,.28)}
+.btn-danger:hover{background:rgba(192,0,26,.28)}
+.btn-success{background:rgba(76,175,80,.13);color:#81C784;border:1px solid rgba(76,175,80,.28)}
+.btn-success:hover{background:rgba(76,175,80,.28)}
+.btn-primary-sm{background:var(--rojo);color:white;border:none}
+.btn-primary-sm:hover{background:var(--rojo-claro)}
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,.12);color:#777}
+.btn-outline:hover{border-color:rgba(255,255,255,.28);color:var(--blanco)}
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:#161616;border:1px solid rgba(192,0,26,.3);border-radius:18px;padding:30px;width:90%;max-width:500px;animation:slideUp .3s cubic-bezier(.16,1,.3,1);position:relative}
+.modal h2{font-family:'Cinzel',serif;font-size:17px;margin-bottom:18px;color:var(--blanco)}
+.modal-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.06);border:none;color:#777;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;transition:all .2s}
+.modal-close:hover{background:rgba(192,0,26,.2);color:var(--blanco)}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#999}
+.chip.red{background:rgba(192,0,26,.14);border-color:rgba(192,0,26,.28);color:#FF6B6B}
+.chip.green{background:rgba(76,175,80,.14);border-color:rgba(76,175,80,.28);color:#81C784}
+.chip.blue{background:rgba(33,150,243,.14);border-color:rgba(33,150,243,.28);color:#64B5F6}
+.search-bar{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:9px 14px}
+.search-bar input{background:transparent;border:none;outline:none;color:var(--blanco);font-family:'Outfit',sans-serif;font-size:13px;flex:1}
+.search-bar span{color:#444}
+.curso-selector{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.curso-chip{padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:#777;font-size:12px;font-weight:600;cursor:pointer;transition:all .25s}
+.curso-chip:hover{border-color:rgba(192,0,26,.35);color:var(--blanco)}
+.curso-chip.active{background:rgba(192,0,26,.18);border-color:var(--rojo);color:var(--blanco)}
+.file-item{display:flex;align-items:center;gap:13px;padding:11px 14px;border-radius:9px;margin-bottom:5px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);transition:all .25s;cursor:pointer}
+.file-item:hover{background:rgba(192,0,26,.05);border-color:rgba(192,0,26,.2)}
+.file-icon{font-size:22px}
+.file-info{flex:1}
+.file-name{font-size:13px;font-weight:600;color:var(--blanco)}
+.file-meta{font-size:11px;color:#555;margin-top:2px}
+.file-actions{display:flex;gap:5px;opacity:0;transition:opacity .2s}
+.file-item:hover .file-actions{opacity:1}
+.sheet-info{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;margin-bottom:10px}
+.sheet-info h4{font-size:13px;font-weight:700;color:var(--blanco);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.sheet-info p{font-size:12px;color:#666;line-height:1.6}
+.sheet-info code{background:rgba(192,0,26,.14);color:#FF8A80;padding:1px 5px;border-radius:4px;font-size:11px}
+@keyframes slideUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#toast{position:fixed;bottom:22px;right:22px;z-index:500;background:rgba(22,22,22,.97);border:1px solid rgba(192,0,26,.38);border-radius:11px;padding:13px 18px;display:flex;align-items:center;gap:11px;min-width:270px;box-shadow:var(--sombra-lg);transform:translateY(80px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1)}
+#toast.show{transform:translateY(0);opacity:1}
+#toast .toast-icon{font-size:18px}
+#toast .toast-text{font-size:13px;font-weight:500;color:var(--blanco)}
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="68" height="78" viewBox="0 0 70 80" fill="none">
+        <path d="M2 2H68V55L35 78L2 55Z" fill="#C0001A" stroke="#000" stroke-width="2.5"/>
+        <rect x="2" y="2" width="66" height="15" fill="white" stroke="#000" stroke-width="1.5"/>
+        <text x="35" y="13.5" text-anchor="middle" font-family="Georgia,serif" font-size="8.2" font-weight="bold" fill="#111">Colegio Perito Moreno</text>
+        <line x1="5" y1="23" x2="42" y2="23" stroke="white" stroke-width="2.2" opacity=".9"/>
+        <line x1="5" y1="28.5" x2="39" y2="28.5" stroke="white" stroke-width="2.2" opacity=".9"/>
+        <line x1="5" y1="34" x2="36" y2="34" stroke="white" stroke-width="2.2" opacity=".9"/>
+        <line x1="5" y1="39.5" x2="33" y2="39.5" stroke="white" stroke-width="2.2" opacity=".9"/>
+        <line x1="5" y1="45" x2="29" y2="45" stroke="white" stroke-width="2.2" opacity=".9"/>
+        <text x="40" y="44" text-anchor="middle" font-family="Georgia,serif" font-size="24" font-weight="bold" fill="#000" stroke="white" stroke-width=".6">P</text>
+        <text x="48" y="65" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="bold" fill="#000" stroke="white" stroke-width=".6">M</text>
+      </svg>
+      <h1>Perito Digital</h1>
+      <p>Colegio Perito Moreno</p>
+    </div>
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchTab('staff')">Docentes / Directivos</button>
+      <button class="login-tab" onclick="switchTab('student')">Alumnos</button>
+    </div>
+    <div id="tab-staff" class="login-form">
+      <div class="form-group"><label>Usuario</label><input type="text" id="staff-user" placeholder="usuario.docente"/></div>
+      <div class="form-group"><label>Contraseña</label><input type="password" id="staff-pass" placeholder="••••••••"/></div>
+      <div class="form-group"><label>Ingresar como</label>
+        <select id="staff-role">
+          <option value="teacher">Docente</option>
+          <option value="director">Director/a</option>
+          <option value="vicedirector">Vicedirector/a</option>
+          <option value="secretary">Secretario/a</option>
+          <option value="legal">Representante Legal</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="loginStaff()">Ingresar al Portal →</button>
+    </div>
+    <div id="tab-student" class="login-form" style="display:none">
+      <p style="font-size:13px;color:#777;line-height:1.6;margin-bottom:4px">Los alumnos ingresan con su cuenta de Google institucional. El sistema registrará tu acceso automáticamente.</p>
+      <button class="btn-google" onclick="loginGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continuar con Google
+      </button>
+      <div class="divider">o código de acceso</div>
+      <div class="form-group"><label>Código de Alumno</label><input type="text" placeholder="ALU-2024-XXXX"/></div>
+      <button class="btn-primary" onclick="loginStudent()">Ingresar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <svg width="40" height="46" viewBox="0 0 70 80" fill="none">
+        <path d="M2 2H68V55L35 78L2 55Z" fill="#C0001A" stroke="#000" stroke-width="2.5"/>
+        <rect x="2" y="2" width="66" height="15" fill="white" stroke="#000" stroke-width="1.5"/>
+        <text x="35" y="13" text-anchor="middle" font-family="Georgia,serif" font-size="8" font-weight="bold" fill="#111">Perito Moreno</text>
+        <text x="40" y="44" text-anchor="middle" font-family="Georgia,serif" font-size="22" font-weight="bold" fill="#000" stroke="white" stroke-width=".5">P</text>
+        <text x="48" y="64" text-anchor="middle" font-family="Georgia,serif" font-size="18" font-weight="bold" fill="#000" stroke="white" stroke-width=".5">M</text>
+      </svg>
+      <div class="sidebar-header-text"><h2>Perito Digital</h2><p>Portal Educativo</p></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">AG</div>
+      <div class="user-name" id="sidebar-name">Prof. García</div>
+      <div class="user-role" id="sidebar-role">Docente</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section-title">Principal</div>
+      <div class="nav-item active" onclick="showSection('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showSection('mural',this)"><span class="nav-icon">📋</span> Mural de Novedades <span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="showSection('calendario',this)"><span class="nav-icon">📅</span> Calendario</div>
+      <div class="nav-section-title" id="nav-docente-section">Docentes</div>
+      <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia',this)"><span class="nav-icon">✅</span> Asistencia</div>
+      <div class="nav-item" id="nav-calificaciones" onclick="showSection('calificaciones',this)"><span class="nav-icon">📝</span> Calificaciones</div>
+      <div class="nav-item" id="nav-archivos" onclick="showSection('archivos',this)"><span class="nav-icon">📁</span> Mis Archivos</div>
+      <div class="nav-item" id="nav-subir" onclick="showSection('subir',this)"><span class="nav-icon">☁️</span> Subir Material</div>
+      <div class="nav-section-title" id="nav-admin-section">Administración</div>
+      <div class="nav-item" id="nav-reportes" onclick="showSection('reportes',this)"><span class="nav-icon">📈</span> Reportes</div>
+      <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn-logout" onclick="logout()">⏻ &nbsp;Cerrar Sesión</button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">
+        <h1 id="page-title">Dashboard</h1>
+        <p id="page-sub">Resumen general del portal</p>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date" id="top-date"></div>
+        <button class="btn btn-primary-sm btn-sm" onclick="showSection('subir',null)">+ Subir Material</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="sec-dashboard" class="section active">
+      <div class="stats-grid">
+        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value">142</div><div class="stat-label">Archivos Subidos</div><div class="stat-change up">↑ 12 esta semana</div></div>
+        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">👨‍🎓</div><div class="stat-value">380</div><div class="stat-label">Alumnos Activos</div><div class="stat-change up">↑ 5 este mes</div></div>
+        <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">👩‍🏫</div><div class="stat-value">24</div><div class="stat-label">Docentes</div><div class="stat-change down">↓ 3 inactivos</div></div>
+        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">📋</div><div class="stat-value">18</div><div class="stat-label">Publicaciones Hoy</div><div class="stat-change up">↑ 6 vs ayer</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><h3>📈 Actividad por Curso</h3></div>
+          <div class="panel-body">
+            <div class="report-bar"><span class="report-label">1°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:82%"></div></div><span class="report-val">41</span></div>
+            <div class="report-bar"><span class="report-label">3°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:74%"></div></div><span class="report-val">37</span></div>
+            <div class="report-bar"><span class="report-label">2°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:68%"></div></div><span class="report-val">34</span></div>
+            <div class="report-bar"><span class="report-label">2°B</span><div class="report-bar-track"><div class="report-bar-fill" style="width:54%"></div></div><span class="report-val">27</span></div>
+            <div class="report-bar"><span class="report-label">4°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:40%"></div></div><span class="report-val">20</span></div>
+            <div class="report-bar"><span class="report-label">5°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:28%"></div></div><span class="report-val">14</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>📂 Tipos de Material</h3></div>
+          <div class="panel-body">
+            <div class="report-bar"><span class="report-label">📄 PDF</span><div class="report-bar-track"><div class="report-bar-fill" style="width:75%"></div></div><span class="report-val">75%</span></div>
+            <div class="report-bar"><span class="report-label">🖥️ Presentaciones</span><div class="report-bar-track"><div class="report-bar-fill" style="width:55%;background:linear-gradient(90deg,#1565C0,#64B5F6)"></div></div><span class="report-val">55%</span></div>
+            <div class="report-bar"><span class="report-label">📊 Planillas</span><div class="report-bar-track"><div class="report-bar-fill" style="width:30%;background:linear-gradient(90deg,#2E7D32,#81C784)"></div></div><span class="report-val">30%</span></div>
+            <div class="report-bar"><span class="report-label">🎥 Videos</span><div class="report-bar-track"><div class="report-bar-fill" style="width:18%;background:linear-gradient(90deg,#4A148C,#CE93D8)"></div></div><span class="report-val">18%</span></div>
+            <div class="report-bar"><span class="report-label">📝 Otros</span><div class="report-bar-track"><div class="report-bar-fill" style="width:12%;background:linear-gradient(90deg,#E65100,#FFB74D)"></div></div><span class="report-val">12%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:18px">
+        <div class="panel">
+          <div class="panel-header"><h3>🔔 Actividad Reciente</h3></div>
+          <div class="panel-body">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#4CAF50;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">Prof. Rodríguez subió <strong style="color:white">Guía Geometría 3°A</strong></div><div style="font-size:11px;color:#444;margin-top:2px">hace 5 minutos</div></div></div>
+              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#2196F3;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">Nueva publicación — <strong style="color:white">Prueba Lengua 2°B</strong></div><div style="font-size:11px;color:#444;margin-top:2px">hace 23 minutos</div></div></div>
+              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#FF9800;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">32 alumnos descargaron <strong style="color:white">Historia 4°A</strong></div><div style="font-size:11px;color:#444;margin-top:2px">hoy 10:14 AM</div></div></div>
+              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#C0001A;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">Dirección eliminó contenido de <strong style="color:white">1°A</strong></div><div style="font-size:11px;color:#444;margin-top:2px">ayer 3:45 PM</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>⚠️ Docentes Inactivos +7 días</h3></div>
+          <div class="panel-body">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:9px;background:rgba(192,0,26,.07);border:1px solid rgba(192,0,26,.18)"><div><div style="font-size:13px;font-weight:600;color:white">Prof. Martínez</div><div style="font-size:11px;color:#555">Física – 4°A, 5°A</div></div><span class="chip red">14 días</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:9px;background:rgba(255,152,0,.05);border:1px solid rgba(255,152,0,.18)"><div><div style="font-size:13px;font-weight:600;color:white">Prof. Suárez</div><div style="font-size:11px;color:#555">Geografía – 3°B</div></div><span class="chip" style="color:#FFB74D;background:rgba(255,152,0,.13);border-color:rgba(255,152,0,.28)">9 días</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:9px;background:rgba(255,152,0,.05);border:1px solid rgba(255,152,0,.18)"><div><div style="font-size:13px;font-weight:600;color:white">Prof. López</div><div style="font-size:11px;color:#555">Química – 5°A</div></div><span class="chip" style="color:#FFB74D;background:rgba(255,152,0,.13);border-color:rgba(255,152,0,.28)">7 días</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MURAL -->
+    <div id="sec-mural" class="section">
+      <div class="grid-2" style="align-items:start">
+        <div>
+          <div class="curso-selector">
+            <div class="curso-chip active">Todos</div><div class="curso-chip">1°A</div><div class="curso-chip">2°A</div><div class="curso-chip">2°B</div><div class="curso-chip">3°A</div><div class="curso-chip">4°A</div><div class="curso-chip">5°A</div>
+          </div>
+          <div class="mural-post">
+            <div class="mural-post-header"><div class="post-avatar">MR</div><div class="post-meta"><div class="post-author">Prof. M. Rodríguez</div><div class="post-info">Matemáticas · 3°A · hace 1 hora</div></div><span class="post-badge badge-prueba">Prueba</span></div>
+            <div class="post-content">📐 Prueba de <strong>Geometría Analítica</strong> el jueves 13/03. Temas: recta, circunferencia y parábola. Entrar con calculadora científica.</div>
+            <div class="post-footer"><span class="post-footer-chip">📅 Jue 13/03</span><span class="post-footer-chip">📌 3°A</span><button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="showToast('Publicación eliminada','🗑️')">🗑️ Eliminar</button></div>
+          </div>
+          <div class="mural-post">
+            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#1565C0,#0D47A1)">PG</div><div class="post-meta"><div class="post-author">Prof. P. González</div><div class="post-info">Lengua y Literatura · 2°A, 2°B · hace 3 horas</div></div><span class="post-badge badge-lectura">Lectura</span></div>
+            <div class="post-content">📖 Para el lunes leer capítulos 4 al 7 de <em>El Principito</em>. Escribir 3 reflexiones personales en el cuaderno. Material disponible para descargar.</div>
+            <div class="post-footer"><span class="post-footer-chip">📅 Lun 10/03</span><span class="post-footer-chip">📌 2°A · 2°B</span><button class="btn btn-sm btn-outline" style="margin-left:auto">📎 Adjunto</button></div>
+          </div>
+          <div class="mural-post">
+            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#1B5E20,#2E7D32)">CL</div><div class="post-meta"><div class="post-author">Prof. C. Leiva</div><div class="post-info">Ciencias Naturales · 1°A · ayer</div></div><span class="post-badge badge-tp">Trabajo Práctico</span></div>
+            <div class="post-content">🔬 Entrega del TP sobre <strong>Células Eucariotas y Procariotas</strong>. Formato PDF o impreso. Viernes 14/03. Mínimo 4 páginas con bibliografía.</div>
+            <div class="post-footer"><span class="post-footer-chip">📅 Vie 14/03</span><span class="post-footer-chip">📌 1°A</span><button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="showToast('Publicación eliminada','🗑️')">🗑️ Eliminar</button></div>
+          </div>
+          <div class="mural-post">
+            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#4A148C,#6A1B9A)">DI</div><div class="post-meta"><div class="post-author">Dirección</div><div class="post-info">Comunicado oficial · Todos los cursos · hoy</div></div><span class="post-badge badge-comunicado">Comunicado</span></div>
+            <div class="post-content">📢 El acto del 24 de Marzo se realizará en el patio cubierto a las 10:00 hs. Asistencia obligatoria con uniforme completo.</div>
+            <div class="post-footer"><span class="post-footer-chip">📢 Todos los cursos</span><span class="post-footer-chip">🏫 Dirección</span></div>
+          </div>
+          <div class="mural-post">
+            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#880E4F,#C2185B)">AL</div><div class="post-meta"><div class="post-author">Prof. A. Luna</div><div class="post-info">Inglés · 2°A · ayer</div></div><span class="post-badge badge-material">💠 Intensificación</span></div>
+            <div class="post-content">💠 Material exclusivo para alumnos que intensifican: ficha de repaso verbal tenses + ejercicios de listening. Descarga obligatoria antes del viernes.</div>
+            <div class="post-footer"><span class="post-footer-chip">💠 Intensificación</span><span class="post-footer-chip">📌 2°A</span><button class="btn btn-sm btn-outline" style="margin-left:auto">📎 Descargar</button></div>
+          </div>
+        </div>
+        <div class="panel" style="position:sticky;top:20px">
+          <div class="panel-header"><h3>✏️ Nueva Publicación</h3></div>
+          <div class="panel-body">
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <div class="form-group"><label>Tipo de Publicación</label>
+                <select><option>📐 Anuncio de Prueba</option><option>📝 Trabajo Práctico</option><option>📖 Lectura Asignada</option><option>📎 Material para Alumnos</option><option>💠 Material Intensificación</option><option>📢 Comunicado</option></select>
+              </div>
+              <div class="form-group"><label>Cursos (selección múltiple)</label>
+                <select multiple style="height:85px"><option>1°A</option><option>2°A</option><option>2°B</option><option>3°A</option><option>4°A</option><option>5°A</option></select>
+              </div>
+              <div class="form-group"><label>Mensaje</label>
+                <textarea style="height:90px;resize:vertical" placeholder="Escribí el mensaje..."></textarea>
+              </div>
+              <div class="form-group"><label>Fecha Límite (opcional)</label><input type="date"/></div>
+              <button class="btn-primary" onclick="showToast('Publicación creada exitosamente','📋')">Publicar en Mural →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDARIO -->
+    <div id="sec-calendario" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📅 Marzo 2025</h3>
+          <div style="display:flex;gap:8px"><button class="btn btn-sm btn-outline">◀ Feb</button><button class="btn btn-sm btn-outline">Abr ▶</button></div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(255,152,0,.6)"></div><span style="font-size:12px;color:#777">Prueba</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(33,150,243,.6)"></div><span style="font-size:12px;color:#777">TP</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(76,175,80,.6)"></div><span style="font-size:12px;color:#777">Lectura</span></div>
+            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(192,0,26,.6)"></div><span style="font-size:12px;color:#777">Acto/Evento</span></div>
+          </div>
+          <div class="calendar-grid">
+            <div class="cal-header">DOM</div><div class="cal-header">LUN</div><div class="cal-header">MAR</div><div class="cal-header">MIÉ</div><div class="cal-header">JUE</div><div class="cal-header">VIE</div><div class="cal-header">SÁB</div>
+            <div class="cal-day other-month"><div class="cal-day-num">23</div></div><div class="cal-day other-month"><div class="cal-day-num">24</div></div><div class="cal-day other-month"><div class="cal-day-num">25</div></div><div class="cal-day other-month"><div class="cal-day-num">26</div></div><div class="cal-day other-month"><div class="cal-day-num">27</div></div><div class="cal-day other-month"><div class="cal-day-num">28</div></div><div class="cal-day"><div class="cal-day-num">1</div></div>
+            <div class="cal-day"><div class="cal-day-num">2</div></div><div class="cal-day"><div class="cal-day-num">3</div></div><div class="cal-day"><div class="cal-day-num">4</div></div><div class="cal-day"><div class="cal-day-num">5</div><div class="cal-event prueba">Mat 3°A</div></div><div class="cal-day today"><div class="cal-day-num">6</div><div class="cal-event tp">Bio TP 2°A</div></div><div class="cal-day"><div class="cal-day-num">7</div></div><div class="cal-day"><div class="cal-day-num">8</div></div>
+            <div class="cal-day"><div class="cal-day-num">9</div></div><div class="cal-day"><div class="cal-day-num">10</div><div class="cal-event lectura">Lengua 2°A</div></div><div class="cal-day"><div class="cal-day-num">11</div></div><div class="cal-day"><div class="cal-day-num">12</div><div class="cal-event prueba">Hist 4°A</div></div><div class="cal-day"><div class="cal-day-num">13</div><div class="cal-event prueba">Mat 3°A</div><div class="cal-event tp">Ing TP</div></div><div class="cal-day"><div class="cal-day-num">14</div><div class="cal-event tp">Cs.Nat 1°A</div></div><div class="cal-day"><div class="cal-day-num">15</div></div>
+            <div class="cal-day"><div class="cal-day-num">16</div></div><div class="cal-day"><div class="cal-day-num">17</div></div><div class="cal-day"><div class="cal-day-num">18</div></div><div class="cal-day"><div class="cal-day-num">19</div></div><div class="cal-day"><div class="cal-day-num">20</div></div><div class="cal-day"><div class="cal-day-num">21</div></div><div class="cal-day"><div class="cal-day-num">22</div></div>
+            <div class="cal-day"><div class="cal-day-num">23</div></div><div class="cal-day"><div class="cal-day-num" style="color:#C0001A">24</div><div class="cal-event" style="background:rgba(192,0,26,.35);color:#FF8A80">Acto</div></div><div class="cal-day"><div class="cal-day-num">25</div></div><div class="cal-day"><div class="cal-day-num">26</div></div><div class="cal-day"><div class="cal-day-num">27</div><div class="cal-event prueba">Quím 5°A</div></div><div class="cal-day"><div class="cal-day-num">28</div></div><div class="cal-day"><div class="cal-day-num">29</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASISTENCIA -->
+    <div id="sec-asistencia" class="section">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+        <div class="curso-selector" style="margin-bottom:0">
+          <div class="curso-chip active" onclick="cambiarCursoAtt(this,'3°B')">3°B</div>
+          <div class="curso-chip" onclick="cambiarCursoAtt(this,'2°A')">2°A</div>
+          <div class="curso-chip" onclick="cambiarCursoAtt(this,'1°A')">1°A</div>
+          <div class="curso-chip" onclick="cambiarCursoAtt(this,'4°C')">4°C</div>
+          <div class="curso-chip" onclick="cambiarCursoAtt(this,'5°B')">5°B</div>
+        </div>
+        <input type="date" id="att-fecha" value="2026-03-06" style="padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="buildAttendance()"/>
+        <button class="btn btn-success btn-sm" onclick="guardarAttendance()">💾 Guardar en Drive</button>
+        <div style="margin-left:auto;display:flex;gap:7px">
+          <span class="chip green" id="cnt-p">P: 0</span>
+          <span class="chip red" id="cnt-a">A: 0</span>
+          <span class="chip" style="color:#FFD54F;background:rgba(255,193,7,.13);border-color:rgba(255,193,7,.28)" id="cnt-t">T: 0</span>
+        </div>
+      </div>
+
+      <!-- Nota sobre corrección tardía -->
+      <div style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#FFD54F;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">🕐</span>
+        <span><strong>Llegada tardía editable:</strong> Al marcar <strong>T</strong> aparece un campo de hora. El preceptor puede modificar la hora en cualquier momento y volver a guardar — la planilla en Drive se actualiza con la corrección.</span>
+      </div>
+
+      <div class="attendance-grid" id="attendance-grid"></div>
+    </div>
+
+    <!-- CALIFICACIONES -->
+    <div id="sec-calificaciones" class="section">
+      <div style="display:flex;gap:11px;margin-bottom:22px;flex-wrap:wrap;align-items:center">
+        <div class="curso-selector" style="margin-bottom:0"><div class="curso-chip active">3°A</div><div class="curso-chip">2°A</div></div>
+        <select style="padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:white;font-family:'Outfit',sans-serif;font-size:13px">
+          <option>1° Trimestre</option><option>2° Trimestre</option><option>3° Trimestre</option>
+        </select>
+        <button class="btn btn-success btn-sm" style="margin-left:auto" onclick="showToast('Calificaciones guardadas en Google Sheets','✅')">💾 Guardar</button>
+        <button class="btn btn-outline btn-sm" onclick="showToast('Exportando a PDF...','📄')">📤 Exportar</button>
+      </div>
+      <div class="panel"><div class="panel-body" style="padding:0"><div class="table-container"><table><thead><tr><th>Alumno</th><th>TP 1</th><th>TP 2</th><th>Prueba 1</th><th>Prueba 2</th><th>Oral</th><th>Promedio</th><th>Estado</th></tr></thead><tbody id="grades-table"></tbody></table></div></div></div>
+    </div>
+
+    <!-- ARCHIVOS -->
+    <div id="sec-archivos" class="section">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
+        <div class="search-bar" style="flex:1"><span>🔍</span><input placeholder="Buscar archivos..."/></div>
+        <div class="curso-selector" style="margin-bottom:0"><div class="curso-chip active">Todos</div><div class="curso-chip">3°A</div><div class="curso-chip">2°A</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>📁 Mis Archivos en Drive</h3><span style="font-size:12px;color:#444">8 archivos · 24.3 MB</span></div>
+        <div class="panel-body">
+          <div class="file-item"><span class="file-icon">📄</span><div class="file-info"><div class="file-name">Guía Geometría Analítica 3°A.pdf</div><div class="file-meta">PDF · 2.4 MB · 05/03/2025 · 📥 34 descargas · 3°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
+          <div class="file-item"><span class="file-icon">📊</span><div class="file-info"><div class="file-name">Ejercicios Estadística 3°A.xlsx</div><div class="file-meta">Excel · 890 KB · 01/03/2025 · 📥 28 descargas · 3°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
+          <div class="file-item"><span class="file-icon">🖥️</span><div class="file-info"><div class="file-name">Presentación Trigonometría 2°A.pptx</div><div class="file-meta">PowerPoint · 5.1 MB · 28/02/2025 · 📥 19 descargas · 2°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
+          <div class="file-item"><span class="file-icon">📄</span><div class="file-info"><div class="file-name">TP Funciones Cuadráticas 2°A.pdf</div><div class="file-meta">PDF · 1.8 MB · 20/02/2025 · 📥 41 descargas · 2°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
+          <div class="file-item"><span class="file-icon">📄</span><div class="file-info"><div class="file-name">Ficha Intensificación Inglés 2°A.pdf</div><div class="file-meta">PDF · 620 KB · 04/03/2025 · 📥 8 descargas · 2°A · 💠 Intensificación</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBIR MATERIAL -->
+    <div id="sec-subir" class="section">
+      <div class="grid-2" style="align-items:start">
+        <div>
+          <div class="upload-zone" onclick="showToast('Seleccionar archivo desde dispositivo','📱')">
+            <div class="upload-icon">☁️</div>
+            <div class="upload-text">Arrastrá o seleccioná archivos</div>
+            <div class="upload-sub">Desde celular, tablet o PC · PDF, Word, Excel, PPT, imágenes</div>
+            <div class="upload-sub" style="margin-top:6px;font-size:11px;color:#444">Máx. 50 MB por archivo</div>
+          </div>
+          <div class="panel" style="margin-top:18px">
+            <div class="panel-header"><h3>📬 Últimas Subidas</h3></div>
+            <div class="panel-body">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:11px;padding:10px;border-radius:9px;background:rgba(76,175,80,.07);border:1px solid rgba(76,175,80,.18)"><span style="font-size:18px">✅</span><div><div style="font-size:13px;font-weight:600;color:white">Guía Geometría.pdf</div><div style="font-size:11px;color:#555">2.4 MB · Subido → Drive 3°A</div></div></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:10px;border-radius:9px;background:rgba(255,152,0,.06);border:1px solid rgba(255,152,0,.18)"><span style="font-size:18px">⏳</span><div><div style="font-size:13px;font-weight:600;color:white">Video Clase Repaso.mp4</div><div style="font-size:11px;color:#555">Subiendo... 67% · 2°A</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>⚙️ Configurar Archivo</h3></div>
+          <div class="panel-body">
+            <div style="display:flex;flex-direction:column;gap:13px">
+              <div class="form-group"><label>Título del Material</label><input type="text" placeholder="Ej: Guía de Geometría Analítica"/></div>
+              <div class="form-group"><label>Asignar a Curso(s)</label><select multiple style="height:95px"><option>1°A</option><option>2°A</option><option>2°B</option><option>3°A</option><option>4°A</option><option>5°A</option></select></div>
+              <div class="form-group"><label>Tipo de Material</label>
+                <select><option>📄 Guía / Apunte</option><option>📐 Trabajo Práctico</option><option>📖 Material de Lectura</option><option>💠 Intensificación</option><option>🎥 Video</option></select>
+              </div>
+              <div class="form-group"><label>Descripción</label><textarea style="height:75px;resize:vertical" placeholder="Descripción breve..."></textarea></div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#777;cursor:pointer"><input type="checkbox"/> Publicar en Mural automáticamente</label>
+              <button class="btn-primary" onclick="showToast('Archivo subido a Google Drive ✓','☁️')">Subir a Drive →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="sec-reportes" class="section">
+      <div class="stats-grid">
+        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value">142</div><div class="stat-label">Total Archivos</div><div class="stat-change up">↑ 12 esta semana</div></div>
+        <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">📥</div><div class="stat-value">1.847</div><div class="stat-label">Descargas Totales</div><div class="stat-change up">↑ 234</div></div>
+        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">👁️</div><div class="stat-value">68%</div><div class="stat-label">Interacción Alumnos</div><div class="stat-change up">↑ 4%</div></div>
+        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value">3</div><div class="stat-label">Docentes Inactivos</div><div class="stat-change down">↑ 1 nuevo</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><h3>📊 Cursos Más Activos</h3></div>
+          <div class="panel-body">
+            <div class="report-bar"><span class="report-label">1°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:82%"></div></div><span class="report-val">82%</span></div>
+            <div class="report-bar"><span class="report-label">3°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:74%"></div></div><span class="report-val">74%</span></div>
+            <div class="report-bar"><span class="report-label">2°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:68%"></div></div><span class="report-val">68%</span></div>
+            <div class="report-bar"><span class="report-label">2°B</span><div class="report-bar-track"><div class="report-bar-fill" style="width:55%"></div></div><span class="report-val">55%</span></div>
+            <div class="report-bar"><span class="report-label">4°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:40%"></div></div><span class="report-val">40%</span></div>
+            <div class="report-bar"><span class="report-label">5°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:28%"></div></div><span class="report-val">28%</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><h3>📈 Interacción Alumnos</h3></div>
+          <div class="panel-body">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:9px;background:rgba(255,255,255,.03)"><span style="font-size:13px;color:#BBB">Descargas esta semana</span><span style="font-size:18px;font-weight:700;color:white">234</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:9px;background:rgba(255,255,255,.03)"><span style="font-size:13px;color:#BBB">Alumnos con +3 descarg/sem</span><span style="font-size:18px;font-weight:700;color:white">178</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:9px;background:rgba(192,0,26,.07);border:1px solid rgba(192,0,26,.18)"><span style="font-size:13px;color:#BBB">Sin actividad +14 días</span><span style="font-size:18px;font-weight:700;color:#FF6B6B">12</span></div>
+            </div>
+            <button class="btn btn-outline" style="width:100%;margin-top:13px" onclick="showToast('Exportando reporte...','📊')">📤 Exportar a Sheets</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="sec-usuarios" class="section">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
+        <div class="search-bar" style="flex:1"><span>🔍</span><input placeholder="Buscar usuario..."/></div>
+        <button class="btn btn-primary-sm" onclick="document.getElementById('modal-usr').classList.add('show')">+ Nuevo Usuario</button>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><h3>👥 Usuarios del Sistema</h3><span style="font-size:12px;color:#444">29 usuarios</span></div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Cursos</th><th>Último Acceso</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody>
+                <tr><td class="td-name">García, Ana</td><td style="font-size:12px;color:#555">ana.garcia</td><td><span class="chip">Docente</span></td><td style="font-size:12px;color:#666">3°A, 2°A</td><td style="font-size:12px;color:#555">Hoy 8:30</td><td><span class="status-dot green"></span>Activo</td><td><button class="btn btn-sm btn-outline" onclick="showToast('Contraseña restablecida','🔑')">🔑</button> <button class="btn btn-sm btn-danger" onclick="showToast('Usuario suspendido','⛔')">⛔</button></td></tr>
+                <tr><td class="td-name">Rodríguez, M.</td><td style="font-size:12px;color:#555">m.rodriguez</td><td><span class="chip">Docente</span></td><td style="font-size:12px;color:#666">3°A</td><td style="font-size:12px;color:#555">Hoy 10:14</td><td><span class="status-dot green"></span>Activo</td><td><button class="btn btn-sm btn-outline" onclick="showToast('Contraseña restablecida','🔑')">🔑</button> <button class="btn btn-sm btn-danger">⛔</button></td></tr>
+                <tr><td class="td-name">Martínez, J.</td><td style="font-size:12px;color:#555">j.martinez</td><td><span class="chip">Docente</span></td><td style="font-size:12px;color:#666">4°A, 5°A</td><td style="font-size:12px;color:#555">Hace 14 días</td><td><span class="status-dot red"></span>Inactivo</td><td><button class="btn btn-sm btn-outline" onclick="showToast('Contraseña restablecida','🔑')">🔑</button> <button class="btn btn-sm btn-danger">⛔</button></td></tr>
+                <tr><td class="td-name">Dirección</td><td style="font-size:12px;color:#555">director</td><td><span class="chip red">Director</span></td><td style="font-size:12px;color:#666">Todos</td><td style="font-size:12px;color:#555">Hoy 9:00</td><td><span class="status-dot green"></span>Activo</td><td style="color:#444">—</td></tr>
+                <tr><td class="td-name">Vicedirección</td><td style="font-size:12px;color:#555">vice</td><td><span class="chip red">Vicedirector</span></td><td style="font-size:12px;color:#666">Todos</td><td style="font-size:12px;color:#555">Ayer</td><td><span class="status-dot green"></span>Activo</td><td style="color:#444">—</td></tr>
+                <tr><td class="td-name">Secretaría</td><td style="font-size:12px;color:#555">secretaria</td><td><span class="chip blue">Secretario/a</span></td><td style="font-size:12px;color:#666">Todos</td><td style="font-size:12px;color:#555">Hoy 7:45</td><td><span class="status-dot green"></span>Activo</td><td style="color:#444">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL NUEVO USUARIO -->
+<div class="modal-overlay" id="modal-usr">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-usr').classList.remove('show')">✕</button>
+    <h2>👤 Crear Nuevo Usuario</h2>
+    <div style="display:flex;flex-direction:column;gap:13px">
+      <div class="form-group"><label>Nombre Completo</label><input type="text" placeholder="Apellido, Nombre"/></div>
+      <div class="form-group"><label>Nombre de Usuario</label><input type="text" placeholder="apellido.nombre"/></div>
+      <div class="form-group"><label>Contraseña Inicial</label><input type="text" placeholder="Se puede generar automáticamente"/></div>
+      <div class="form-group"><label>Rol</label><select><option>Docente</option><option>Director</option><option>Vicedirector</option><option>Secretario/a</option><option>Representante Legal</option></select></div>
+      <div class="form-group"><label>Asignar Cursos</label><select multiple style="height:90px"><option>1°A</option><option>2°A</option><option>2°B</option><option>3°A</option><option>4°A</option><option>5°A</option></select></div>
+      <button class="btn-primary" onclick="document.getElementById('modal-usr').classList.remove('show');showToast('Usuario creado y credenciales asignadas ✓','✅')">Crear Usuario →</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
+
+<script>
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema'};
+let attendanceState={};
+const STUDENTS=['Acosta, Lucía','Álvarez, Marcos','Báez, Sofía','Benítez, Tomás','Cabrera, Val.','Castillo, Rodrigo','Díaz, Camila','Fernández, Eze','Flores, Martina','García, Sebastián','Gómez, Milagros','González, Bruno','Gutiérrez, Emilia','Hernández, F.','Ibáñez, Flor.','Juárez, Ramiro'];
+
+function updateDate(){const d=new Date();document.getElementById('top-date').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+updateDate();
+
+function switchTab(t){
+  document.querySelectorAll('.login-tab').forEach((e,i)=>e.classList.toggle('active',(i===0&&t==='staff')||(i===1&&t==='student')));
+  document.getElementById('tab-staff').style.display=t==='staff'?'flex':'none';
+  document.getElementById('tab-student').style.display=t==='student'?'flex':'none';
+}
+
+function loginStaff(){
+  const role=document.getElementById('staff-role').value;
+  const names={teacher:'Prof. García',director:'Dirección',vicedirector:'Vicedirección',secretary:'Secretaría',legal:'Rep. Legal'};
+  doLogin(names[role]||'Usuario',role);
+}
+function loginGoogle(){doLogin('Alumno González','student')}
+function loginStudent(){doLogin('Alumno González','student')}
+
+function doLogin(name,role){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('sidebar-name').textContent=name;
+  const rl={teacher:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',student:'Alumno/a'};
+  document.getElementById('sidebar-role').textContent=rl[role]||role;
+  const ini=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('sidebar-avatar').textContent=ini;
+  const isAdmin=['director','vicedirector','secretary','legal'].includes(role);
+  const isStudent=role==='student';
+  document.getElementById('nav-docente-section').style.display=isStudent?'none':'block';
+  ['nav-asistencia','nav-calificaciones','nav-subir'].forEach(id=>document.getElementById(id).style.display=isStudent?'none':'flex');
+  document.getElementById('nav-archivos').style.display='flex';
+  document.getElementById('nav-admin-section').style.display=isAdmin?'block':'none';
+  ['nav-reportes','nav-usuarios'].forEach(id=>document.getElementById(id).style.display=isAdmin?'flex':'none');
+  buildAttendance();buildGrades();
+  showToast('Bienvenido/a, '+name+'!','👋');
+}
+
+function logout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+function showSection(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const sec=document.getElementById('sec-'+id);
+  if(sec)sec.classList.add('active');
+  if(el)el.classList.add('active');
+  document.getElementById('page-title').textContent=SECTIONS[id]||id;
+  document.getElementById('page-sub').textContent=SUBS[id]||'';
+}
+
+let cursoActualAtt = '3°B';
+let tardyTimes = {}; // store tardía hours: {studentIndex: "HH:MM"}
+
+function cambiarCursoAtt(el, curso) {
+  document.querySelectorAll('#sec-asistencia .curso-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  cursoActualAtt = curso;
+  attendanceState = {};
+  tardyTimes = {};
+  buildAttendance();
+  showToast('Curso seleccionado: ' + curso, '📋');
+}
+
+function buildAttendance(){
+  const grid=document.getElementById('attendance-grid');
+  grid.innerHTML='';
+  STUDENTS.forEach((s,i)=>{
+    attendanceState[i]=attendanceState[i]||'presente';
+    const c=document.createElement('div');
+    c.className='student-card '+attendanceState[i];
+    c.id='att-'+i;
+    const parts=s.split(',');
+    const ini=(parts[1]?parts[1].trim()[0]:'?')+(parts[0][0]);
+    const isTarde = attendanceState[i] === 'tarde';
+    const horaVal = tardyTimes[i] || '';
+    c.innerHTML=`
+      <div class="student-avatar-sm">${ini}</div>
+      <div class="student-name">${s}</div>
+      <div class="attendance-btns">
+        <button class="att-btn p ${attendanceState[i]==='presente'?'active':''}" onclick="setAtt(${i},'presente')">P</button>
+        <button class="att-btn a ${attendanceState[i]==='ausente'?'active':''}" onclick="setAtt(${i},'ausente')">A</button>
+        <button class="att-btn t ${isTarde?'active':''}" onclick="setAtt(${i},'tarde')">T</button>
+      </div>
+      <div class="tarde-hora-wrap" id="tarde-wrap-${i}" style="display:${isTarde?'flex':'none'};align-items:center;gap:6px;margin-top:6px">
+        <span style="font-size:10px;color:#FFD54F;white-space:nowrap">🕐 Hora:</span>
+        <input type="time" id="tarde-hora-${i}" value="${horaVal}"
+          style="background:rgba(255,193,7,.15);border:1px solid rgba(255,193,7,.4);border-radius:7px;color:#FFD54F;
+                 font-size:12px;font-weight:700;padding:4px 8px;width:90px;font-family:inherit"
+          onchange="setTardyTime(${i}, this.value)"
+          placeholder="HH:MM"/>
+        <span style="font-size:9px;color:rgba(255,255,255,.35)">editable</span>
+      </div>
+    `;
+    grid.appendChild(c);
+  });
+  updateCounts();
+}
+
+function setAtt(i,val){
+  attendanceState[i]=val;
+  const c=document.getElementById('att-'+i);
+  c.className='student-card '+val;
+  // Mostrar/ocultar campo de hora tardía
+  const wrap = document.getElementById('tarde-wrap-'+i);
+  if (wrap) wrap.style.display = val === 'tarde' ? 'flex' : 'none';
+  if (val !== 'tarde') { tardyTimes[i] = ''; }
+  updateCounts();
+}
+
+function setTardyTime(i, hora) {
+  tardyTimes[i] = hora;
+  // Si borra la hora no pierde el estado T
+}
+
+function updateCounts(){
+  const vals=Object.values(attendanceState);
+  document.getElementById('cnt-p').textContent='P: '+vals.filter(v=>v==='presente').length;
+  document.getElementById('cnt-a').textContent='A: '+vals.filter(v=>v==='ausente').length;
+  document.getElementById('cnt-t').textContent='T: '+vals.filter(v=>v==='tarde').length;
+}
+
+function guardarAttendance() {
+  const fecha = document.getElementById('att-fecha').value || new Date().toLocaleDateString('es-AR');
+  const tardes = Object.entries(attendanceState).filter(([,v])=>v==='tarde');
+  const sinHora = tardes.filter(([i]) => !tardyTimes[i]);
+  if (sinHora.length > 0) {
+    showToast(`⚠️ ${sinHora.length} alumno/s tarde sin hora registrada. Podés completarla y guardar de nuevo.`, '🕐');
+  }
+  // Simular guardado en Drive
+  setTimeout(() => {
+    showToast(`✅ Asistencia de ${cursoActualAtt} guardada en Drive (${fecha})`, '✅');
+  }, sinHora.length > 0 ? 1500 : 0);
+}
+
+
+function buildGrades(){
+  const tb=document.getElementById('grades-table');
+  tb.innerHTML=STUDENTS.slice(0,10).map(s=>{
+    const g=[Math.floor(Math.random()*4+6),Math.floor(Math.random()*4+6),Math.floor(Math.random()*4+5),Math.floor(Math.random()*4+6),Math.floor(Math.random()*3+7)];
+    const avg=(g.reduce((a,b)=>a+b,0)/g.length).toFixed(1);
+    const col=avg>=7?'#4CAF50':avg>=5?'#FFC107':'#FF1744';
+    return `<tr><td class="td-name">${s}</td>${g.map(n=>`<td><input class="grade-input" value="${n}" style="color:${n>=7?'#4CAF50':n>=5?'#FFC107':'#FF1744'}"/></td>`).join('')}<td style="font-weight:700;font-size:15px;color:${col}">${avg}</td><td>${parseFloat(avg)>=6?'<span class="chip green">Aprobado</span>':'<span class="chip red">En proceso</span>'}</td></tr>`;
+  }).join('');
+}
+
+let toastTimer;
+function showToast(msg,icon='✅'){
+  clearTimeout(toastTimer);
+  document.getElementById('toast-text').textContent=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  const t=document.getElementById('toast');
+  t.classList.add('show');
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3400);
+}
+
+// Curso chips
+document.querySelectorAll('.curso-selector').forEach(sel=>{
+  sel.addEventListener('click',e=>{
+    if(e.target.classList.contains('curso-chip')){
+      sel.querySelectorAll('.curso-chip').forEach(c=>c.classList.remove('active'));
+      e.target.classList.add('active');
+    }
+  });
+});
+</script>
+</body>
+</html>
