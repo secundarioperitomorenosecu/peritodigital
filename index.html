@@ -606,16 +606,29 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 // ── Conexión con Google Apps Script ──────────────────────────────────
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyNmMMfHSkikZ_5W_QKK-7scCq5cVwJ4GsnGpoXnKNLJBOUupvhzNr4pwSPbQNEY_pvxA/exec';
 
-async function callWebApp(params) {
-  try {
-    const res = await fetch(WEBAPP_URL, {
-      method: 'POST',
-      body: JSON.stringify(params)
-    });
-    return await res.json();
-  } catch(e) {
-    return { ok: false, error: 'Error de conexión: ' + e.message };
-  }
+function callWebApp(params) {
+  return new Promise((resolve) => {
+    // Usamos JSONP para evitar el problema de CORS con Google Apps Script
+    const callbackName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+
+    // Agregar callback al objeto global
+    window[callbackName] = function(data) {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+
+    // Construir URL con parámetros
+    const encoded = encodeURIComponent(JSON.stringify(params));
+    script.src = WEBAPP_URL + '?callback=' + callbackName + '&data=' + encoded;
+    script.onerror = function() {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      resolve({ ok: false, error: 'Error de conexión con el servidor' });
+    };
+    document.body.appendChild(script);
+  });
 }
 // ─────────────────────────────────────────────────────────────────────
 
