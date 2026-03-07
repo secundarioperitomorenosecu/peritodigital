@@ -603,9 +603,27 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
 
 <script>
+// ── Conexión con Google Apps Script ──────────────────────────────────
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyNmMMfHSkikZ_5W_QKK-7scCq5cVwJ4GsnGpoXnKNLJBOUupvhzNr4pwSPbQNEY_pvxA/exec';
+
+async function callWebApp(params) {
+  try {
+    const res = await fetch(WEBAPP_URL, {
+      method: 'POST',
+      body: JSON.stringify(params)
+    });
+    return await res.json();
+  } catch(e) {
+    return { ok: false, error: 'Error de conexión: ' + e.message };
+  }
+}
+// ─────────────────────────────────────────────────────────────────────
+
 const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios'};
 const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema'};
 let attendanceState={};
+let currentUser = '';
+let currentRole = '';
 const STUDENTS=['Acosta, Lucía','Álvarez, Marcos','Báez, Sofía','Benítez, Tomás','Cabrera, Val.','Castillo, Rodrigo','Díaz, Camila','Fernández, Eze','Flores, Martina','García, Sebastián','Gómez, Milagros','González, Bruno','Gutiérrez, Emilia','Hernández, F.','Ibáñez, Flor.','Juárez, Ramiro'];
 
 function updateDate(){const d=new Date();document.getElementById('top-date').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
@@ -619,13 +637,32 @@ function switchTab(t){
 
 function loginStaff(){
   const role=document.getElementById('staff-role').value;
-  const names={teacher:'Prof. García',director:'Dirección',vicedirector:'Vicedirección',secretary:'Secretaría',legal:'Rep. Legal'};
-  doLogin(names[role]||'Usuario',role);
+  const usuario=document.getElementById('staff-user') ? document.getElementById('staff-user').value.trim() : '';
+  const pass=document.getElementById('staff-pass') ? document.getElementById('staff-pass').value.trim() : '';
+
+  // Si no hay campos de usuario/pass en el HTML usamos login directo por rol (demo)
+  if(!usuario || !pass){
+    const names={teacher:'Prof. García',director:'Dirección',vicedirector:'Vicedirección',secretary:'Secretaría',legal:'Rep. Legal'};
+    doLogin(names[role]||'Usuario',role);
+    return;
+  }
+
+  showToast('Verificando credenciales...','⏳');
+  callWebApp({ accion:'login', usuario, contrasenia:pass }).then(res => {
+    if(res.ok){
+      doLogin(res.nombre, res.rol.toLowerCase());
+      showToast('Bienvenido/a ' + res.nombre, '✅');
+    } else {
+      showToast(res.error || 'Usuario o contraseña incorrectos','❌');
+    }
+  });
 }
 function loginGoogle(){doLogin('Alumno González','student')}
 function loginStudent(){doLogin('Alumno González','student')}
 
 function doLogin(name,role){
+  currentUser = name;
+  currentRole = role;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   document.getElementById('sidebar-name').textContent=name;
@@ -735,12 +772,29 @@ function guardarAttendance() {
   const tardes = Object.entries(attendanceState).filter(([,v])=>v==='tarde');
   const sinHora = tardes.filter(([i]) => !tardyTimes[i]);
   if (sinHora.length > 0) {
-    showToast(`⚠️ ${sinHora.length} alumno/s tarde sin hora registrada. Podés completarla y guardar de nuevo.`, '🕐');
+    showToast(`⚠️ ${sinHora.length} alumno/s tarde sin hora. Podés completarla y guardar de nuevo.`, '🕐');
   }
-  // Simular guardado en Drive
-  setTimeout(() => {
-    showToast(`✅ Asistencia de ${cursoActualAtt} guardada en Drive (${fecha})`, '✅');
-  }, sinHora.length > 0 ? 1500 : 0);
+
+  // Armar lista para enviar al WebApp
+  const lista = STUDENTS.map((nombre, i) => ({
+    legajo: String(i+1).padStart(3,'0'),
+    nombre: nombre,
+    estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : 'T',
+    horaLlegada: tardyTimes[i] || '',
+    observacion: ''
+  }));
+
+  showToast('Guardando asistencia...', '⏳');
+  callWebApp({
+    accion: 'guardarAsistencia',
+    curso: cursoActualAtt,
+    fecha: fecha,
+    lista: lista,
+    docente: currentUser || 'docente'
+  }).then(res => {
+    if(res.ok) showToast(`✅ Asistencia de ${cursoActualAtt} guardada (${fecha})`, '✅');
+    else showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
+  });
 }
 
 
