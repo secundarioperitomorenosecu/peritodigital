@@ -937,6 +937,7 @@ function showSection(id,el){
   document.getElementById('page-sub').textContent=SUBS[id]||'';
   // Cargar datos reales al entrar a cada sección
   if(id === 'mural') cargarMural();
+  if(id === 'calendario') renderCalendar();
   if(id === 'dashboard') cargarDashboard();
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
@@ -1827,12 +1828,13 @@ document.querySelectorAll('.curso-selector').forEach(sel=>{
 });
 
 // ── Calendario ────────────────────────────────────────────────
-let calYear, calMonth;
+const MESES_CAL = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const _hoyInit = new Date();
+let calYear  = _hoyInit.getFullYear();
+let calMonth = _hoyInit.getMonth();
 
 function initCalendar() {
-  const now = new Date();
-  calYear  = now.getFullYear();
-  calMonth = now.getMonth();
   renderCalendar();
 }
 
@@ -1851,9 +1853,7 @@ function cambiarMes(delta) {
 }
 
 function renderCalendar() {
-  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  document.getElementById('cal-titulo').textContent = MESES[calMonth] + ' ' + calYear;
+  document.getElementById('cal-titulo').textContent = MESES_CAL[calMonth] + ' ' + calYear;
 
   const grid  = document.getElementById('cal-grid');
   if (!grid) return;
