@@ -1262,23 +1262,6 @@ function generarReporte() {
   });
 }
 
-  // Usar alumnos reales si están disponibles
-  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a=>a.nombre) : STUDENTS.slice(0,10);
-
-  tb.innerHTML = lista.map((s,i) => {
-    const ini = s.split(',').length>1 ?
-      (s.split(',')[1].trim()[0]||'?')+(s.split(',')[0][0]||'?') :
-      s.substring(0,2).toUpperCase();
-    return `<tr>
-      <td class="td-name">${s}</td>
-      <td><input class="grade-input" id="grade-${i}" placeholder="-"
-        style="width:70px;text-align:center"
-        onchange="colorGrade(this, '${periodo}')"/></td>
-      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(255,255,255,.5)">—</td>
-    </tr>`;
-  }).join('');
-}
-
 function colorGrade(input, periodo) {
   const val = input.value.trim().toUpperCase();
   const n = parseFloat(val);
