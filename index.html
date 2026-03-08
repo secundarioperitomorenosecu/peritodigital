@@ -105,6 +105,18 @@ body{font-family:'Outfit',sans-serif;background:var(--negro);color:var(--blanco)
 .badge-lectura{background:rgba(76,175,80,.2);color:#81C784;border:1px solid rgba(76,175,80,.3)}
 .badge-material{background:rgba(156,39,176,.2);color:#CE93D8;border:1px solid rgba(156,39,176,.3)}
 .badge-comunicado{background:rgba(192,0,26,.2);color:#FF6B6B;border:1px solid rgba(192,0,26,.3)}
+.com-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:18px;margin-bottom:12px;transition:all .3s;cursor:pointer}
+.com-card:hover{border-color:rgba(192,0,26,.3);background:rgba(192,0,26,.04)}
+.com-card.unread{border-color:rgba(192,0,26,.4);background:rgba(192,0,26,.07)}
+.com-card .com-titulo{font-size:15px;font-weight:700;color:var(--blanco);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.com-card .com-cuerpo{font-size:13px;color:#BBB;line-height:1.6;margin-bottom:10px}
+.com-card .com-meta{font-size:11px;color:#555;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.com-card .com-adjunto{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:7px;background:rgba(192,0,26,.12);border:1px solid rgba(192,0,26,.25);color:#FF8A80;font-size:12px;font-weight:600;text-decoration:none;margin-top:8px;transition:all .2s}
+.com-card .com-adjunto:hover{background:rgba(192,0,26,.25)}
+.com-dest-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.com-dest-badge.alumnos{background:rgba(76,175,80,.15);color:#81C784;border:1px solid rgba(76,175,80,.25)}
+.com-dest-badge.docentes{background:rgba(33,150,243,.15);color:#64B5F6;border:1px solid rgba(33,150,243,.25)}
+.com-unread-dot{width:8px;height:8px;border-radius:50%;background:var(--rojo);box-shadow:0 0 6px rgba(192,0,26,.7);flex-shrink:0}
 .post-content{font-size:13px;color:#BBB;line-height:1.6}
 .post-footer{display:flex;align-items:center;gap:10px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.05)}
 .post-footer-chip{font-size:11px;padding:3px 9px;border-radius:6px;background:rgba(255,255,255,.05);color:#777}
@@ -294,10 +306,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 </head>
 <body>
 <div class="bg-pattern"></div>
-<button class="hamburger" onclick="toggleSidebar()" id="hamburger" aria-label="Menú">
+<button class="hamburger" id="hamburger" aria-label="Menú">
   <span></span><span></span><span></span>
 </button>
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
 
 <!-- LOGIN -->
 <div id="login-screen">
@@ -349,6 +361,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
       <div class="nav-item" id="nav-resumen-alumno" onclick="showSection('resumen-alumno',this)"><span class="nav-icon">👤</span> Resumen por Alumno</div>
       <div class="nav-item" id="nav-reportes" onclick="showSection('reportes',this)"><span class="nav-icon">📈</span> Reportes</div>
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
+      <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
     </div>
     <div class="sidebar-footer">
       <button class="btn-logout" onclick="logout()">⏻ &nbsp;Cerrar Sesión</button>
@@ -436,8 +449,59 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
   </div>
 </div>
 
-<!-- TOAST -->
-<div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
+    <!-- COMUNICADOS -->
+    <div id="sec-comunicados" class="section">
+      <div class="panel" style="margin-bottom:18px" id="panel-nuevo-comunicado">
+        <div class="panel-header">
+          <h3>✉️ Nuevo Comunicado</h3>
+          <button class="btn btn-sm btn-outline" onclick="toggleNuevoComunicado()">Ocultar ▲</button>
+        </div>
+        <div class="panel-body" id="form-comunicado">
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div class="form-group">
+              <label>Destinatarios</label>
+              <select id="com-dest" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="actualizarSelectorCurso()">
+                <option value="">— Seleccioná destinatarios —</option>
+              </select>
+            </div>
+            <div class="form-group" id="com-curso-grupo" style="display:none">
+              <label>Curso</label>
+              <select id="com-curso" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px">
+                <option value="">— Seleccioná el curso —</option>
+                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Título</label>
+              <input type="text" id="com-titulo" placeholder="Asunto del comunicado" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px"/>
+            </div>
+            <div class="form-group">
+              <label>Mensaje</label>
+              <textarea id="com-cuerpo" rows="4" placeholder="Escribí el comunicado aquí..." style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px;resize:vertical"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Adjunto (opcional — PDF o imagen)</label>
+              <input type="file" id="com-archivo" accept=".pdf,image/*" style="color:#BBB;font-size:12px"/>
+            </div>
+            <button class="btn-primary" onclick="enviarComunicado()" style="max-width:200px">Enviar Comunicado →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📬 Comunicados Recibidos / Enviados</h3>
+          <button class="btn btn-sm btn-outline" onclick="cargarComunicados()">↺ Actualizar</button>
+        </div>
+        <div class="panel-body" id="comunicados-lista">
+          <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Cargando comunicados...</div>
+        </div>
+      </div>
+    </div>
+
+<span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
     <!-- RESUMEN POR CURSO (directivo/preceptor) -->
     <div id="sec-resumen-curso" class="section">
       <div class="panel">
@@ -534,8 +598,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',comunicados:'Comunicados'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -585,8 +649,9 @@ function doLogin(name, role, usuario, res){
   const canSeeResumen = isAdmin || isPreceptor || isDocente;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
-  ['nav-asistencia','nav-calificaciones','nav-subir'].forEach(id =>
+  ['nav-asistencia','nav-calificaciones'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
+  document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-archivos').style.display = 'flex';
   document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente) ? 'block' : 'none';
   document.getElementById('nav-resumen-curso').style.display  = canSeeResumen ? 'flex' : 'none';
@@ -597,6 +662,8 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
+
+  inicializarComunicados();
 
   if(!isStudent) buildGrades();
   setTimeout(() => { if(!isStudent) cargarAsistenciaDesdeSheets(); }, 500);
@@ -628,6 +695,7 @@ function showSection(id,el){
   if(id === 'mis-notas') cargarMisNotas();
   if(id === 'resumen-curso') cargarResumenCurso();
   if(id === 'resumen-alumno') { document.getElementById('resumen-alumno-contenido').innerHTML='<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Seleccioná un curso y un alumno.</div>'; }
+  if(id === 'comunicados') cargarComunicados();
 }
 
 function cargarMural() {
@@ -1140,6 +1208,26 @@ function closeSidebar(){
   document.querySelector('.sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
 }
+
+// Hamburguesa — touch + click para Android/Samsung
+(function(){
+  function bindTap(id, fn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    let touched = false;
+    el.addEventListener('touchstart', function(e){
+      touched = true;
+      fn();
+      e.preventDefault();
+    }, { passive: false });
+    el.addEventListener('click', function(){
+      if (!touched) fn();
+      touched = false;
+    });
+  }
+  bindTap('hamburger', toggleSidebar);
+  bindTap('sidebar-overlay', closeSidebar);
+})();
 // Al navegar en móvil cierra el menú automáticamente
 const _origShowSection = showSection;
 // Hook closeSidebar into nav clicks on mobile
@@ -1150,7 +1238,192 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 // ─────────────────────────────────────────────────────────────────────
 
+// ── COMUNICADOS ───────────────────────────────────────────────────────
+let comunicadosLeidos = JSON.parse(localStorage.getItem('com_leidos') || '[]');
+
+function inicializarComunicados() {
+  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isPreceptor = currentRole === 'preceptor';
+  const isDocente   = currentRole === 'docente' || currentRole === 'teacher';
+  const isAlumno    = currentRole === 'alumno';
+
+  // Mostrar nav siempre (todos reciben comunicados)
+  document.getElementById('nav-comunicados').style.display = 'flex';
+
+  // Armar opciones de destinatarios según rol
+  const sel = document.getElementById('com-dest');
+  sel.innerHTML = '<option value="">— Seleccioná destinatarios —</option>';
+
+  if (isAdmin) {
+    sel.innerHTML += `
+      <option value="alumnos_todos">Todos los alumnos</option>
+      <option value="alumnos_curso">Alumnos de un curso</option>
+      <option value="docentes_todos">Todos los docentes</option>`;
+    document.getElementById('panel-nuevo-comunicado').style.display = 'block';
+  } else if (isPreceptor) {
+    sel.innerHTML += `
+      <option value="alumnos_curso">Alumnos de mi curso</option>
+      <option value="docentes_curso">Docentes de mi curso</option>`;
+    document.getElementById('panel-nuevo-comunicado').style.display = 'block';
+  } else {
+    // Docentes y alumnos solo leen
+    document.getElementById('panel-nuevo-comunicado').style.display = 'none';
+  }
+}
+
+function actualizarSelectorCurso() {
+  const dest = document.getElementById('com-dest').value;
+  const necesitaCurso = dest === 'alumnos_curso' || dest === 'docentes_curso';
+  document.getElementById('com-curso-grupo').style.display = necesitaCurso ? 'block' : 'none';
+}
+
+function toggleNuevoComunicado() {
+  const form = document.getElementById('form-comunicado');
+  const btn  = document.querySelector('#panel-nuevo-comunicado .btn-outline');
+  if (form.style.display === 'none') {
+    form.style.display = 'block'; btn.textContent = 'Ocultar ▲';
+  } else {
+    form.style.display = 'none'; btn.textContent = 'Redactar ▼';
+  }
+}
+
+function enviarComunicado() {
+  const dest   = document.getElementById('com-dest').value;
+  const curso  = document.getElementById('com-curso').value;
+  const titulo = document.getElementById('com-titulo').value.trim();
+  const cuerpo = document.getElementById('com-cuerpo').value.trim();
+  const fileInput = document.getElementById('com-archivo');
+
+  if (!dest)   { showToast('Seleccioná los destinatarios','⚠️'); return; }
+  if ((dest === 'alumnos_curso' || dest === 'docentes_curso') && !curso) {
+    showToast('Seleccioná el curso','⚠️'); return;
+  }
+  if (!titulo) { showToast('Escribí un título','⚠️'); return; }
+  if (!cuerpo) { showToast('Escribí el mensaje','⚠️'); return; }
+
+  const enviar = (base64, nombre, mime) => {
+    showToast('Enviando comunicado...','⏳');
+    callWebApp({
+      accion: 'crearComunicado',
+      autorUsuario: currentUser,
+      autorNombre:  document.getElementById('sidebar-name').textContent,
+      rolAutor:     document.getElementById('sidebar-role').textContent,
+      destinatarios: dest,
+      curso:  curso || '',
+      titulo, cuerpo,
+      archivoBase64: base64 || '',
+      archivoNombre: nombre || '',
+      archivoMime:   mime || ''
+    }).then(res => {
+      if (res.ok) {
+        showToast('Comunicado enviado ✓','✅');
+        document.getElementById('com-titulo').value = '';
+        document.getElementById('com-cuerpo').value = '';
+        document.getElementById('com-archivo').value = '';
+        document.getElementById('com-dest').value = '';
+        document.getElementById('com-curso-grupo').style.display = 'none';
+        cargarComunicados();
+      } else {
+        showToast(res.error || 'Error al enviar','❌');
+      }
+    });
+  };
+
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      enviar(base64, file.name, file.type);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    enviar('', '', '');
+  }
+}
+
+function cargarComunicados() {
+  const cursoParam = currentRole === 'alumno' ? currentCursoAlumno : '';
+  callWebApp({
+    accion: 'obtenerComunicados',
+    usuario: currentUser,
+    rol: document.getElementById('sidebar-role').textContent,
+    curso: cursoParam
+  }).then(res => {
+    const lista = document.getElementById('comunicados-lista');
+    if (!res.ok || !res.comunicados || res.comunicados.length === 0) {
+      lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">No hay comunicados para mostrar.</div>';
+      return;
+    }
+
+    const noLeidos = res.comunicados.filter(c => !comunicadosLeidos.includes(c.id)).length;
+    const badge = document.getElementById('badge-comunicados');
+    if (noLeidos > 0) {
+      badge.textContent = noLeidos;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    const destLabel = { alumnos_todos:'Todos los alumnos', alumnos_curso:'Alumnos del curso', docentes_todos:'Todos los docentes', docentes_curso:'Docentes del curso' };
+    const destClass = { alumnos_todos:'alumnos', alumnos_curso:'alumnos', docentes_todos:'docentes', docentes_curso:'docentes' };
+
+    lista.innerHTML = res.comunicados.map(c => {
+      const leido   = comunicadosLeidos.includes(c.id);
+      const fecha   = c.fecha ? new Date(c.fecha).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}) : '';
+      const adjunto = c.archivoUrl
+        ? `<a href="${c.archivoUrl}" target="_blank" class="com-adjunto">📎 ${c.archivoNombre || 'Ver adjunto'}</a>`
+        : '';
+      const dest = c.destinatarios
+        ? `<span class="com-dest-badge ${destClass[c.destinatarios]||'alumnos'}">${destLabel[c.destinatarios]||c.destinatarios}${c.curso ? ' — ' + c.curso : ''}</span>`
+        : '';
+      const dot  = !leido ? `<span class="com-unread-dot"></span>` : '';
+
+      return `<div class="com-card ${leido?'':'unread'}" onclick="marcarLeido('${c.id}',this)">
+        <div class="com-titulo">${dot} ${c.titulo}</div>
+        <div class="com-cuerpo">${c.cuerpo.replace(/\n/g,'<br>')}</div>
+        ${adjunto}
+        <div class="com-meta">
+          <span>👤 ${c.autor}</span>
+          <span>📅 ${fecha}</span>
+          ${dest}
+          ${c.autorUsuario === currentUser || ['Director/a','Vicedirector/a','Secretario/a'].includes(document.getElementById('sidebar-role').textContent)
+            ? `<button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="event.stopPropagation();eliminarComunicado('${c.id}')">🗑</button>`
+            : ''}
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+function marcarLeido(id, el) {
+  if (!comunicadosLeidos.includes(id)) {
+    comunicadosLeidos.push(id);
+    localStorage.setItem('com_leidos', JSON.stringify(comunicadosLeidos));
+    el.classList.remove('unread');
+    el.querySelector('.com-unread-dot') && el.querySelector('.com-unread-dot').remove();
+    // Actualizar badge
+    const noLeidos = document.querySelectorAll('.com-card.unread').length;
+    const badge = document.getElementById('badge-comunicados');
+    if (noLeidos > 0) { badge.textContent = noLeidos; } else { badge.style.display = 'none'; }
+  }
+}
+
+function eliminarComunicado(id) {
+  if (!confirm('¿Eliminár este comunicado?')) return;
+  callWebApp({
+    accion: 'eliminarComunicado', id,
+    usuario: currentUser,
+    rol: document.getElementById('sidebar-role').textContent
+  }).then(res => {
+    if (res.ok) { showToast('Comunicado eliminado','✅'); cargarComunicados(); }
+    else showToast(res.error || 'Error al eliminar','❌');
+  });
+}
+// ─────────────────────────────────────────────────────────────────────
+
 // Curso chips
+
 document.querySelectorAll('.curso-selector').forEach(sel=>{
   sel.addEventListener('click',e=>{
     if(e.target.classList.contains('curso-chip')){
