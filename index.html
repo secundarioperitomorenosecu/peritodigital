@@ -168,7 +168,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .upload-sub{font-size:12px;color:#aaa}
 .report-bar{display:flex;align-items:center;gap:11px;margin-bottom:9px}
 .report-label{font-size:12px;color:#aaa;width:130px;flex-shrink:0}
-.report-bar-track{flex:1;height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden}
+.report-bar-track{flex:1;height:7px;background:#e8d5c4;border-radius:4px;overflow:hidden}
 .report-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--rojo),var(--rojo-claro))}
 .report-val{font-size:12px;font-weight:700;color:var(--blanco);width:34px;text-align:right}
 .btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;transition:all .25s}
@@ -185,20 +185,20 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .modal-overlay.show{display:flex}
 .modal{background:#161616;border:1px solid rgba(192,0,26,.3);border-radius:18px;padding:30px;width:90%;max-width:500px;animation:slideUp .3s cubic-bezier(.16,1,.3,1);position:relative}
 .modal h2{font-family:'Cinzel',serif;font-size:17px;margin-bottom:18px;color:var(--blanco)}
-.modal-close{position:absolute;top:14px;right:14px;background:rgba(255,255,255,.06);border:none;color:#777;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;transition:all .2s}
+.modal-close{position:absolute;top:14px;right:14px;background:#f0e9e0;border:none;color:#888;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;transition:all .2s}
 .modal-close:hover{background:rgba(192,0,26,.2);color:var(--blanco)}
-.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#999}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#fdf8f3;border:1px solid #e8d5c4;color:#999}
 .chip.red{background:rgba(192,0,26,.14);border-color:rgba(192,0,26,.28);color:#FF6B6B}
 .chip.green{background:rgba(76,175,80,.14);border-color:rgba(76,175,80,.28);color:#81C784}
 .chip.blue{background:rgba(33,150,243,.14);border-color:rgba(33,150,243,.28);color:#64B5F6}
-.search-bar{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;padding:9px 14px}
+.search-bar{display:flex;align-items:center;gap:9px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;padding:9px 14px}
 .search-bar input{background:transparent;border:none;outline:none;color:var(--blanco);font-family:'Outfit',sans-serif;font-size:13px;flex:1}
 .search-bar span{color:#444}
 .curso-selector{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
-.curso-chip{padding:6px 14px;border-radius:7px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:#777;font-size:12px;font-weight:600;cursor:pointer;transition:all .25s}
+.curso-chip{padding:6px 14px;border-radius:7px;border:1px solid #e8d5c4;background:#fdf8f3;color:#888;font-size:12px;font-weight:600;cursor:pointer;transition:all .25s}
 .curso-chip:hover{border-color:rgba(192,0,26,.35);color:var(--blanco)}
 .curso-chip.active{background:rgba(192,0,26,.18);border-color:var(--rojo);color:var(--blanco)}
-.file-item{display:flex;align-items:center;gap:13px;padding:11px 14px;border-radius:9px;margin-bottom:5px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);transition:all .25s;cursor:pointer}
+.file-item{display:flex;align-items:center;gap:13px;padding:11px 14px;border-radius:9px;margin-bottom:5px;background:#fdf8f3;border:1px solid #e8d5c4;transition:all .25s;cursor:pointer}
 .file-item:hover{background:rgba(192,0,26,.05);border-color:rgba(192,0,26,.2)}
 .file-icon{font-size:22px}
 .file-info{flex:1}
@@ -206,7 +206,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .file-meta{font-size:11px;color:#555;margin-top:2px}
 .file-actions{display:flex;gap:5px;opacity:0;transition:opacity .2s}
 .file-item:hover .file-actions{opacity:1}
-.sheet-info{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:14px;margin-bottom:10px}
+.sheet-info{background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:14px;margin-bottom:10px}
 .sheet-info h4{font-size:13px;font-weight:700;color:var(--blanco);margin-bottom:6px;display:flex;align-items:center;gap:7px}
 .sheet-info p{font-size:12px;color:#666;line-height:1.6}
 .sheet-info code{background:rgba(192,0,26,.14);color:#FF8A80;padding:1px 5px;border-radius:4px;font-size:11px}
@@ -396,9 +396,58 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
     <!-- MURAL -->
     <div id="sec-mural" class="section">
-      <div class="grid-2" style="align-items:start">
-        <div>
-          <div class="curso-selector">
+
+      <!-- Formulario nueva publicación -->
+      <div class="panel" style="margin-bottom:18px" id="panel-nuevo-post">
+        <div class="panel-header">
+          <h3>📝 Nueva Publicación</h3>
+          <button class="btn btn-sm btn-outline" onclick="toggleNuevoPost()">Ocultar ▲</button>
+        </div>
+        <div class="panel-body" id="form-nuevo-post">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+              <label>Tipo</label>
+              <select id="post-tipo">
+                <option value="prueba">📝 Prueba / Evaluación</option>
+                <option value="tp">📎 Trabajo Práctico</option>
+                <option value="lectura">📖 Lectura</option>
+                <option value="material">📁 Material de estudio</option>
+                <option value="comunicado">📢 Aviso general</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Curso</label>
+              <select id="post-curso">
+                <option value="todos">Todos los cursos</option>
+                <option>1°A</option><option>1°B</option>
+                <option>2°A</option><option>2°B</option>
+                <option>3°A</option><option>3°B</option>
+                <option>4°A</option><option>4°B</option>
+                <option>5°A</option><option>5°B</option>
+                <option>6°A</option><option>6°B</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Título</label>
+            <input type="text" id="post-titulo" placeholder="Ej: Prueba de Matemática — Unidad 3"/>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label>Descripción</label>
+            <textarea id="post-cuerpo" rows="3" placeholder="Detalle del aviso, tema evaluado, consignas, etc." style="resize:vertical"></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button class="btn btn-outline btn-sm" onclick="limpiarFormMural()">Limpiar</button>
+            <button class="btn btn-primary btn-sm" onclick="publicarEnMural()">Publicar →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📋 Publicaciones</h3>
+          <div class="curso-selector" style="margin:0">
             <div class="curso-chip active" onclick="filtrarMural('todos',this)">Todos</div>
             <div class="curso-chip" onclick="filtrarMural('1°A',this)">1°A</div><div class="curso-chip" onclick="filtrarMural('1°B',this)">1°B</div>
             <div class="curso-chip" onclick="filtrarMural('2°A',this)">2°A</div><div class="curso-chip" onclick="filtrarMural('2°B',this)">2°B</div>
@@ -407,11 +456,14 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <div class="curso-chip" onclick="filtrarMural('5°A',this)">5°A</div><div class="curso-chip" onclick="filtrarMural('5°B',this)">5°B</div>
             <div class="curso-chip" onclick="filtrarMural('6°A',this)">6°A</div><div class="curso-chip" onclick="filtrarMural('6°B',this)">6°B</div>
           </div>
+        </div>
+        <div class="panel-body">
           <div id="mural-feed" style="display:flex;flex-direction:column;gap:12px">
             <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando publicaciones...</div>
           </div>
         </div>
       </div>
+
     </div>
 
 <!-- MODAL NUEVO USUARIO -->
@@ -441,13 +493,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:flex;flex-direction:column;gap:13px">
             <div class="form-group">
               <label>Destinatarios</label>
-              <select id="com-dest" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="actualizarSelectorCurso()">
+              <select id="com-dest" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="actualizarSelectorCurso()">
                 <option value="">— Seleccioná destinatarios —</option>
               </select>
             </div>
             <div class="form-group" id="com-curso-grupo" style="display:none">
               <label>Curso</label>
-              <select id="com-curso" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px">
+              <select id="com-curso" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
                 <option value="">— Seleccioná el curso —</option>
                 <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
                 <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
@@ -456,11 +508,11 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             </div>
             <div class="form-group">
               <label>Título</label>
-              <input type="text" id="com-titulo" placeholder="Asunto del comunicado" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px"/>
+              <input type="text" id="com-titulo" placeholder="Asunto del comunicado" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
             </div>
             <div class="form-group">
               <label>Mensaje</label>
-              <textarea id="com-cuerpo" rows="4" placeholder="Escribí el comunicado aquí..." style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px;resize:vertical"></textarea>
+              <textarea id="com-cuerpo" rows="4" placeholder="Escribí el comunicado aquí..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;resize:vertical"></textarea>
             </div>
             <div class="form-group">
               <label>Adjunto (opcional — PDF o imagen)</label>
@@ -497,7 +549,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
         <div class="panel-body">
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
-            <input type="date" id="att-fecha" style="padding:8px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarAsistenciaDesdeSheets()"/>
+            <input type="date" id="att-fecha" style="padding:8px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarAsistenciaDesdeSheets()"/>
           </div>
           <div class="curso-selector" id="curso-selector-att">
             <div class="curso-chip active" onclick="cambiarCursoAtt(this,'1A')">1°A</div>
@@ -526,7 +578,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div class="panel-header">
           <h3>📝 Libro de Calificaciones</h3>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <select id="cal-periodo" style="padding:7px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:white;font-family:inherit;font-size:12px" onchange="buildGrades()">
+            <select id="cal-periodo" style="padding:7px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:12px" onchange="buildGrades()">
               <option value="1BIM">1° Bimestre</option>
               <option value="1CUAT">1° Cuatrimestre</option>
               <option value="3BIM">3° Bimestre</option>
@@ -539,13 +591,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
         <div class="panel-body">
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
-            <select id="cal-curso" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarAlumnosCalificaciones()">
+            <select id="cal-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarAlumnosCalificaciones()">
               <option value="">— Seleccioná un curso —</option>
               <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
               <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
               <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
             </select>
-            <input type="text" id="cal-materia" placeholder="Materia (ej: Matemática)" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px;width:200px"/>
+            <input type="text" id="cal-materia" placeholder="Materia (ej: Matemática)" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;width:200px"/>
           </div>
           <div class="table-container">
             <table>
@@ -583,7 +635,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:flex;flex-direction:column;gap:16px;max-width:560px">
             <div class="form-group">
               <label>Curso</label>
-              <select id="up-curso" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px">
+              <select id="up-curso" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
                 <option value="">— Seleccioná el curso —</option>
                 <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
                 <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
@@ -592,11 +644,11 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             </div>
             <div class="form-group">
               <label>Materia</label>
-              <input type="text" id="up-materia" placeholder="Ej: Matemática, Biología..." style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px"/>
+              <input type="text" id="up-materia" placeholder="Ej: Matemática, Biología..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
             </div>
             <div class="form-group">
               <label>Descripción (opcional)</label>
-              <input type="text" id="up-desc" placeholder="Breve descripción del archivo..." style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px"/>
+              <input type="text" id="up-desc" placeholder="Breve descripción del archivo..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
             </div>
             <div class="form-group">
               <label>Archivo</label>
@@ -652,13 +704,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div class="panel-header"><h3>🏫 Resumen por Curso</h3></div>
         <div class="panel-body">
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
-            <select id="rc-curso" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
+            <select id="rc-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
               <option value="">— Seleccioná un curso —</option>
               <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
               <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
               <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
             </select>
-            <select id="rc-vista" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
+            <select id="rc-vista" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
               <option value="asistencia">Asistencia</option>
               <option value="notas">Calificaciones</option>
             </select>
@@ -674,13 +726,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div class="panel-header"><h3>👤 Resumen por Alumno</h3></div>
         <div class="panel-body">
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
-            <select id="ra-curso" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarAlumnosDeCurso()">
+            <select id="ra-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarAlumnosDeCurso()">
               <option value="">— Seleccioná un curso —</option>
               <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
               <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
               <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
             </select>
-            <select id="ra-alumno" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarResumenAlumno()">
+            <select id="ra-alumno" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenAlumno()">
               <option value="">— Seleccioná un alumno —</option>
             </select>
           </div>
@@ -822,6 +874,9 @@ function doLogin(name, role, usuario, res){
   ['nav-asistencia','nav-calificaciones'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
   document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) ? 'flex' : 'none';
+  // Mural: directivos, docentes y preceptores pueden publicar
+  const panelPost = document.getElementById('panel-nuevo-post');
+  if (panelPost) panelPost.style.display = (isAdmin || isDocente || isPreceptor) ? 'block' : 'none';
   document.getElementById('nav-archivos').style.display = 'flex';
   document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente) ? 'block' : 'none';
   document.getElementById('nav-resumen-curso').style.display  = canSeeResumen ? 'flex' : 'none';
@@ -1555,6 +1610,41 @@ function actualizarSelectorCurso() {
   const dest = document.getElementById('com-dest').value;
   const necesitaCurso = dest === 'alumnos_curso' || dest === 'docentes_curso';
   document.getElementById('com-curso-grupo').style.display = necesitaCurso ? 'block' : 'none';
+}
+
+function toggleNuevoPost() {
+  const form = document.getElementById('form-nuevo-post');
+  const btn  = document.querySelector('#panel-nuevo-post .btn-outline');
+  if (!form) return;
+  if (form.style.display === 'none') {
+    form.style.display = 'block'; if(btn) btn.textContent = 'Ocultar ▲';
+  } else {
+    form.style.display = 'none'; if(btn) btn.textContent = 'Mostrar ▼';
+  }
+}
+
+function limpiarFormMural() {
+  ['post-titulo','post-cuerpo'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+}
+
+function publicarEnMural() {
+  const titulo = (document.getElementById('post-titulo')?.value || '').trim();
+  const cuerpo = (document.getElementById('post-cuerpo')?.value || '').trim();
+  const tipo   = document.getElementById('post-tipo')?.value || 'comunicado';
+  const curso  = document.getElementById('post-curso')?.value || 'todos';
+  if (!titulo) { showToast('Escribí un título para la publicación','⚠️'); return; }
+  showToast('Publicando...', '⏳');
+  callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso,
+    autor_usuario: currentUser, autor_nombre: currentNombre, rol_autor: currentRole
+  }).then(res => {
+    if (res && res.ok) {
+      showToast('Publicado en el mural ✓', '✅');
+      limpiarFormMural();
+      cargarMural();
+    } else {
+      showToast('Error al publicar', '❌');
+    }
+  });
 }
 
 function toggleNuevoComunicado() {
