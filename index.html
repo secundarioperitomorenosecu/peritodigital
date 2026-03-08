@@ -2,15 +2,36 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<script>
+// Apps Script sirve en iframe — forzamos viewport correcto
+(function(){
+  try {
+    if(window.self !== window.top){
+      // Estamos en iframe de Apps Script
+      var vp = document.querySelector('meta[name=viewport]');
+      if(vp) vp.setAttribute('content','width=device-width,initial-scale=1.0,maximum-scale=1.0');
+    }
+  } catch(e){}
+})();
+</script>
 <title>Perito Digital – Colegio Perito Moreno</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
+html{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+body{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+  touch-action:manipulation;
+}
 :root{--rojo:#C0001A;--rojo-oscuro:#8B0013;--rojo-claro:#E8003D;--negro:#0D0D0D;--blanco:#FAFAFA;--gris:#1A1A1A;--gris-medio:#2E2E2E;--gris-claro:#F0F0F0;--acento:#FF1744;--dorado:#C8A84B;--sombra:0 8px 32px rgba(192,0,26,0.18);--sombra-lg:0 20px 60px rgba(0,0,0,0.35)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Outfit',sans-serif;background:var(--negro);color:var(--blanco);min-height:100vh;overflow-x:hidden}
 .bg-pattern{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 50% at 10% 20%,rgba(192,0,26,.12) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 80%,rgba(192,0,26,.08) 0%,transparent 60%),repeating-linear-gradient(-45deg,transparent,transparent 40px,rgba(255,255,255,.012) 40px,rgba(255,255,255,.012) 41px)}
-#login-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0D0D0D 0%,#1a0005 50%,#0D0D0D 100%)}
+#login-screen{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0D0D0D 0%,#1a0005 50%,#0D0D0D 100%)}
 .login-card{background:rgba(26,26,26,.97);border:1px solid rgba(192,0,26,.4);border-radius:20px;padding:48px 40px;width:100%;max-width:420px;box-shadow:var(--sombra-lg),0 0 80px rgba(192,0,26,.15);animation:slideUp .6s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
 .login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--rojo),var(--acento),var(--rojo),transparent)}
 .login-logo{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:32px}
@@ -31,7 +52,7 @@ body{font-family:'Outfit',sans-serif;background:var(--negro);color:var(--blanco)
 .divider{display:flex;align-items:center;gap:12px;color:#555;font-size:12px}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
 #app{display:none;position:relative;z-index:1;min-height:100vh}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:255px;background:rgba(10,10,10,.98);border-right:1px solid rgba(192,0,26,.2);display:flex;flex-direction:column;z-index:50;backdrop-filter:blur(20px)}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:255px;background:rgba(10,10,10,.98);border-right:1px solid rgba(192,0,26,.2);display:flex;flex-direction:column;z-index:499;backdrop-filter:blur(20px);transition:transform .3s ease}
 .sidebar-header{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
 .sidebar-header-text h2{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--blanco);letter-spacing:1px}
 .sidebar-header-text p{font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
@@ -49,7 +70,7 @@ body{font-family:'Outfit',sans-serif;background:var(--negro);color:var(--blanco)
 .sidebar-footer{padding:14px;border-top:1px solid rgba(255,255,255,.05)}
 .btn-logout{width:100%;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:transparent;color:#555;font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-logout:hover{border-color:var(--rojo);color:var(--rojo)}
-.main-content{margin-left:255px;padding:26px 30px;min-height:100vh}
+.main-content{margin-left:255px;padding:26px 30px;min-height:100vh;transition:margin .3s ease}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
 .topbar-title h1{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--blanco)}
 .topbar-title p{font-size:12px;color:#555;margin-top:2px}
@@ -183,57 +204,111 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 #toast.show{transform:translateY(0);opacity:1}
 #toast .toast-icon{font-size:18px}
 #toast .toast-text{font-size:13px;font-weight:500;color:var(--blanco)}
+
+/* ── RESPONSIVE MÓVIL ─────────────────────────────────────────── */
+.hamburger{
+  display:none;
+  position:fixed;top:12px;left:12px;z-index:700;
+  background:var(--rojo);border:none;border-radius:10px;
+  width:44px;height:44px;cursor:pointer;
+  flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 3px 14px rgba(0,0,0,.5);
+}
+.hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:.3s}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:498}
+.sidebar-overlay.open{display:block}
+
+@media screen and (max-width:800px){
+  /* ── Login ── */
+  .login-card{
+    padding:22px 16px !important;
+    margin:10px !important;
+    max-width:calc(100vw - 20px) !important;
+    border-radius:14px !important;
+  }
+  .login-logo{margin-bottom:16px !important}
+  .login-logo img{width:60px !important;height:60px !important}
+  .login-logo h1{font-size:17px !important;margin-top:8px !important}
+  .login-logo p{font-size:10px !important}
+  .form-group label{font-size:11px !important}
+  .form-group input{font-size:15px !important;padding:10px 12px !important}
+  .btn-primary{font-size:15px !important;padding:13px !important}
+
+  /* ── Sidebar ── */
+  .hamburger{display:flex !important}
+  .sidebar{
+    transform:translateX(-100%) !important;
+    width:280px !important;
+    z-index:499 !important;
+  }
+  .sidebar.open{transform:translateX(0) !important}
+
+  /* ── Main ── */
+  .main-content{
+    margin-left:0 !important;
+    padding:12px !important;
+    padding-top:64px !important;
+  }
+
+  /* ── Topbar ── */
+  .topbar{flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .topbar-title h1{font-size:14px !important}
+  .topbar-title p{font-size:10px !important}
+  .topbar-right{flex-wrap:wrap;gap:6px;justify-content:flex-end}
+  .topbar-right button,.btn{font-size:11px !important;padding:6px 10px !important}
+  input[type="date"]{font-size:12px !important;padding:6px 8px !important}
+  select{font-size:13px !important}
+
+  /* ── Stats ── */
+  .stats-grid{grid-template-columns:repeat(2,1fr) !important;gap:10px !important}
+  .stat-card{padding:12px !important}
+  .stat-value{font-size:20px !important}
+  .stat-label{font-size:10px !important}
+
+  /* ── Layout ── */
+  .grid-2{grid-template-columns:1fr !important;gap:12px !important}
+  .panel-body{padding:10px !important}
+  .panel-header{padding:10px 12px !important}
+  .panel-header h3{font-size:13px !important}
+
+  /* ── Asistencia ── */
+  .attendance-grid{grid-template-columns:repeat(2,1fr) !important;gap:8px !important}
+  .student-card{padding:8px 6px !important}
+  .student-name{font-size:10px !important}
+  .att-btn{font-size:10px !important;padding:3px 6px !important}
+
+  /* ── Chips ── */
+  .curso-selector{gap:5px !important;flex-wrap:wrap !important}
+  .curso-chip{font-size:10px !important;padding:4px 8px !important}
+
+  /* ── Tablas ── */
+  .table-container,.panel-body{overflow-x:auto !important}
+  table{font-size:11px !important;min-width:360px}
+  th,td{padding:5px 6px !important}
+
+  /* ── iOS zoom fix ── */
+  input,select,textarea{font-size:16px !important}
+}
+/* ────────────────────────────────────────────────────────────── */
 </style>
 </head>
 <body>
 <div class="bg-pattern"></div>
+<button class="hamburger" onclick="toggleSidebar()" id="hamburger" aria-label="Menú">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-logo">
-      <svg width="68" height="78" viewBox="0 0 70 80" fill="none">
-        <path d="M2 2H68V55L35 78L2 55Z" fill="#C0001A" stroke="#000" stroke-width="2.5"/>
-        <rect x="2" y="2" width="66" height="15" fill="white" stroke="#000" stroke-width="1.5"/>
-        <text x="35" y="13.5" text-anchor="middle" font-family="Georgia,serif" font-size="8.2" font-weight="bold" fill="#111">Colegio Perito Moreno</text>
-        <line x1="5" y1="23" x2="42" y2="23" stroke="white" stroke-width="2.2" opacity=".9"/>
-        <line x1="5" y1="28.5" x2="39" y2="28.5" stroke="white" stroke-width="2.2" opacity=".9"/>
-        <line x1="5" y1="34" x2="36" y2="34" stroke="white" stroke-width="2.2" opacity=".9"/>
-        <line x1="5" y1="39.5" x2="33" y2="39.5" stroke="white" stroke-width="2.2" opacity=".9"/>
-        <line x1="5" y1="45" x2="29" y2="45" stroke="white" stroke-width="2.2" opacity=".9"/>
-        <text x="40" y="44" text-anchor="middle" font-family="Georgia,serif" font-size="24" font-weight="bold" fill="#000" stroke="white" stroke-width=".6">P</text>
-        <text x="48" y="65" text-anchor="middle" font-family="Georgia,serif" font-size="20" font-weight="bold" fill="#000" stroke="white" stroke-width=".6">M</text>
-      </svg>
-      <h1>Perito Digital</h1>
-      <p>Colegio Perito Moreno</p>
+      <img src="data:image/webp;base64,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" alt="Escudo Colegio Perito Moreno" style="width:90px;height:auto;filter:drop-shadow(0 4px 16px rgba(192,19,26,0.4))"/>
     </div>
-    <div class="login-tabs">
-      <button class="login-tab active" onclick="switchTab('staff')">Docentes / Directivos</button>
-      <button class="login-tab" onclick="switchTab('student')">Alumnos</button>
-    </div>
-    <div id="tab-staff" class="login-form">
-      <div class="form-group"><label>Usuario</label><input type="text" id="staff-user" placeholder="usuario.docente"/></div>
-      <div class="form-group"><label>Contraseña</label><input type="password" id="staff-pass" placeholder="••••••••"/></div>
-      <div class="form-group"><label>Ingresar como</label>
-        <select id="staff-role">
-          <option value="teacher">Docente</option>
-          <option value="director">Director/a</option>
-          <option value="vicedirector">Vicedirector/a</option>
-          <option value="secretary">Secretario/a</option>
-          <option value="legal">Representante Legal</option>
-        </select>
-      </div>
+    <div class="login-form" style="display:block">
+      <div class="form-group"><label>Usuario</label><input type="text" id="staff-user" placeholder="usuario" autocomplete="username"/></div>
+      <div class="form-group"><label>Contraseña</label><input type="password" id="staff-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginStaff()"/></div>
       <button class="btn-primary" onclick="loginStaff()">Ingresar al Portal →</button>
-    </div>
-    <div id="tab-student" class="login-form" style="display:none">
-      <p style="font-size:13px;color:#777;line-height:1.6;margin-bottom:4px">Los alumnos ingresan con su cuenta de Google institucional. El sistema registrará tu acceso automáticamente.</p>
-      <button class="btn-google" onclick="loginGoogle()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Continuar con Google
-      </button>
-      <div class="divider">o código de acceso</div>
-      <div class="form-group"><label>Código de Alumno</label><input type="text" placeholder="ALU-2024-XXXX"/></div>
-      <button class="btn-primary" onclick="loginStudent()">Ingresar →</button>
     </div>
   </div>
 </div>
@@ -265,8 +340,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia',this)"><span class="nav-icon">✅</span> Asistencia</div>
       <div class="nav-item" id="nav-calificaciones" onclick="showSection('calificaciones',this)"><span class="nav-icon">📝</span> Calificaciones</div>
       <div class="nav-item" id="nav-archivos" onclick="showSection('archivos',this)"><span class="nav-icon">📁</span> Mis Archivos</div>
+      <div class="nav-section-title" id="nav-alumno-section" style="display:none">Alumno</div>
+      <div class="nav-item" id="nav-mi-asistencia" style="display:none" onclick="showSection('mi-asistencia',this)"><span class="nav-icon">✅</span> Mi Asistencia</div>
+      <div class="nav-item" id="nav-mis-notas" style="display:none" onclick="showSection('mis-notas',this)"><span class="nav-icon">📊</span> Mis Notas</div>
       <div class="nav-item" id="nav-subir" onclick="showSection('subir',this)"><span class="nav-icon">☁️</span> Subir Material</div>
       <div class="nav-section-title" id="nav-admin-section">Administración</div>
+      <div class="nav-item" id="nav-resumen-curso" onclick="showSection('resumen-curso',this)"><span class="nav-icon">🏫</span> Resumen por Curso</div>
+      <div class="nav-item" id="nav-resumen-alumno" onclick="showSection('resumen-alumno',this)"><span class="nav-icon">👤</span> Resumen por Alumno</div>
       <div class="nav-item" id="nav-reportes" onclick="showSection('reportes',this)"><span class="nav-icon">📈</span> Reportes</div>
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
     </div>
@@ -290,290 +370,47 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="section active">
       <div class="stats-grid">
-        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value">142</div><div class="stat-label">Archivos Subidos</div><div class="stat-change up">↑ 12 esta semana</div></div>
-        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">👨‍🎓</div><div class="stat-value">380</div><div class="stat-label">Alumnos Activos</div><div class="stat-change up">↑ 5 este mes</div></div>
-        <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">👩‍🏫</div><div class="stat-value">24</div><div class="stat-label">Docentes</div><div class="stat-change down">↓ 3 inactivos</div></div>
-        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">📋</div><div class="stat-value">18</div><div class="stat-label">Publicaciones Hoy</div><div class="stat-change up">↑ 6 vs ayer</div></div>
+        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value" id="stat-archivos">—</div><div class="stat-label">Archivos Subidos</div></div>
+        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">👨‍🎓</div><div class="stat-value" id="stat-alumnos">—</div><div class="stat-label">Alumnos Activos</div></div>
+        <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">👩‍🏫</div><div class="stat-value" id="stat-docentes">—</div><div class="stat-label">Docentes</div></div>
+        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">📋</div><div class="stat-value" id="stat-publicaciones">—</div><div class="stat-label">Publicaciones</div></div>
       </div>
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-header"><h3>📈 Actividad por Curso</h3></div>
-          <div class="panel-body">
-            <div class="report-bar"><span class="report-label">1°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:82%"></div></div><span class="report-val">41</span></div>
-            <div class="report-bar"><span class="report-label">3°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:74%"></div></div><span class="report-val">37</span></div>
-            <div class="report-bar"><span class="report-label">2°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:68%"></div></div><span class="report-val">34</span></div>
-            <div class="report-bar"><span class="report-label">2°B</span><div class="report-bar-track"><div class="report-bar-fill" style="width:54%"></div></div><span class="report-val">27</span></div>
-            <div class="report-bar"><span class="report-label">4°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:40%"></div></div><span class="report-val">20</span></div>
-            <div class="report-bar"><span class="report-label">5°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:28%"></div></div><span class="report-val">14</span></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h3>📂 Tipos de Material</h3></div>
-          <div class="panel-body">
-            <div class="report-bar"><span class="report-label">📄 PDF</span><div class="report-bar-track"><div class="report-bar-fill" style="width:75%"></div></div><span class="report-val">75%</span></div>
-            <div class="report-bar"><span class="report-label">🖥️ Presentaciones</span><div class="report-bar-track"><div class="report-bar-fill" style="width:55%;background:linear-gradient(90deg,#1565C0,#64B5F6)"></div></div><span class="report-val">55%</span></div>
-            <div class="report-bar"><span class="report-label">📊 Planillas</span><div class="report-bar-track"><div class="report-bar-fill" style="width:30%;background:linear-gradient(90deg,#2E7D32,#81C784)"></div></div><span class="report-val">30%</span></div>
-            <div class="report-bar"><span class="report-label">🎥 Videos</span><div class="report-bar-track"><div class="report-bar-fill" style="width:18%;background:linear-gradient(90deg,#4A148C,#CE93D8)"></div></div><span class="report-val">18%</span></div>
-            <div class="report-bar"><span class="report-label">📝 Otros</span><div class="report-bar-track"><div class="report-bar-fill" style="width:12%;background:linear-gradient(90deg,#E65100,#FFB74D)"></div></div><span class="report-val">12%</span></div>
-          </div>
+      <div class="panel" style="margin-top:20px">
+        <div class="panel-header"><h3>👋 Bienvenido/a a Perito Digital</h3></div>
+        <div class="panel-body" style="color:rgba(255,255,255,.6);font-size:14px;line-height:1.8">
+          <p>Usá el menú de la izquierda para navegar entre las secciones.</p>
+          <p>📋 <strong>Mural</strong> — publicaciones de pruebas, TPs y lecturas</p>
+          <p>✅ <strong>Asistencia</strong> — tomá asistencia por curso y fecha</p>
+          <p>📊 <strong>Calificaciones</strong> — cargá notas por período</p>
+          <p>📁 <strong>Archivos</strong> — subí y compartí material con alumnos</p>
         </div>
       </div>
-      <div class="grid-2" style="margin-top:18px">
-        <div class="panel">
-          <div class="panel-header"><h3>🔔 Actividad Reciente</h3></div>
-          <div class="panel-body">
-            <div style="display:flex;flex-direction:column;gap:12px">
-              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#4CAF50;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">Prof. Rodríguez subió <strong style="color:white">Guía Geometría 3°A</strong></div><div style="font-size:11px;color:#444;margin-top:2px">hace 5 minutos</div></div></div>
-              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#2196F3;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">Nueva publicación — <strong style="color:white">Prueba Lengua 2°B</strong></div><div style="font-size:11px;color:#444;margin-top:2px">hace 23 minutos</div></div></div>
-              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#FF9800;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">32 alumnos descargaron <strong style="color:white">Historia 4°A</strong></div><div style="font-size:11px;color:#444;margin-top:2px">hoy 10:14 AM</div></div></div>
-              <div style="display:flex;gap:11px;align-items:flex-start"><div style="width:7px;height:7px;border-radius:50%;background:#C0001A;margin-top:5px;flex-shrink:0"></div><div><div style="font-size:13px;color:#BBB">Dirección eliminó contenido de <strong style="color:white">1°A</strong></div><div style="font-size:11px;color:#444;margin-top:2px">ayer 3:45 PM</div></div></div>
-            </div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h3>⚠️ Docentes Inactivos +7 días</h3></div>
-          <div class="panel-body">
-            <div style="display:flex;flex-direction:column;gap:8px">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:9px;background:rgba(192,0,26,.07);border:1px solid rgba(192,0,26,.18)"><div><div style="font-size:13px;font-weight:600;color:white">Prof. Martínez</div><div style="font-size:11px;color:#555">Física – 4°A, 5°A</div></div><span class="chip red">14 días</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:9px;background:rgba(255,152,0,.05);border:1px solid rgba(255,152,0,.18)"><div><div style="font-size:13px;font-weight:600;color:white">Prof. Suárez</div><div style="font-size:11px;color:#555">Geografía – 3°B</div></div><span class="chip" style="color:#FFB74D;background:rgba(255,152,0,.13);border-color:rgba(255,152,0,.28)">9 días</span></div>
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:9px;background:rgba(255,152,0,.05);border:1px solid rgba(255,152,0,.18)"><div><div style="font-size:13px;font-weight:600;color:white">Prof. López</div><div style="font-size:11px;color:#555">Química – 5°A</div></div><span class="chip" style="color:#FFB74D;background:rgba(255,152,0,.13);border-color:rgba(255,152,0,.28)">7 días</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    
     <!-- MURAL -->
     <div id="sec-mural" class="section">
       <div class="grid-2" style="align-items:start">
         <div>
           <div class="curso-selector">
-            <div class="curso-chip active">Todos</div><div class="curso-chip">1°A</div><div class="curso-chip">2°A</div><div class="curso-chip">2°B</div><div class="curso-chip">3°A</div><div class="curso-chip">4°A</div><div class="curso-chip">5°A</div>
+            <div class="curso-chip active" onclick="filtrarMural('todos',this)">Todos</div>
+            <div class="curso-chip" onclick="filtrarMural('1°A',this)">1°A</div><div class="curso-chip" onclick="filtrarMural('1°B',this)">1°B</div>
+            <div class="curso-chip" onclick="filtrarMural('2°A',this)">2°A</div><div class="curso-chip" onclick="filtrarMural('2°B',this)">2°B</div>
+            <div class="curso-chip" onclick="filtrarMural('3°A',this)">3°A</div><div class="curso-chip" onclick="filtrarMural('3°B',this)">3°B</div>
+            <div class="curso-chip" onclick="filtrarMural('4°A',this)">4°A</div><div class="curso-chip" onclick="filtrarMural('4°B',this)">4°B</div>
+            <div class="curso-chip" onclick="filtrarMural('5°A',this)">5°A</div><div class="curso-chip" onclick="filtrarMural('5°B',this)">5°B</div>
+            <div class="curso-chip" onclick="filtrarMural('6°A',this)">6°A</div><div class="curso-chip" onclick="filtrarMural('6°B',this)">6°B</div>
           </div>
-          <div class="mural-post">
-            <div class="mural-post-header"><div class="post-avatar">MR</div><div class="post-meta"><div class="post-author">Prof. M. Rodríguez</div><div class="post-info">Matemáticas · 3°A · hace 1 hora</div></div><span class="post-badge badge-prueba">Prueba</span></div>
-            <div class="post-content">📐 Prueba de <strong>Geometría Analítica</strong> el jueves 13/03. Temas: recta, circunferencia y parábola. Entrar con calculadora científica.</div>
-            <div class="post-footer"><span class="post-footer-chip">📅 Jue 13/03</span><span class="post-footer-chip">📌 3°A</span><button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="showToast('Publicación eliminada','🗑️')">🗑️ Eliminar</button></div>
-          </div>
-          <div class="mural-post">
-            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#1565C0,#0D47A1)">PG</div><div class="post-meta"><div class="post-author">Prof. P. González</div><div class="post-info">Lengua y Literatura · 2°A, 2°B · hace 3 horas</div></div><span class="post-badge badge-lectura">Lectura</span></div>
-            <div class="post-content">📖 Para el lunes leer capítulos 4 al 7 de <em>El Principito</em>. Escribir 3 reflexiones personales en el cuaderno. Material disponible para descargar.</div>
-            <div class="post-footer"><span class="post-footer-chip">📅 Lun 10/03</span><span class="post-footer-chip">📌 2°A · 2°B</span><button class="btn btn-sm btn-outline" style="margin-left:auto">📎 Adjunto</button></div>
-          </div>
-          <div class="mural-post">
-            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#1B5E20,#2E7D32)">CL</div><div class="post-meta"><div class="post-author">Prof. C. Leiva</div><div class="post-info">Ciencias Naturales · 1°A · ayer</div></div><span class="post-badge badge-tp">Trabajo Práctico</span></div>
-            <div class="post-content">🔬 Entrega del TP sobre <strong>Células Eucariotas y Procariotas</strong>. Formato PDF o impreso. Viernes 14/03. Mínimo 4 páginas con bibliografía.</div>
-            <div class="post-footer"><span class="post-footer-chip">📅 Vie 14/03</span><span class="post-footer-chip">📌 1°A</span><button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="showToast('Publicación eliminada','🗑️')">🗑️ Eliminar</button></div>
-          </div>
-          <div class="mural-post">
-            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#4A148C,#6A1B9A)">DI</div><div class="post-meta"><div class="post-author">Dirección</div><div class="post-info">Comunicado oficial · Todos los cursos · hoy</div></div><span class="post-badge badge-comunicado">Comunicado</span></div>
-            <div class="post-content">📢 El acto del 24 de Marzo se realizará en el patio cubierto a las 10:00 hs. Asistencia obligatoria con uniforme completo.</div>
-            <div class="post-footer"><span class="post-footer-chip">📢 Todos los cursos</span><span class="post-footer-chip">🏫 Dirección</span></div>
-          </div>
-          <div class="mural-post">
-            <div class="mural-post-header"><div class="post-avatar" style="background:linear-gradient(135deg,#880E4F,#C2185B)">AL</div><div class="post-meta"><div class="post-author">Prof. A. Luna</div><div class="post-info">Inglés · 2°A · ayer</div></div><span class="post-badge badge-material">💠 Intensificación</span></div>
-            <div class="post-content">💠 Material exclusivo para alumnos que intensifican: ficha de repaso verbal tenses + ejercicios de listening. Descarga obligatoria antes del viernes.</div>
-            <div class="post-footer"><span class="post-footer-chip">💠 Intensificación</span><span class="post-footer-chip">📌 2°A</span><button class="btn btn-sm btn-outline" style="margin-left:auto">📎 Descargar</button></div>
-          </div>
+          <div id="mural-feed" style="display:flex;flex-direction:column;gap:12px">
+          <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">⏳ Cargando publicaciones...</div>
         </div>
-        <div class="panel" style="position:sticky;top:20px">
-          <div class="panel-header"><h3>✏️ Nueva Publicación</h3></div>
-          <div class="panel-body">
-            <div style="display:flex;flex-direction:column;gap:13px">
-              <div class="form-group"><label>Tipo de Publicación</label>
-                <select><option>📐 Anuncio de Prueba</option><option>📝 Trabajo Práctico</option><option>📖 Lectura Asignada</option><option>📎 Material para Alumnos</option><option>💠 Material Intensificación</option><option>📢 Comunicado</option></select>
-              </div>
-              <div class="form-group"><label>Cursos (selección múltiple)</label>
-                <select multiple style="height:85px"><option>1°A</option><option>2°A</option><option>2°B</option><option>3°A</option><option>4°A</option><option>5°A</option></select>
-              </div>
-              <div class="form-group"><label>Mensaje</label>
-                <textarea style="height:90px;resize:vertical" placeholder="Escribí el mensaje..."></textarea>
-              </div>
-              <div class="form-group"><label>Fecha Límite (opcional)</label><input type="date"/></div>
-              <button class="btn-primary" onclick="showToast('Publicación creada exitosamente','📋')">Publicar en Mural →</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CALENDARIO -->
-    <div id="sec-calendario" class="section">
-      <div class="panel">
-        <div class="panel-header">
-          <h3>📅 Marzo 2025</h3>
-          <div style="display:flex;gap:8px"><button class="btn btn-sm btn-outline">◀ Feb</button><button class="btn btn-sm btn-outline">Abr ▶</button></div>
-        </div>
-        <div class="panel-body">
-          <div style="display:flex;gap:14px;margin-bottom:14px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(255,152,0,.6)"></div><span style="font-size:12px;color:#777">Prueba</span></div>
-            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(33,150,243,.6)"></div><span style="font-size:12px;color:#777">TP</span></div>
-            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(76,175,80,.6)"></div><span style="font-size:12px;color:#777">Lectura</span></div>
-            <div style="display:flex;align-items:center;gap:7px"><div style="width:11px;height:11px;border-radius:3px;background:rgba(192,0,26,.6)"></div><span style="font-size:12px;color:#777">Acto/Evento</span></div>
-          </div>
-          <div class="calendar-grid">
-            <div class="cal-header">DOM</div><div class="cal-header">LUN</div><div class="cal-header">MAR</div><div class="cal-header">MIÉ</div><div class="cal-header">JUE</div><div class="cal-header">VIE</div><div class="cal-header">SÁB</div>
-            <div class="cal-day other-month"><div class="cal-day-num">23</div></div><div class="cal-day other-month"><div class="cal-day-num">24</div></div><div class="cal-day other-month"><div class="cal-day-num">25</div></div><div class="cal-day other-month"><div class="cal-day-num">26</div></div><div class="cal-day other-month"><div class="cal-day-num">27</div></div><div class="cal-day other-month"><div class="cal-day-num">28</div></div><div class="cal-day"><div class="cal-day-num">1</div></div>
-            <div class="cal-day"><div class="cal-day-num">2</div></div><div class="cal-day"><div class="cal-day-num">3</div></div><div class="cal-day"><div class="cal-day-num">4</div></div><div class="cal-day"><div class="cal-day-num">5</div><div class="cal-event prueba">Mat 3°A</div></div><div class="cal-day today"><div class="cal-day-num">6</div><div class="cal-event tp">Bio TP 2°A</div></div><div class="cal-day"><div class="cal-day-num">7</div></div><div class="cal-day"><div class="cal-day-num">8</div></div>
-            <div class="cal-day"><div class="cal-day-num">9</div></div><div class="cal-day"><div class="cal-day-num">10</div><div class="cal-event lectura">Lengua 2°A</div></div><div class="cal-day"><div class="cal-day-num">11</div></div><div class="cal-day"><div class="cal-day-num">12</div><div class="cal-event prueba">Hist 4°A</div></div><div class="cal-day"><div class="cal-day-num">13</div><div class="cal-event prueba">Mat 3°A</div><div class="cal-event tp">Ing TP</div></div><div class="cal-day"><div class="cal-day-num">14</div><div class="cal-event tp">Cs.Nat 1°A</div></div><div class="cal-day"><div class="cal-day-num">15</div></div>
-            <div class="cal-day"><div class="cal-day-num">16</div></div><div class="cal-day"><div class="cal-day-num">17</div></div><div class="cal-day"><div class="cal-day-num">18</div></div><div class="cal-day"><div class="cal-day-num">19</div></div><div class="cal-day"><div class="cal-day-num">20</div></div><div class="cal-day"><div class="cal-day-num">21</div></div><div class="cal-day"><div class="cal-day-num">22</div></div>
-            <div class="cal-day"><div class="cal-day-num">23</div></div><div class="cal-day"><div class="cal-day-num" style="color:#C0001A">24</div><div class="cal-event" style="background:rgba(192,0,26,.35);color:#FF8A80">Acto</div></div><div class="cal-day"><div class="cal-day-num">25</div></div><div class="cal-day"><div class="cal-day-num">26</div></div><div class="cal-day"><div class="cal-day-num">27</div><div class="cal-event prueba">Quím 5°A</div></div><div class="cal-day"><div class="cal-day-num">28</div></div><div class="cal-day"><div class="cal-day-num">29</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ASISTENCIA -->
-    <div id="sec-asistencia" class="section">
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
-        <div class="curso-selector" style="margin-bottom:0">
-          <div class="curso-chip active" onclick="cambiarCursoAtt(this,'3°B')">3°B</div>
-          <div class="curso-chip" onclick="cambiarCursoAtt(this,'2°A')">2°A</div>
-          <div class="curso-chip" onclick="cambiarCursoAtt(this,'1°A')">1°A</div>
-          <div class="curso-chip" onclick="cambiarCursoAtt(this,'4°C')">4°C</div>
-          <div class="curso-chip" onclick="cambiarCursoAtt(this,'5°B')">5°B</div>
-        </div>
-        <input type="date" id="att-fecha" value="2026-03-06" style="padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="buildAttendance()"/>
-        <button class="btn btn-success btn-sm" onclick="guardarAttendance()">💾 Guardar en Drive</button>
-        <div style="margin-left:auto;display:flex;gap:7px">
-          <span class="chip green" id="cnt-p">P: 0</span>
-          <span class="chip red" id="cnt-a">A: 0</span>
-          <span class="chip" style="color:#FFD54F;background:rgba(255,193,7,.13);border-color:rgba(255,193,7,.28)" id="cnt-t">T: 0</span>
-        </div>
-      </div>
-
-      <!-- Nota sobre corrección tardía -->
-      <div style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.2);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#FFD54F;display:flex;align-items:center;gap:10px">
-        <span style="font-size:18px">🕐</span>
-        <span><strong>Llegada tardía editable:</strong> Al marcar <strong>T</strong> aparece un campo de hora. El preceptor puede modificar la hora en cualquier momento y volver a guardar — la planilla en Drive se actualiza con la corrección.</span>
-      </div>
-
-      <div class="attendance-grid" id="attendance-grid"></div>
-    </div>
-
-    <!-- CALIFICACIONES -->
-    <div id="sec-calificaciones" class="section">
-      <div style="display:flex;gap:11px;margin-bottom:22px;flex-wrap:wrap;align-items:center">
-        <div class="curso-selector" style="margin-bottom:0"><div class="curso-chip active">3°A</div><div class="curso-chip">2°A</div></div>
-        <select style="padding:8px 13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:white;font-family:'Outfit',sans-serif;font-size:13px">
-          <option>1° Trimestre</option><option>2° Trimestre</option><option>3° Trimestre</option>
-        </select>
-        <button class="btn btn-success btn-sm" style="margin-left:auto" onclick="showToast('Calificaciones guardadas en Google Sheets','✅')">💾 Guardar</button>
-        <button class="btn btn-outline btn-sm" onclick="showToast('Exportando a PDF...','📄')">📤 Exportar</button>
-      </div>
-      <div class="panel"><div class="panel-body" style="padding:0"><div class="table-container"><table><thead><tr><th>Alumno</th><th>TP 1</th><th>TP 2</th><th>Prueba 1</th><th>Prueba 2</th><th>Oral</th><th>Promedio</th><th>Estado</th></tr></thead><tbody id="grades-table"></tbody></table></div></div></div>
-    </div>
-
-    <!-- ARCHIVOS -->
-    <div id="sec-archivos" class="section">
-      <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
-        <div class="search-bar" style="flex:1"><span>🔍</span><input placeholder="Buscar archivos..."/></div>
-        <div class="curso-selector" style="margin-bottom:0"><div class="curso-chip active">Todos</div><div class="curso-chip">3°A</div><div class="curso-chip">2°A</div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-header"><h3>📁 Mis Archivos en Drive</h3><span style="font-size:12px;color:#444">8 archivos · 24.3 MB</span></div>
-        <div class="panel-body">
-          <div class="file-item"><span class="file-icon">📄</span><div class="file-info"><div class="file-name">Guía Geometría Analítica 3°A.pdf</div><div class="file-meta">PDF · 2.4 MB · 05/03/2025 · 📥 34 descargas · 3°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
-          <div class="file-item"><span class="file-icon">📊</span><div class="file-info"><div class="file-name">Ejercicios Estadística 3°A.xlsx</div><div class="file-meta">Excel · 890 KB · 01/03/2025 · 📥 28 descargas · 3°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
-          <div class="file-item"><span class="file-icon">🖥️</span><div class="file-info"><div class="file-name">Presentación Trigonometría 2°A.pptx</div><div class="file-meta">PowerPoint · 5.1 MB · 28/02/2025 · 📥 19 descargas · 2°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
-          <div class="file-item"><span class="file-icon">📄</span><div class="file-info"><div class="file-name">TP Funciones Cuadráticas 2°A.pdf</div><div class="file-meta">PDF · 1.8 MB · 20/02/2025 · 📥 41 descargas · 2°A</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
-          <div class="file-item"><span class="file-icon">📄</span><div class="file-info"><div class="file-name">Ficha Intensificación Inglés 2°A.pdf</div><div class="file-meta">PDF · 620 KB · 04/03/2025 · 📥 8 descargas · 2°A · 💠 Intensificación</div></div><div class="file-actions"><button class="btn btn-sm btn-outline">✏️</button><button class="btn btn-sm btn-danger" onclick="showToast('Archivo eliminado','🗑️')">🗑️</button></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SUBIR MATERIAL -->
-    <div id="sec-subir" class="section">
-      <div class="grid-2" style="align-items:start">
-        <div>
-          <div class="upload-zone" onclick="showToast('Seleccionar archivo desde dispositivo','📱')">
-            <div class="upload-icon">☁️</div>
-            <div class="upload-text">Arrastrá o seleccioná archivos</div>
-            <div class="upload-sub">Desde celular, tablet o PC · PDF, Word, Excel, PPT, imágenes</div>
-            <div class="upload-sub" style="margin-top:6px;font-size:11px;color:#444">Máx. 50 MB por archivo</div>
-          </div>
-          <div class="panel" style="margin-top:18px">
-            <div class="panel-header"><h3>📬 Últimas Subidas</h3></div>
-            <div class="panel-body">
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;align-items:center;gap:11px;padding:10px;border-radius:9px;background:rgba(76,175,80,.07);border:1px solid rgba(76,175,80,.18)"><span style="font-size:18px">✅</span><div><div style="font-size:13px;font-weight:600;color:white">Guía Geometría.pdf</div><div style="font-size:11px;color:#555">2.4 MB · Subido → Drive 3°A</div></div></div>
-                <div style="display:flex;align-items:center;gap:11px;padding:10px;border-radius:9px;background:rgba(255,152,0,.06);border:1px solid rgba(255,152,0,.18)"><span style="font-size:18px">⏳</span><div><div style="font-size:13px;font-weight:600;color:white">Video Clase Repaso.mp4</div><div style="font-size:11px;color:#555">Subiendo... 67% · 2°A</div></div></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h3>⚙️ Configurar Archivo</h3></div>
-          <div class="panel-body">
-            <div style="display:flex;flex-direction:column;gap:13px">
-              <div class="form-group"><label>Título del Material</label><input type="text" placeholder="Ej: Guía de Geometría Analítica"/></div>
-              <div class="form-group"><label>Asignar a Curso(s)</label><select multiple style="height:95px"><option>1°A</option><option>2°A</option><option>2°B</option><option>3°A</option><option>4°A</option><option>5°A</option></select></div>
-              <div class="form-group"><label>Tipo de Material</label>
-                <select><option>📄 Guía / Apunte</option><option>📐 Trabajo Práctico</option><option>📖 Material de Lectura</option><option>💠 Intensificación</option><option>🎥 Video</option></select>
-              </div>
-              <div class="form-group"><label>Descripción</label><textarea style="height:75px;resize:vertical" placeholder="Descripción breve..."></textarea></div>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#777;cursor:pointer"><input type="checkbox"/> Publicar en Mural automáticamente</label>
-              <button class="btn-primary" onclick="showToast('Archivo subido a Google Drive ✓','☁️')">Subir a Drive →</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- REPORTES -->
-    <div id="sec-reportes" class="section">
-      <div class="stats-grid">
-        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value">142</div><div class="stat-label">Total Archivos</div><div class="stat-change up">↑ 12 esta semana</div></div>
-        <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">📥</div><div class="stat-value">1.847</div><div class="stat-label">Descargas Totales</div><div class="stat-change up">↑ 234</div></div>
-        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">👁️</div><div class="stat-value">68%</div><div class="stat-label">Interacción Alumnos</div><div class="stat-change up">↑ 4%</div></div>
-        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value">3</div><div class="stat-label">Docentes Inactivos</div><div class="stat-change down">↑ 1 nuevo</div></div>
-      </div>
-      <div class="grid-2">
-        <div class="panel">
-          <div class="panel-header"><h3>📊 Cursos Más Activos</h3></div>
-          <div class="panel-body">
-            <div class="report-bar"><span class="report-label">1°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:82%"></div></div><span class="report-val">82%</span></div>
-            <div class="report-bar"><span class="report-label">3°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:74%"></div></div><span class="report-val">74%</span></div>
-            <div class="report-bar"><span class="report-label">2°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:68%"></div></div><span class="report-val">68%</span></div>
-            <div class="report-bar"><span class="report-label">2°B</span><div class="report-bar-track"><div class="report-bar-fill" style="width:55%"></div></div><span class="report-val">55%</span></div>
-            <div class="report-bar"><span class="report-label">4°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:40%"></div></div><span class="report-val">40%</span></div>
-            <div class="report-bar"><span class="report-label">5°A</span><div class="report-bar-track"><div class="report-bar-fill" style="width:28%"></div></div><span class="report-val">28%</span></div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header"><h3>📈 Interacción Alumnos</h3></div>
-          <div class="panel-body">
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:9px;background:rgba(255,255,255,.03)"><span style="font-size:13px;color:#BBB">Descargas esta semana</span><span style="font-size:18px;font-weight:700;color:white">234</span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:9px;background:rgba(255,255,255,.03)"><span style="font-size:13px;color:#BBB">Alumnos con +3 descarg/sem</span><span style="font-size:18px;font-weight:700;color:white">178</span></div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:9px;background:rgba(192,0,26,.07);border:1px solid rgba(192,0,26,.18)"><span style="font-size:13px;color:#BBB">Sin actividad +14 días</span><span style="font-size:18px;font-weight:700;color:#FF6B6B">12</span></div>
-            </div>
-            <button class="btn btn-outline" style="width:100%;margin-top:13px" onclick="showToast('Exportando reporte...','📊')">📤 Exportar a Sheets</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- USUARIOS -->
-    <div id="sec-usuarios" class="section">
-      <div style="display:flex;align-items:center;gap:11px;margin-bottom:22px">
-        <div class="search-bar" style="flex:1"><span>🔍</span><input placeholder="Buscar usuario..."/></div>
-        <button class="btn btn-primary-sm" onclick="document.getElementById('modal-usr').classList.add('show')">+ Nuevo Usuario</button>
-      </div>
-      <div class="panel">
+              <div class="panel">
         <div class="panel-header"><h3>👥 Usuarios del Sistema</h3><span style="font-size:12px;color:#444">29 usuarios</span></div>
         <div class="panel-body" style="padding:0">
           <div class="table-container">
             <table>
               <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Cursos</th><th>Último Acceso</th><th>Estado</th><th>Acciones</th></tr></thead>
-              <tbody>
-                <tr><td class="td-name">García, Ana</td><td style="font-size:12px;color:#555">ana.garcia</td><td><span class="chip">Docente</span></td><td style="font-size:12px;color:#666">3°A, 2°A</td><td style="font-size:12px;color:#555">Hoy 8:30</td><td><span class="status-dot green"></span>Activo</td><td><button class="btn btn-sm btn-outline" onclick="showToast('Contraseña restablecida','🔑')">🔑</button> <button class="btn btn-sm btn-danger" onclick="showToast('Usuario suspendido','⛔')">⛔</button></td></tr>
-                <tr><td class="td-name">Rodríguez, M.</td><td style="font-size:12px;color:#555">m.rodriguez</td><td><span class="chip">Docente</span></td><td style="font-size:12px;color:#666">3°A</td><td style="font-size:12px;color:#555">Hoy 10:14</td><td><span class="status-dot green"></span>Activo</td><td><button class="btn btn-sm btn-outline" onclick="showToast('Contraseña restablecida','🔑')">🔑</button> <button class="btn btn-sm btn-danger">⛔</button></td></tr>
-                <tr><td class="td-name">Martínez, J.</td><td style="font-size:12px;color:#555">j.martinez</td><td><span class="chip">Docente</span></td><td style="font-size:12px;color:#666">4°A, 5°A</td><td style="font-size:12px;color:#555">Hace 14 días</td><td><span class="status-dot red"></span>Inactivo</td><td><button class="btn btn-sm btn-outline" onclick="showToast('Contraseña restablecida','🔑')">🔑</button> <button class="btn btn-sm btn-danger">⛔</button></td></tr>
-                <tr><td class="td-name">Dirección</td><td style="font-size:12px;color:#555">director</td><td><span class="chip red">Director</span></td><td style="font-size:12px;color:#666">Todos</td><td style="font-size:12px;color:#555">Hoy 9:00</td><td><span class="status-dot green"></span>Activo</td><td style="color:#444">—</td></tr>
-                <tr><td class="td-name">Vicedirección</td><td style="font-size:12px;color:#555">vice</td><td><span class="chip red">Vicedirector</span></td><td style="font-size:12px;color:#666">Todos</td><td style="font-size:12px;color:#555">Ayer</td><td><span class="status-dot green"></span>Activo</td><td style="color:#444">—</td></tr>
-                <tr><td class="td-name">Secretaría</td><td style="font-size:12px;color:#555">secretaria</td><td><span class="chip blue">Secretario/a</span></td><td style="font-size:12px;color:#666">Todos</td><td style="font-size:12px;color:#555">Hoy 7:45</td><td><span class="status-dot green"></span>Activo</td><td style="color:#444">—</td></tr>
-              </tbody>
+              <tbody id="users-table">
+                  <tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;font-size:13px">⏳ Cargando usuarios...</td></tr>
+                </tbody>
             </table>
           </div>
         </div>
@@ -601,102 +438,165 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 
 <!-- TOAST -->
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
+    <!-- RESUMEN POR CURSO (directivo/preceptor) -->
+    <div id="sec-resumen-curso" class="section">
+      <div class="panel">
+        <div class="panel-header"><h3>🏫 Resumen por Curso</h3></div>
+        <div class="panel-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+            <select id="rc-curso" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
+              <option value="">— Seleccioná un curso —</option>
+              <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
+              <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
+              <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+            </select>
+            <select id="rc-vista" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
+              <option value="asistencia">Asistencia</option>
+              <option value="notas">Calificaciones</option>
+            </select>
+          </div>
+          <div id="resumen-curso-contenido" style="color:rgba(255,255,255,.3);text-align:center;padding:30px">Seleccioná un curso para ver el resumen.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESUMEN POR ALUMNO (directivo/preceptor) -->
+    <div id="sec-resumen-alumno" class="section">
+      <div class="panel">
+        <div class="panel-header"><h3>👤 Resumen por Alumno</h3></div>
+        <div class="panel-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
+            <select id="ra-curso" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarAlumnosDeCurso()">
+              <option value="">— Seleccioná un curso —</option>
+              <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
+              <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
+              <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+            </select>
+            <select id="ra-alumno" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarResumenAlumno()">
+              <option value="">— Seleccioná un alumno —</option>
+            </select>
+          </div>
+          <div id="resumen-alumno-contenido" style="color:rgba(255,255,255,.3);text-align:center;padding:30px">Seleccioná un curso y un alumno.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MI ASISTENCIA (alumno) -->
+    <div id="sec-mi-asistencia" class="section">
+      <div class="panel">
+        <div class="panel-header"><h3>📅 Mi Asistencia</h3></div>
+        <div class="panel-body">
+          <div id="mi-asistencia-resumen" style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+            <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:120px"><div class="stat-icon">✅</div><div class="stat-value" id="cnt-presentes">—</div><div class="stat-label">Presentes</div></div>
+            <div class="stat-card" style="--color:#F44336;flex:1;min-width:120px"><div class="stat-icon">❌</div><div class="stat-value" id="cnt-ausentes">—</div><div class="stat-label">Ausentes</div></div>
+            <div class="stat-card" style="--color:#FF9800;flex:1;min-width:120px"><div class="stat-icon">🕐</div><div class="stat-value" id="cnt-tardes">—</div><div class="stat-label">Tardanzas</div></div>
+          </div>
+          <div id="mi-asistencia-tabla" style="color:rgba(255,255,255,.4);text-align:center;padding:30px">⏳ Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIS NOTAS (alumno) -->
+    <div id="sec-mis-notas" class="section">
+      <div class="panel">
+        <div class="panel-header"><h3>📊 Mis Notas</h3></div>
+        <div class="panel-body">
+          <div id="mis-notas-tabla" style="color:rgba(255,255,255,.4);text-align:center;padding:30px">⏳ Cargando...</div>
+        </div>
+      </div>
+    </div>
+
 
 <script>
-// ── Conexión con Google Apps Script ──────────────────────────────────
-const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyNmMMfHSkikZ_5W_QKK-7scCq5cVwJ4GsnGpoXnKNLJBOUupvhzNr4pwSPbQNEY_pvxA/exec';
+// ── Conexión nativa con Google Apps Script ────────────────────────────
+// Al estar hosteado dentro de AppScript, usamos google.script.run
+// que no tiene problemas de CORS
+
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyNmMMfHSkikZ_5W_QKK-7scCq5cVwJ4GsnGpoXnKNLJBOUupvhzNr4pwSPbQNEY_pvxA/exec';
 
 function callWebApp(params) {
-  return new Promise((resolve) => {
-    // Usamos JSONP para evitar el problema de CORS con Google Apps Script
-    const callbackName = 'cb_' + Date.now();
-    const script = document.createElement('script');
-
-    // Agregar callback al objeto global
-    window[callbackName] = function(data) {
-      delete window[callbackName];
-      document.body.removeChild(script);
-      resolve(data);
-    };
-
-    // Construir URL con parámetros
-    const encoded = encodeURIComponent(JSON.stringify(params));
-    script.src = WEBAPP_URL + '?callback=' + callbackName + '&data=' + encoded;
-    script.onerror = function() {
-      delete window[callbackName];
-      document.body.removeChild(script);
-      resolve({ ok: false, error: 'Error de conexión con el servidor' });
-    };
-    document.body.appendChild(script);
-  });
+  return fetch(BACKEND_URL + '?data=' + encodeURIComponent(JSON.stringify(params)))
+    .then(r => r.json())
+    .catch(err => ({ ok: false, error: err.message || 'Error de conexión' }));
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno'};
 const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
-const STUDENTS=['Acosta, Lucía','Álvarez, Marcos','Báez, Sofía','Benítez, Tomás','Cabrera, Val.','Castillo, Rodrigo','Díaz, Camila','Fernández, Eze','Flores, Martina','García, Sebastián','Gómez, Milagros','González, Bruno','Gutiérrez, Emilia','Hernández, F.','Ibáñez, Flor.','Juárez, Ramiro'];
+const STUDENTS=[]; // Los alumnos se cargan desde Google Sheets
 
 function updateDate(){const d=new Date();document.getElementById('top-date').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 updateDate();
 
-function switchTab(t){
-  document.querySelectorAll('.login-tab').forEach((e,i)=>e.classList.toggle('active',(i===0&&t==='staff')||(i===1&&t==='student')));
-  document.getElementById('tab-staff').style.display=t==='staff'?'flex':'none';
-  document.getElementById('tab-student').style.display=t==='student'?'flex':'none';
-}
-
 function loginStaff(){
-  const role=document.getElementById('staff-role').value;
-  const usuario=document.getElementById('staff-user') ? document.getElementById('staff-user').value.trim() : '';
-  const pass=document.getElementById('staff-pass') ? document.getElementById('staff-pass').value.trim() : '';
+  const usuario = (document.getElementById('staff-user').value || '').trim();
+  const pass = (document.getElementById('staff-pass').value || '').trim();
 
-  // Si no hay campos de usuario/pass en el HTML usamos login directo por rol (demo)
   if(!usuario || !pass){
-    const names={teacher:'Prof. García',director:'Dirección',vicedirector:'Vicedirección',secretary:'Secretaría',legal:'Rep. Legal'};
-    doLogin(names[role]||'Usuario',role);
+    showToast('Ingresá usuario y contraseña','⚠️');
     return;
   }
 
   showToast('Verificando credenciales...','⏳');
   callWebApp({ accion:'login', usuario, contrasenia:pass }).then(res => {
     if(res.ok){
-      doLogin(res.nombre, res.rol.toLowerCase());
+      doLogin(res.nombre, res.rol.toLowerCase(), res.usuario || usuario, res);
       showToast('Bienvenido/a ' + res.nombre, '✅');
     } else {
       showToast(res.error || 'Usuario o contraseña incorrectos','❌');
     }
   });
 }
-function loginGoogle(){doLogin('Alumno González','student')}
-function loginStudent(){doLogin('Alumno González','student')}
 
-function doLogin(name,role){
-  currentUser = name;
+function doLogin(name, role, usuario, res){
+  currentUser = usuario || name;
   currentRole = role;
+  if(role === 'alumno' && res && res.curso) currentCursoAlumno = res.curso;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
+  if(window.innerWidth<=800)   document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  if(window.innerWidth<=800) document.getElementById('hamburger').style.display='flex';
   document.getElementById('sidebar-name').textContent=name;
-  const rl={teacher:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',student:'Alumno/a'};
+  const rl={teacher:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a'};
   document.getElementById('sidebar-role').textContent=rl[role]||role;
-  const ini=name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const ini=name.split(/[\s,]+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase();
   document.getElementById('sidebar-avatar').textContent=ini;
-  const isAdmin=['director','vicedirector','secretary','legal'].includes(role);
-  const isStudent=role==='student';
-  document.getElementById('nav-docente-section').style.display=isStudent?'none':'block';
-  ['nav-asistencia','nav-calificaciones','nav-subir'].forEach(id=>document.getElementById(id).style.display=isStudent?'none':'flex');
-  document.getElementById('nav-archivos').style.display='flex';
-  document.getElementById('nav-admin-section').style.display=isAdmin?'block':'none';
-  ['nav-reportes','nav-usuarios'].forEach(id=>document.getElementById(id).style.display=isAdmin?'flex':'none');
-  buildAttendance();buildGrades();
+  const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
+  const isPreceptor= role === 'preceptor';
+  const isDocente  = role === 'docente' || role === 'teacher';
+  const isStudent  = role === 'alumno';
+  const canSeeResumen = isAdmin || isPreceptor || isDocente;
+
+  document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
+  ['nav-asistencia','nav-calificaciones','nav-subir'].forEach(id =>
+    document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
+  document.getElementById('nav-archivos').style.display = 'flex';
+  document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente) ? 'block' : 'none';
+  document.getElementById('nav-resumen-curso').style.display  = canSeeResumen ? 'flex' : 'none';
+  document.getElementById('nav-resumen-alumno').style.display = canSeeResumen ? 'flex' : 'none';
+  document.getElementById('nav-reportes').style.display  = isAdmin ? 'flex' : 'none';
+  document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
+  // Secciones exclusivas del alumno
+  document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
+  ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
+    document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
+
+  if(!isStudent) buildGrades();
+  setTimeout(() => { if(!isStudent) cargarAsistenciaDesdeSheets(); }, 500);
   showToast('Bienvenido/a, '+name+'!','👋');
 }
 
 function logout(){
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
+  document.getElementById('hamburger').style.display='none';
+  closeSidebar();
+  document.getElementById('staff-user').value='';
+  document.getElementById('staff-pass').value='';
 }
 
 function showSection(id,el){
@@ -707,10 +607,98 @@ function showSection(id,el){
   if(el)el.classList.add('active');
   document.getElementById('page-title').textContent=SECTIONS[id]||id;
   document.getElementById('page-sub').textContent=SUBS[id]||'';
+  // Cargar datos reales al entrar a cada sección
+  if(id === 'mural') cargarMural();
+  if(id === 'dashboard') cargarDashboard();
+  if(id === 'asistencia') cargarAsistenciaDesdeSheets();
+  if(id === 'mi-asistencia') cargarMiAsistencia();
+  if(id === 'mis-notas') cargarMisNotas();
+  if(id === 'resumen-curso') cargarResumenCurso();
+  if(id === 'resumen-alumno') { document.getElementById('resumen-alumno-contenido').innerHTML='<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Seleccioná un curso y un alumno.</div>'; }
+}
+
+function cargarMural() {
+  const feed = document.getElementById('mural-feed');
+  if (!feed) return;
+  feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">⏳ Cargando publicaciones...</div>';
+  callWebApp({ accion: 'obtenerPublicaciones', curso: 'todos', soloActivas: true }).then(res => {
+    if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
+      feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3);font-size:13px">📋 No hay publicaciones aún.<br><span style="font-size:11px">Los docentes pueden publicar desde este mural.</span></div>';
+      return;
+    }
+    const tipoClass = { 'Prueba':'badge-prueba','TP':'badge-tp','Lectura':'badge-lectura','Intensificación':'badge-intensif' };
+    feed.innerHTML = res.publicaciones.map(p => `
+      <div class="mural-post">
+        <div class="mural-post-header">
+          <div class="post-avatar">${(p.docenteNombre||'??').split(',').map(x=>x.trim()[0]).join('').substring(0,2).toUpperCase()}</div>
+          <div class="post-meta">
+            <div class="post-author">${p.docenteNombre||'Docente'}</div>
+            <div class="post-info">${p.materia||''} · ${p.curso||''}</div>
+          </div>
+          <span class="post-badge ${tipoClass[p.tipo]||''}">${p.tipo||''}</span>
+        </div>
+        <div class="post-content">${p.descripcion||''}</div>
+        <div class="post-footer">
+          ${p.fechaEvento ? `<span class="post-footer-chip">📅 ${p.fechaEvento}</span>` : ''}
+          <span class="post-footer-chip">📌 ${p.curso||'General'}</span>
+          ${currentRole==='directivo'||currentRole==='admin' ? `<button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="eliminarPost('${p.id}')">🗑️</button>` : ''}
+        </div>
+      </div>`).join('');
+  });
+}
+
+function filtrarMural(curso, el) {
+  document.querySelectorAll('#sec-mural .curso-chip').forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const feed = document.getElementById('mural-feed');
+  feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">⏳ Cargando...</div>';
+  callWebApp({ accion: 'obtenerPublicaciones', curso: curso, soloActivas: true }).then(res => {
+    if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
+      feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3);font-size:13px">📋 Sin publicaciones para este filtro.</div>';
+      return;
+    }
+    const tipoClass = { 'Prueba':'badge-prueba','TP':'badge-tp','Lectura':'badge-lectura','Intensificación':'badge-intensif' };
+    feed.innerHTML = res.publicaciones.map(p => `
+      <div class="mural-post">
+        <div class="mural-post-header">
+          <div class="post-avatar">${(p.docenteNombre||'??').split(',').map(x=>x.trim()[0]).join('').substring(0,2).toUpperCase()}</div>
+          <div class="post-meta">
+            <div class="post-author">${p.docenteNombre||'Docente'}</div>
+            <div class="post-info">${p.materia||''} · ${p.curso||''}</div>
+          </div>
+          <span class="post-badge ${tipoClass[p.tipo]||''}">${p.tipo||''}</span>
+        </div>
+        <div class="post-content">${p.descripcion||''}</div>
+        <div class="post-footer">
+          ${p.fechaEvento ? `<span class="post-footer-chip">📅 ${p.fechaEvento}</span>` : ''}
+          <span class="post-footer-chip">📌 ${p.curso||'General'}</span>
+          ${currentRole==='directivo'||currentRole==='admin' ? `<button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="eliminarPost('${p.id}')">🗑️</button>` : ''}
+        </div>
+      </div>`).join('');
+  });
+}
+
+function eliminarPost(id) {
+  if (!confirm('¿Eliminar esta publicación?')) return;
+  callWebApp({ accion: 'eliminarPublicacion', id, usuario: currentUser, rol: currentRole }).then(res => {
+    if (res.ok) { showToast('Publicación eliminada','🗑️'); cargarMural(); }
+    else showToast('Error al eliminar','❌');
+  });
+}
+
+function cargarDashboard() {
+  callWebApp({ accion: 'reporte' }).then(res => {
+    if (!res.ok) return;
+    if (res.totalArchivos !== undefined) document.getElementById('stat-archivos').textContent = res.totalArchivos;
+    if (res.totalAlumnos !== undefined) document.getElementById('stat-alumnos').textContent = res.totalAlumnos;
+    if (res.totalDocentes !== undefined) document.getElementById('stat-docentes').textContent = res.totalDocentes;
+    if (res.totalPublicaciones !== undefined) document.getElementById('stat-publicaciones').textContent = res.totalPublicaciones;
+  });
 }
 
 let cursoActualAtt = '3°B';
-let tardyTimes = {}; // store tardía hours: {studentIndex: "HH:MM"}
+let tardyTimes = {};
+let alumnosActuales = []; // alumnos reales cargados desde Sheets
 
 function cambiarCursoAtt(el, curso) {
   document.querySelectorAll('#sec-asistencia .curso-chip').forEach(c => c.classList.remove('active'));
@@ -718,20 +706,55 @@ function cambiarCursoAtt(el, curso) {
   cursoActualAtt = curso;
   attendanceState = {};
   tardyTimes = {};
-  buildAttendance();
-  showToast('Curso seleccionado: ' + curso, '📋');
+  cargarAsistenciaDesdeSheets();
+}
+
+function cargarAsistenciaDesdeSheets() {
+  const fecha = document.getElementById('att-fecha').value;
+  if (!fecha) return;
+
+  const grid = document.getElementById('attendance-grid');
+  grid.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.4);font-size:13px">⏳ Cargando asistencia...</div>';
+
+  callWebApp({ accion: 'obtenerAsistencia', curso: cursoActualAtt, fecha: fecha }).then(res => {
+    if (!res.ok) { showToast('Error al cargar asistencia', '❌'); return; }
+
+    alumnosActuales = res.alumnos;
+
+    if (alumnosActuales.length === 0) {
+      grid.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.4);font-size:13px">⚠️ No hay alumnos cargados en este curso.<br>Completá la lista en Google Sheets primero.</div>';
+      return;
+    }
+
+    // Cargar estados guardados o P por defecto
+    alumnosActuales.forEach((a, i) => {
+      const est = a.estado === 'A' ? 'ausente' : a.estado === 'T' ? 'tarde' : 'presente';
+      attendanceState[i] = est;
+      tardyTimes[i] = a.horaLlegada || '';
+    });
+
+    if (res.yaGuardado) {
+      showToast(`Asistencia del ${fecha} cargada ✓`, '📋');
+    }
+
+    buildAttendance();
+  });
 }
 
 function buildAttendance(){
   const grid=document.getElementById('attendance-grid');
   grid.innerHTML='';
-  STUDENTS.forEach((s,i)=>{
+
+  // Usar alumnos reales si están cargados, si no usar lista demo
+  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a => a.nombre) : STUDENTS;
+
+  lista.forEach((s,i)=>{
     attendanceState[i]=attendanceState[i]||'presente';
     const c=document.createElement('div');
     c.className='student-card '+attendanceState[i];
     c.id='att-'+i;
     const parts=s.split(',');
-    const ini=(parts[1]?parts[1].trim()[0]:'?')+(parts[0][0]);
+    const ini=(parts[1]?parts[1].trim()[0]:'?')+(parts[0]?parts[0][0]:'?');
     const isTarde = attendanceState[i] === 'tarde';
     const horaVal = tardyTimes[i] || '';
     c.innerHTML=`
@@ -757,6 +780,7 @@ function buildAttendance(){
   updateCounts();
 }
 
+
 function setAtt(i,val){
   attendanceState[i]=val;
   const c=document.getElementById('att-'+i);
@@ -781,21 +805,29 @@ function updateCounts(){
 }
 
 function guardarAttendance() {
-  const fecha = document.getElementById('att-fecha').value || new Date().toLocaleDateString('es-AR');
+  const fecha = document.getElementById('att-fecha').value;
   const tardes = Object.entries(attendanceState).filter(([,v])=>v==='tarde');
   const sinHora = tardes.filter(([i]) => !tardyTimes[i]);
   if (sinHora.length > 0) {
     showToast(`⚠️ ${sinHora.length} alumno/s tarde sin hora. Podés completarla y guardar de nuevo.`, '🕐');
   }
 
-  // Armar lista para enviar al WebApp
-  const lista = STUDENTS.map((nombre, i) => ({
-    legajo: String(i+1).padStart(3,'0'),
-    nombre: nombre,
-    estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : 'T',
-    horaLlegada: tardyTimes[i] || '',
-    observacion: ''
-  }));
+  // Usar alumnos reales si están cargados
+  const lista = alumnosActuales.length > 0
+    ? alumnosActuales.map((a, i) => ({
+        legajo: a.legajo,
+        nombre: a.nombre,
+        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : 'T',
+        horaLlegada: tardyTimes[i] || '',
+        observacion: ''
+      }))
+    : STUDENTS.map((nombre, i) => ({
+        legajo: String(i+1).padStart(3,'0'),
+        nombre: nombre,
+        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : 'T',
+        horaLlegada: tardyTimes[i] || '',
+        observacion: ''
+      }));
 
   showToast('Guardando asistencia...', '⏳');
   callWebApp({
@@ -805,7 +837,7 @@ function guardarAttendance() {
     lista: lista,
     docente: currentUser || 'docente'
   }).then(res => {
-    if(res.ok) showToast(`✅ Asistencia de ${cursoActualAtt} guardada (${fecha})`, '✅');
+    if(res.ok) showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
     else showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
   });
 }
@@ -813,13 +845,47 @@ function guardarAttendance() {
 
 function buildGrades(){
   const tb=document.getElementById('grades-table');
-  tb.innerHTML=STUDENTS.slice(0,10).map(s=>{
-    const g=[Math.floor(Math.random()*4+6),Math.floor(Math.random()*4+6),Math.floor(Math.random()*4+5),Math.floor(Math.random()*4+6),Math.floor(Math.random()*3+7)];
-    const avg=(g.reduce((a,b)=>a+b,0)/g.length).toFixed(1);
-    const col=avg>=7?'#4CAF50':avg>=5?'#FFC107':'#FF1744';
-    return `<tr><td class="td-name">${s}</td>${g.map(n=>`<td><input class="grade-input" value="${n}" style="color:${n>=7?'#4CAF50':n>=5?'#FFC107':'#FF1744'}"/></td>`).join('')}<td style="font-weight:700;font-size:15px;color:${col}">${avg}</td><td>${parseFloat(avg)>=6?'<span class="chip green">Aprobado</span>':'<span class="chip red">En proceso</span>'}</td></tr>`;
+  const periodo = document.querySelector('select[style*="grade"]') ?
+    document.querySelector('#sec-calificaciones select').value : '1BIM';
+
+  // Usar alumnos reales si están disponibles
+  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a=>a.nombre) : STUDENTS.slice(0,10);
+
+  tb.innerHTML = lista.map((s,i) => {
+    const ini = s.split(',').length>1 ?
+      (s.split(',')[1].trim()[0]||'?')+(s.split(',')[0][0]||'?') :
+      s.substring(0,2).toUpperCase();
+    return `<tr>
+      <td class="td-name">${s}</td>
+      <td><input class="grade-input" id="grade-${i}" placeholder="-"
+        style="width:70px;text-align:center"
+        onchange="colorGrade(this, '${periodo}')"/></td>
+      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(255,255,255,.5)">—</td>
+    </tr>`;
   }).join('');
 }
+
+function colorGrade(input, periodo) {
+  const val = input.value.trim().toUpperCase();
+  const n = parseFloat(val);
+  // Bimestrales: TEA/TEP/TED
+  if (periodo === '1BIM' || periodo === '3BIM') {
+    if (val === 'TEA') { input.style.color='#4CAF50'; }
+    else if (val === 'TEP') { input.style.color='#FFC107'; }
+    else if (val === 'TED') { input.style.color='#FF5252'; }
+    input.value = val;
+    return;
+  }
+  // Numérica
+  if (!isNaN(n)) {
+    if (periodo === 'DIC' || periodo === 'FEB') {
+      input.style.color = n >= 4 ? '#4CAF50' : '#FF5252';
+    } else {
+      input.style.color = n >= 7 ? '#4CAF50' : n >= 5 ? '#FFC107' : '#FF5252';
+    }
+  }
+}
+
 
 let toastTimer;
 function showToast(msg,icon='✅'){
@@ -830,6 +896,246 @@ function showToast(msg,icon='✅'){
   t.classList.add('show');
   toastTimer=setTimeout(()=>t.classList.remove('show'),3400);
 }
+
+// ── Resumen por Curso (directivo/preceptor) ───────────────────────────
+function cargarResumenCurso() {
+  const curso = document.getElementById('rc-curso').value;
+  const vista = document.getElementById('rc-vista').value;
+  const contenido = document.getElementById('resumen-curso-contenido');
+  if (!curso) { contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Seleccioná un curso.</div>'; return; }
+  contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Cargando...</div>';
+
+  if (vista === 'asistencia') {
+    callWebApp({ accion: 'obtenerResumenAsistenciaCurso', curso }).then(res => {
+      if (!res.ok || !res.alumnos || res.alumnos.length === 0) {
+        contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Sin datos de asistencia para este curso.</div>'; return;
+      }
+      contenido.innerHTML = `<table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Alumno</th>
+          <th style="text-align:center;padding:8px;color:#4CAF50;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Presentes</th>
+          <th style="text-align:center;padding:8px;color:#F44336;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Ausentes</th>
+          <th style="text-align:center;padding:8px;color:#FF9800;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Tardanzas</th>
+          <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">% Asistencia</th>
+        </tr></thead>
+        <tbody>${res.alumnos.map(a => {
+          const total = a.presentes + a.ausentes + a.tardes;
+          const pct = total > 0 ? Math.round((a.presentes + a.tardes) / total * 100) : 0;
+          const color = pct >= 85 ? '#4CAF50' : pct >= 70 ? '#FF9800' : '#F44336';
+          return `<tr>
+            <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${a.nombre}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#4CAF50;border-bottom:1px solid rgba(255,255,255,.05)">${a.presentes}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#F44336;border-bottom:1px solid rgba(255,255,255,.05)">${a.ausentes}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#FF9800;border-bottom:1px solid rgba(255,255,255,.05)">${a.tardes}</td>
+            <td style="text-align:center;padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">
+              <span style="color:${color};font-weight:700;font-size:13px">${pct}%</span>
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    });
+  } else {
+    callWebApp({ accion: 'obtenerNotasCurso', curso }).then(res => {
+      if (!res.ok || !res.alumnos || res.alumnos.length === 0) {
+        contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Sin calificaciones para este curso.</div>'; return;
+      }
+      const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
+      contenido.innerHTML = `<table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Alumno</th>
+          <th style="text-align:left;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Materia</th>
+          ${periodos.map(p=>`<th style="text-align:center;padding:6px;color:rgba(255,255,255,.5);font-size:10px;border-bottom:1px solid rgba(255,255,255,.1)">${p}</th>`).join('')}
+          <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
+        </tr></thead>
+        <tbody>${res.alumnos.map(a => a.materias.map((m,mi) => {
+          const estadoCol = m.estadoFinal==='Promovido'?'#4CAF50':m.estadoFinal==='Adeuda'?'#F44336':'#FF9800';
+          return `<tr>
+            ${mi===0?`<td style="padding:8px 12px;font-size:12px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top" rowspan="${a.materias.length}">${a.nombre}</td>`:''}
+            <td style="padding:6px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${m.materia}</td>
+            ${[m.bim1,m.cuat1,m.bim3,m.cuat2,m.dic,m.feb].map(n=>`<td style="text-align:center;padding:6px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${n||'—'}</td>`).join('')}
+            <td style="text-align:center;padding:6px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:${estadoCol};font-size:11px;font-weight:700">${m.estadoFinal||'—'}</span></td>
+          </tr>`;
+        }).join('')).join('')}</tbody>
+      </table>`;
+    });
+  }
+}
+
+// ── Resumen por Alumno (directivo/preceptor) ──────────────────────────
+function cargarAlumnosDeCurso() {
+  const curso = document.getElementById('ra-curso').value;
+  const sel = document.getElementById('ra-alumno');
+  sel.innerHTML = '<option value="">— Seleccioná un alumno —</option>';
+  document.getElementById('resumen-alumno-contenido').innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Seleccioná un alumno.</div>';
+  if (!curso) return;
+  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: new Date().toISOString().split('T')[0] }).then(res => {
+    if (!res.ok || !res.alumnos) return;
+    res.alumnos.forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.legajo;
+      opt.textContent = a.nombre;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function cargarResumenAlumno() {
+  const curso   = document.getElementById('ra-curso').value;
+  const legajo  = document.getElementById('ra-alumno').value;
+  const nombre  = document.getElementById('ra-alumno').options[document.getElementById('ra-alumno').selectedIndex]?.text || '';
+  const contenido = document.getElementById('resumen-alumno-contenido');
+  if (!legajo) return;
+  contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Cargando...</div>';
+
+  Promise.all([
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso }),
+    callWebApp({ accion: 'obtenerNotasAlumno', legajo, curso })
+  ]).then(([resAtt, resNot]) => {
+    const registros = resAtt.registros || [];
+    const presentes = registros.filter(r=>r.estado==='P').length;
+    const ausentes  = registros.filter(r=>r.estado==='A').length;
+    const tardes    = registros.filter(r=>r.estado==='T').length;
+    const total     = presentes + ausentes + tardes;
+    const pct       = total > 0 ? Math.round((presentes+tardes)/total*100) : 0;
+    const pctColor  = pct>=85?'#4CAF50':pct>=70?'#FF9800':'#F44336';
+    const materias  = resNot.materias || [];
+    const periodos  = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
+
+    contenido.innerHTML = `
+      <h3 style="margin-bottom:16px;font-size:16px">${nombre} — ${curso}</h3>
+      <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes}</div><div class="stat-label">Presentes</div></div>
+        <div class="stat-card" style="--color:#F44336;flex:1;min-width:100px"><div class="stat-icon">❌</div><div class="stat-value">${ausentes}</div><div class="stat-label">Ausentes</div></div>
+        <div class="stat-card" style="--color:#FF9800;flex:1;min-width:100px"><div class="stat-icon">🕐</div><div class="stat-value">${tardes}</div><div class="stat-label">Tardanzas</div></div>
+        <div class="stat-card" style="--color:${pctColor};flex:1;min-width:100px"><div class="stat-icon">📊</div><div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Asistencia</div></div>
+      </div>
+      ${materias.length > 0 ? `
+      <h4 style="margin-bottom:12px;font-size:13px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px">Calificaciones</h4>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Materia</th>
+          ${periodos.map(p=>`<th style="text-align:center;padding:6px;color:rgba(255,255,255,.5);font-size:10px;border-bottom:1px solid rgba(255,255,255,.1)">${p}</th>`).join('')}
+          <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
+        </tr></thead>
+        <tbody>${materias.map(m => {
+          const ec = m.estadoFinal==='Promovido'?'#4CAF50':m.estadoFinal==='Adeuda'?'#F44336':'#FF9800';
+          return `<tr>
+            <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${m.materia}</td>
+            ${[m.bim1,m.cuat1,m.bim3,m.cuat2,m.dic,m.feb].map(n=>`<td style="text-align:center;padding:6px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${n||'—'}</td>`).join('')}
+            <td style="text-align:center;padding:6px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:${ec};font-weight:700;font-size:12px">${m.estadoFinal||'—'}</span></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>` : '<div style="color:rgba(255,255,255,.3);font-size:13px;margin-top:8px">Sin calificaciones cargadas aún.</div>'}
+      ${registros.length > 0 ? `
+      <h4 style="margin:20px 0 12px;font-size:13px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px">Detalle de Asistencia</h4>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Fecha</th>
+          <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
+          <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora</th>
+        </tr></thead>
+        <tbody>${registros.map(r=>{
+          const col={P:'#E8F5E9',A:'#FFEBEE',T:'#FFF8E1'}[r.estado];
+          const txt={P:'Presente',A:'Ausente',T:'Tarde'}[r.estado];
+          return `<tr>
+            <td style="padding:7px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${r.fecha}</td>
+            <td style="text-align:center;padding:7px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="background:${col};color:#111;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">${txt}</span></td>
+            <td style="text-align:center;padding:7px;font-size:12px;color:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.05)">${r.horaLlegada||'—'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>` : ''}
+    `;
+  });
+}
+// ─────────────────────────────────────────────────────────────────────
+
+// ── Funciones para alumnos ────────────────────────────────────────────
+let currentCursoAlumno = '';
+
+function cargarMiAsistencia() {
+  if (!currentCursoAlumno) return;
+  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
+    if (!res.ok) return;
+    const registros = res.registros || [];
+    const presentes = registros.filter(r => r.estado === 'P').length;
+    const ausentes  = registros.filter(r => r.estado === 'A').length;
+    const tardes    = registros.filter(r => r.estado === 'T').length;
+    document.getElementById('cnt-presentes').textContent = presentes;
+    document.getElementById('cnt-ausentes').textContent  = ausentes;
+    document.getElementById('cnt-tardes').textContent    = tardes;
+    const tabla = document.getElementById('mi-asistencia-tabla');
+    if (registros.length === 0) {
+      tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Sin registros de asistencia aún.</div>';
+      return;
+    }
+    const colores = { P: '#E8F5E9', A: '#FFEBEE', T: '#FFF8E1' };
+    const textos  = { P: 'Presente', A: 'Ausente', T: 'Tarde' };
+    tabla.innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Fecha</th>
+        <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
+        <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora llegada</th>
+      </tr></thead>
+      <tbody>${registros.map(r => `<tr>
+        <td style="padding:8px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${r.fecha}</td>
+        <td style="padding:8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="background:${colores[r.estado]};color:#111;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">${textos[r.estado]||r.estado}</span>
+        </td>
+        <td style="padding:8px;text-align:center;font-size:12px;color:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.05)">${r.horaLlegada||'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  });
+}
+
+function cargarMisNotas() {
+  if (!currentCursoAlumno) return;
+  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
+    const tabla = document.getElementById('mis-notas-tabla');
+    if (!res.ok || !res.materias || res.materias.length === 0) {
+      tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Sin calificaciones cargadas aún.</div>';
+      return;
+    }
+    const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Diciembre','Febrero'];
+    const colPer = { '1°Bim':'#1565C0','1°Cuat':'#2E7D32','3°Bim':'#6A1B9A','2°Cuat':'#C0131A','Diciembre':'#E65100','Febrero':'#E65100' };
+    tabla.innerHTML = `<table style="width:100%;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 12px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Materia</th>
+        ${periodos.map(p=>`<th style="text-align:center;padding:6px;font-size:10px;color:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.1);background:${colPer[p]}22">${p}</th>`).join('')}
+        <th style="text-align:center;padding:8px;color:rgba(255,255,255,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
+      </tr></thead>
+      <tbody>${res.materias.map(m => {
+        const estadoCol = m.estadoFinal==='Promovido'?'#4CAF50':m.estadoFinal==='Adeuda'?'#F44336':'#FF9800';
+        return `<tr>
+          <td style="padding:8px 12px;font-size:13px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.05)">${m.materia}</td>
+          ${[m.bim1,m.cuat1,m.bim3,m.cuat2,m.dic,m.feb].map(n=>`<td style="text-align:center;padding:6px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${n||'—'}</td>`).join('')}
+          <td style="text-align:center;padding:6px;border-bottom:1px solid rgba(255,255,255,.05)">
+            <span style="color:${estadoCol};font-size:12px;font-weight:700">${m.estadoFinal||'—'}</span>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  });
+}
+// ─────────────────────────────────────────────────────────────────────
+
+// ── Menú móvil ────────────────────────────────────────────────────────
+function toggleSidebar(){
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+// Al navegar en móvil cierra el menú automáticamente
+const _origShowSection = showSection;
+// Hook closeSidebar into nav clicks on mobile
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    if(window.innerWidth <= 768) closeSidebar();
+  });
+});
+// ─────────────────────────────────────────────────────────────────────
 
 // Curso chips
 document.querySelectorAll('.curso-selector').forEach(sel=>{
