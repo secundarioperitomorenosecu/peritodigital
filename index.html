@@ -319,8 +319,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
     </div>
     <div class="login-form" style="display:block">
       <div class="form-group"><label>Usuario</label><input type="text" id="staff-user" placeholder="usuario" autocomplete="username"/></div>
-      <div class="form-group"><label>Contraseña</label><input type="password" id="staff-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginStaff()"/></div>
-      <button class="btn-primary" onclick="loginStaff()">Ingresar al Portal →</button>
+      <div class="form-group"><label>Contraseña</label><input type="password" id="staff-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <button class="btn-primary" id="btn-login">Ingresar al Portal →</button>
     </div>
   </div>
 </div>
@@ -740,6 +740,30 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 // que no tiene problemas de CORS
 
 const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyNmMMfHSkikZ_5W_QKK-7scCq5cVwJ4GsnGpoXnKNLJBOUupvhzNr4pwSPbQNEY_pvxA/exec';
+
+// Bind login button y Enter en password — sin onclick en HTML
+document.addEventListener('DOMContentLoaded', function() {
+  const btnLogin = document.getElementById('btn-login');
+  const passField = document.getElementById('staff-pass');
+  if (btnLogin) {
+    btnLogin.addEventListener('click', function() { loginStaff(); });
+    btnLogin.addEventListener('touchstart', function(e) { e.preventDefault(); loginStaff(); }, { passive: false });
+  }
+  if (passField) {
+    passField.addEventListener('keydown', function(e) { if (e.key === 'Enter') loginStaff(); });
+  }
+  // Hamburguesa y overlay
+  const ham = document.getElementById('hamburger');
+  const overlay = document.getElementById('sidebar-overlay');
+  function bindTap(el, fn) {
+    if (!el) return;
+    let touched = false;
+    el.addEventListener('touchstart', function(e) { touched = true; fn(); e.preventDefault(); }, { passive: false });
+    el.addEventListener('click', function() { if (!touched) fn(); touched = false; });
+  }
+  bindTap(ham, function() { toggleSidebar(); });
+  bindTap(overlay, function() { closeSidebar(); });
+});
 
 function callWebApp(params) {
   return new Promise((resolve) => {
@@ -1518,25 +1542,6 @@ function closeSidebar(){
   document.getElementById('sidebar-overlay').classList.remove('open');
 }
 
-// Hamburguesa — touch + click para Android/Samsung
-(function(){
-  function bindTap(id, fn) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    let touched = false;
-    el.addEventListener('touchstart', function(e){
-      touched = true;
-      fn();
-      e.preventDefault();
-    }, { passive: false });
-    el.addEventListener('click', function(){
-      if (!touched) fn();
-      touched = false;
-    });
-  }
-  bindTap('hamburger', toggleSidebar);
-  bindTap('sidebar-overlay', closeSidebar);
-})();
 // Al navegar en móvil cierra el menú automáticamente
 const _origShowSection = showSection;
 // Hook closeSidebar into nav clicks on mobile
