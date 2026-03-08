@@ -502,6 +502,169 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
     </div>
 
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
+    <!-- ASISTENCIA -->
+    <div id="sec-asistencia" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>✅ Toma de Asistencia</h3>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="cnt-p" style="font-size:12px;color:#4CAF50;font-weight:700">P: 0</span>
+            <span id="cnt-a" style="font-size:12px;color:#F44336;font-weight:700">A: 0</span>
+            <span id="cnt-t" style="font-size:12px;color:#FF9800;font-weight:700">T: 0</span>
+            <button class="btn btn-success btn-sm" onclick="guardarAttendance()">💾 Guardar</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+            <input type="date" id="att-fecha" style="padding:8px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarAsistenciaDesdeSheets()"/>
+          </div>
+          <div class="curso-selector" id="curso-selector-att">
+            <div class="curso-chip active" onclick="cambiarCursoAtt(this,'1A')">1°A</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'1B')">1°B</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'2A')">2°A</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'2B')">2°B</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'3A')">3°A</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'3B')">3°B</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'4A')">4°A</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'4B')">4°B</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'5A')">5°A</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'5B')">5°B</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'6A')">6°A</div>
+            <div class="curso-chip" onclick="cambiarCursoAtt(this,'6B')">6°B</div>
+          </div>
+          <div class="attendance-grid" id="attendance-grid">
+            <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">Seleccioná una fecha para cargar asistencia.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALIFICACIONES -->
+    <div id="sec-calificaciones" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📝 Libro de Calificaciones</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="cal-periodo" style="padding:7px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;color:white;font-family:inherit;font-size:12px" onchange="buildGrades()">
+              <option value="1BIM">1° Bimestre</option>
+              <option value="1CUAT">1° Cuatrimestre</option>
+              <option value="3BIM">3° Bimestre</option>
+              <option value="2CUAT">2° Cuatrimestre</option>
+              <option value="DIC">Diciembre</option>
+              <option value="FEB">Febrero</option>
+            </select>
+            <button class="btn btn-success btn-sm" onclick="guardarCalificaciones()">💾 Guardar Notas</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+            <select id="cal-curso" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px" onchange="cargarAlumnosCalificaciones()">
+              <option value="">— Seleccioná un curso —</option>
+              <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+              <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+              <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+            </select>
+            <input type="text" id="cal-materia" placeholder="Materia (ej: Matemática)" style="padding:8px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:white;font-family:inherit;font-size:13px;width:200px"/>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr>
+                <th>Alumno</th>
+                <th style="text-align:center">Nota / TEA-TEP-TED</th>
+                <th style="text-align:center">Estado</th>
+              </tr></thead>
+              <tbody id="grades-table">
+                <tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIS ARCHIVOS -->
+    <div id="sec-archivos" class="section">
+      <div class="panel">
+        <div class="panel-header"><h3>📁 Mis Archivos en Drive</h3></div>
+        <div class="panel-body">
+          <div id="archivos-lista">
+            <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Cargando archivos...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBIR MATERIAL -->
+    <div id="sec-subir" class="section">
+      <div class="panel">
+        <div class="panel-header"><h3>☁️ Subir Material</h3></div>
+        <div class="panel-body">
+          <div style="display:flex;flex-direction:column;gap:16px;max-width:560px">
+            <div class="form-group">
+              <label>Curso</label>
+              <select id="up-curso" style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px">
+                <option value="">— Seleccioná el curso —</option>
+                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Materia</label>
+              <input type="text" id="up-materia" placeholder="Ej: Matemática, Biología..." style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px"/>
+            </div>
+            <div class="form-group">
+              <label>Descripción (opcional)</label>
+              <input type="text" id="up-desc" placeholder="Breve descripción del archivo..." style="width:100%;padding:10px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:white;font-family:inherit;font-size:13px"/>
+            </div>
+            <div class="form-group">
+              <label>Archivo</label>
+              <div class="upload-zone" onclick="document.getElementById('up-file').click()">
+                <div class="upload-icon">📎</div>
+                <div class="upload-text">Hacé click para seleccionar un archivo</div>
+                <div class="upload-sub" id="up-filename">PDF, Word, Excel, imágenes — máx. 10MB</div>
+              </div>
+              <input type="file" id="up-file" style="display:none" onchange="document.getElementById('up-filename').textContent=this.files[0]?.name||'Sin archivo'"/>
+            </div>
+            <button class="btn-primary" style="max-width:200px" onclick="subirArchivo()">☁️ Subir a Drive →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTES -->
+    <div id="sec-reportes" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📈 Reportes y Estadísticas</h3>
+          <button class="btn btn-sm btn-outline" onclick="generarReporte()">↺ Actualizar</button>
+        </div>
+        <div class="panel-body" id="reportes-contenido">
+          <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Cargando reporte...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USUARIOS -->
+    <div id="sec-usuarios" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>👥 Gestión de Usuarios</h3>
+          <button class="btn btn-primary-sm btn-sm" onclick="document.getElementById('modal-usr').classList.add('show')">+ Nuevo Usuario</button>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Cursos</th><th>Último Acceso</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="users-table">
+                <tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;font-size:13px">⏳ Cargando usuarios...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- RESUMEN POR CURSO (directivo/preceptor) -->
     <div id="sec-resumen-curso" class="section">
       <div class="panel">
@@ -696,6 +859,9 @@ function showSection(id,el){
   if(id === 'resumen-curso') cargarResumenCurso();
   if(id === 'resumen-alumno') { document.getElementById('resumen-alumno-contenido').innerHTML='<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">Seleccioná un curso y un alumno.</div>'; }
   if(id === 'comunicados') cargarComunicados();
+  if(id === 'archivos') cargarArchivos();
+  if(id === 'reportes') generarReporte();
+  if(id === 'usuarios') cargarUsuarios();
 }
 
 function cargarMural() {
@@ -926,8 +1092,151 @@ function guardarAttendance() {
 
 function buildGrades(){
   const tb=document.getElementById('grades-table');
-  const periodo = document.querySelector('select[style*="grade"]') ?
-    document.querySelector('#sec-calificaciones select').value : '1BIM';
+  if(!tb) return;
+  const selPeriodo = document.getElementById('cal-periodo');
+  const periodo = selPeriodo ? selPeriodo.value : '1BIM';
+  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a=>a.nombre) : [];
+  if(lista.length === 0){
+    tb.innerHTML='<tr><td colspan="3" style="text-align:center;color:rgba(255,255,255,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>';
+    return;
+  }
+  tb.innerHTML = lista.map((s,i) => {
+    return `<tr>
+      <td class="td-name">${s}</td>
+      <td style="text-align:center"><input class="grade-input" id="grade-${i}" placeholder="-"
+        style="width:80px;text-align:center"
+        onchange="colorGrade(this, '${periodo}')"/></td>
+      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(255,255,255,.5);text-align:center">—</td>
+    </tr>`;
+  }).join('');
+}
+
+function cargarAlumnosCalificaciones() {
+  const curso = document.getElementById('cal-curso').value;
+  if (!curso) return;
+  alumnosActuales = [];
+  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: new Date().toISOString().split('T')[0] }).then(res => {
+    if (res.ok && res.alumnos) { alumnosActuales = res.alumnos; }
+    buildGrades();
+  });
+}
+
+function guardarCalificaciones() {
+  const curso   = document.getElementById('cal-curso').value;
+  const materia = document.getElementById('cal-materia').value.trim();
+  const periodo = document.getElementById('cal-periodo').value;
+  if (!curso)   { showToast('Seleccioná un curso','⚠️'); return; }
+  if (!materia) { showToast('Ingresá la materia','⚠️'); return; }
+  if (alumnosActuales.length === 0) { showToast('No hay alumnos cargados','⚠️'); return; }
+
+  const promesas = alumnosActuales.map((a, i) => {
+    const input = document.getElementById('grade-'+i);
+    const val = input ? input.value.trim() : '';
+    if (!val) return Promise.resolve({ ok: true });
+    return callWebApp({
+      accion: 'guardarCalificacion',
+      legajo: a.legajo, nombre: a.nombre, email: '', curso, materia,
+      docente: currentUser, trimestre: periodo, notas: val
+    });
+  });
+
+  showToast('Guardando calificaciones...','⏳');
+  Promise.all(promesas).then(() => showToast('Calificaciones guardadas ✓','✅'));
+}
+
+function subirArchivo() {
+  const curso   = document.getElementById('up-curso').value;
+  const materia = document.getElementById('up-materia').value.trim();
+  const desc    = document.getElementById('up-desc').value.trim();
+  const fileInput = document.getElementById('up-file');
+
+  if (!curso)   { showToast('Seleccioná el curso','⚠️'); return; }
+  if (!materia) { showToast('Ingresá la materia','⚠️'); return; }
+  if (!fileInput.files.length) { showToast('Seleccioná un archivo','⚠️'); return; }
+
+  const file = fileInput.files[0];
+  if (file.size > 10 * 1024 * 1024) { showToast('El archivo supera los 10MB','❌'); return; }
+
+  showToast('Subiendo archivo...','⏳');
+  const reader = new FileReader();
+  reader.onload = e => {
+    const base64 = e.target.result.split(',')[1];
+    const nombreDisplay = document.getElementById('sidebar-name').textContent;
+    callWebApp({
+      accion: 'subirArchivo',
+      contenido: base64, nombre: file.name, mime: file.type,
+      docenteUsuario: currentUser, docenteNombre: nombreDisplay,
+      curso, materia, descripcion: desc
+    }).then(res => {
+      if (res.ok) {
+        showToast('Archivo subido a Drive ✓','✅');
+        document.getElementById('up-file').value = '';
+        document.getElementById('up-filename').textContent = 'PDF, Word, Excel, imágenes — máx. 10MB';
+      } else {
+        showToast(res.error || 'Error al subir','❌');
+      }
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function cargarArchivos() {
+  const cont = document.getElementById('archivos-lista');
+  if (!cont) return;
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Cargando archivos...</div>';
+  callWebApp({ accion: 'obtenerArchivos', usuario: currentUser, rol: currentRole }).then(res => {
+    if (!res.ok || !res.archivos || res.archivos.length === 0) {
+      cont.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,.3)">📁 No hay archivos subidos aún.</div>';
+      return;
+    }
+    cont.innerHTML = res.archivos.map(f => `
+      <div class="file-item" onclick="window.open('${f.url}','_blank')">
+        <div class="file-icon">📄</div>
+        <div class="file-info">
+          <div class="file-name">${f.nombre}</div>
+          <div class="file-meta">${f.curso||''} · ${f.materia||''} · ${f.fecha||''}</div>
+        </div>
+        <div class="file-actions">
+          <button class="btn btn-sm btn-outline" onclick="event.stopPropagation();window.open('${f.url}','_blank')">⬇️ Ver</button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+function cargarUsuarios() {
+  const tb = document.getElementById('users-table');
+  if (!tb) return;
+  callWebApp({ accion: 'obtenerUsuarios' }).then(res => {
+    if (!res.ok || !res.usuarios || res.usuarios.length === 0) {
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,.3);padding:20px">Sin usuarios cargados.</td></tr>';
+      return;
+    }
+    tb.innerHTML = res.usuarios.map(u => `<tr>
+      <td class="td-name">${u.nombre||'—'}</td>
+      <td>${u.usuario||'—'}</td>
+      <td><span class="chip">${u.rol||'—'}</span></td>
+      <td style="font-size:12px">${u.cursos||'—'}</td>
+      <td style="font-size:11px;color:#555">${u.ultimoAcceso||'—'}</td>
+      <td><span class="status-dot ${u.activo?'green':'red'}"></span>${u.activo?'Activo':'Inactivo'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="showToast('Función disponible próximamente','⚠️')">✏️</button></td>
+    </tr>`).join('');
+  });
+}
+
+function generarReporte() {
+  const cont = document.getElementById('reportes-contenido');
+  if(cont) cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(255,255,255,.3)">⏳ Generando reporte...</div>';
+  callWebApp({ accion: 'reporte' }).then(res => {
+    if (!cont) return;
+    if (!res.ok) { cont.innerHTML = '<div style="text-align:center;padding:30px;color:#F44336">Error al generar reporte.</div>'; return; }
+    cont.innerHTML = `
+      <div class="stats-grid" style="margin-bottom:20px">
+        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value">${res.archivos||0}</div><div class="stat-label">Archivos este mes</div></div>
+        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">⬇️</div><div class="stat-value">${res.descargas||0}</div><div class="stat-label">Descargas</div></div>
+        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value">${res.inactivos||0}</div><div class="stat-label">Docentes inactivos</div></div>
+      </div>`;
+  });
+}
 
   // Usar alumnos reales si están disponibles
   const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a=>a.nombre) : STUDENTS.slice(0,10);
