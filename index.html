@@ -398,7 +398,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
           <p>📁 <strong>Archivos</strong> — subí y compartí material con alumnos</p>
         </div>
       </div>
-    
+    </div>
+
     <!-- MURAL -->
     <div id="sec-mural" class="section">
       <div class="grid-2" style="align-items:start">
@@ -413,25 +414,11 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
             <div class="curso-chip" onclick="filtrarMural('6°A',this)">6°A</div><div class="curso-chip" onclick="filtrarMural('6°B',this)">6°B</div>
           </div>
           <div id="mural-feed" style="display:flex;flex-direction:column;gap:12px">
-          <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">⏳ Cargando publicaciones...</div>
-        </div>
-              <div class="panel">
-        <div class="panel-header"><h3>👥 Usuarios del Sistema</h3><span style="font-size:12px;color:#444">29 usuarios</span></div>
-        <div class="panel-body" style="padding:0">
-          <div class="table-container">
-            <table>
-              <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Cursos</th><th>Último Acceso</th><th>Estado</th><th>Acciones</th></tr></thead>
-              <tbody id="users-table">
-                  <tr><td colspan="7" style="text-align:center;color:rgba(255,255,255,.3);padding:20px;font-size:13px">⏳ Cargando usuarios...</td></tr>
-                </tbody>
-            </table>
+            <div style="text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:13px">⏳ Cargando publicaciones...</div>
           </div>
         </div>
       </div>
     </div>
-
-  </main>
-</div>
 
 <!-- MODAL NUEVO USUARIO -->
 <div class="modal-overlay" id="modal-usr">
@@ -733,6 +720,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
       </div>
     </div>
 
+  </main>
+</div><!-- fin #app -->
 
 <script>
 // ── Conexión nativa con Google Apps Script ────────────────────────────
