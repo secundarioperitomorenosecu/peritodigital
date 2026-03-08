@@ -482,6 +482,29 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   </div>
 </div>
 
+    <!-- CALENDARIO -->
+    <div id="sec-calendario" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-sm btn-outline" onclick="cambiarMes(-1)">◀</button>
+            <h3 id="cal-titulo" style="font-family:'Cinzel',serif;font-size:16px;min-width:200px;text-align:center">—</h3>
+            <button class="btn btn-sm btn-outline" onclick="cambiarMes(1)">▶</button>
+          </div>
+          <button class="btn btn-sm btn-outline" onclick="irHoy()">Hoy</button>
+        </div>
+        <div class="panel-body">
+          <div class="calendar-grid" style="margin-bottom:6px">
+            <div class="cal-header">DOM</div><div class="cal-header">LUN</div>
+            <div class="cal-header">MAR</div><div class="cal-header">MIÉ</div>
+            <div class="cal-header">JUE</div><div class="cal-header">VIE</div>
+            <div class="cal-header">SÁB</div>
+          </div>
+          <div class="calendar-grid" id="cal-grid"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- COMUNICADOS -->
     <div id="sec-comunicados" class="section">
       <div class="panel" style="margin-bottom:18px" id="panel-nuevo-comunicado">
@@ -1802,6 +1825,72 @@ document.querySelectorAll('.curso-selector').forEach(sel=>{
     }
   });
 });
+
+// ── Calendario ────────────────────────────────────────────────
+let calYear, calMonth;
+
+function initCalendar() {
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+function irHoy() {
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  renderCalendar();
+}
+
+function cambiarMes(delta) {
+  calMonth += delta;
+  if (calMonth > 11) { calMonth = 0;  calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                 'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('cal-titulo').textContent = MESES[calMonth] + ' ' + calYear;
+
+  const grid  = document.getElementById('cal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const primerDia = new Date(calYear, calMonth, 1).getDay(); // 0=dom
+  const diasMes   = new Date(calYear, calMonth + 1, 0).getDate();
+  const hoy       = new Date();
+
+  // Días del mes anterior (grises)
+  const diasAntes = new Date(calYear, calMonth, 0).getDate();
+  for (let i = primerDia - 1; i >= 0; i--) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = '<div class="cal-day-num">' + (diasAntes - i) + '</div>';
+    grid.appendChild(d);
+  }
+
+  // Días del mes actual
+  for (let d = 1; d <= diasMes; d++) {
+    const div = document.createElement('div');
+    const esHoy = (d === hoy.getDate() && calMonth === hoy.getMonth() && calYear === hoy.getFullYear());
+    div.className = 'cal-day' + (esHoy ? ' today' : '');
+    div.innerHTML = '<div class="cal-day-num">' + d + '</div>';
+    grid.appendChild(div);
+  }
+
+  // Días del mes siguiente para completar la grilla
+  const totalCeldas = primerDia + diasMes;
+  const resto = totalCeldas % 7 === 0 ? 0 : 7 - (totalCeldas % 7);
+  for (let i = 1; i <= resto; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = '<div class="cal-day-num">' + i + '</div>';
+    grid.appendChild(d);
+  }
+}
 </script>
 </body>
 </html>
