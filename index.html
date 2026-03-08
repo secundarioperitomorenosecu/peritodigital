@@ -515,9 +515,22 @@ tbody td{padding:12px 14px;font-size:13px;color:#BBB}
 const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyNmMMfHSkikZ_5W_QKK-7scCq5cVwJ4GsnGpoXnKNLJBOUupvhzNr4pwSPbQNEY_pvxA/exec';
 
 function callWebApp(params) {
-  return fetch(BACKEND_URL + '?data=' + encodeURIComponent(JSON.stringify(params)))
-    .then(r => r.json())
-    .catch(err => ({ ok: false, error: err.message || 'Error de conexión' }));
+  return new Promise((resolve) => {
+    const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+    const script = document.createElement('script');
+    window[cbName] = function(data) {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    script.onerror = function() {
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve({ ok: false, error: 'Error de conexión' });
+    };
+    script.src = BACKEND_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
+    document.body.appendChild(script);
+  });
 }
 // ─────────────────────────────────────────────────────────────────────
 
