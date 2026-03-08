@@ -848,6 +848,9 @@ const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
+let currentNombre = '';
+let currentMateria = '';
+let currentCursos = [];
 const STUDENTS=[]; // Los alumnos se cargan desde Google Sheets
 
 function updateDate(){const d=new Date();document.getElementById('top-date').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
@@ -874,8 +877,11 @@ function loginStaff(){
 }
 
 function doLogin(name, role, usuario, res){
-  currentUser = usuario || name;
-  currentRole = role;
+  currentUser    = usuario || name;
+  currentRole    = role;
+  currentNombre  = name;
+  if(res && res.materias && res.materias !== 'TODAS') currentMateria = res.materias;
+  if(res && res.cursos)   currentCursos = res.cursos === 'TODOS' ? [] : res.cursos.split(',').map(s=>s.trim()).filter(Boolean);
   if(role === 'alumno' && res && res.curso) currentCursoAlumno = res.curso;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
@@ -936,8 +942,10 @@ function showSection(id,el){
   document.getElementById('page-title').textContent=SECTIONS[id]||id;
   document.getElementById('page-sub').textContent=SUBS[id]||'';
   // Cargar datos reales al entrar a cada sección
-  if(id === 'mural') cargarMural();
+  if(id === 'mural') { cargarMural(); setupMuralCursos(); }
   if(id === 'calendario') renderCalendar();
+  if(id === 'calificaciones') setupCalificaciones();
+  if(id === 'asistencia') setupAsistencia();
   if(id === 'dashboard') cargarDashboard();
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
@@ -1322,6 +1330,58 @@ function generarReporte() {
         <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value">${res.inactivos||0}</div><div class="stat-label">Docentes inactivos</div></div>
       </div>`;
   });
+}
+
+function setupMuralCursos() {
+  // Filter course chips in mural publish form for non-admin
+  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const cursoSel = document.getElementById('post-curso');
+  if (!cursoSel || isAdmin || currentCursos.length === 0) return;
+  const TODOS = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
+  cursoSel.innerHTML = '<option value="todos">Todos mis cursos</option>' +
+    currentCursos.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function setupCalificaciones() {
+  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const cursoSel = document.getElementById('cal-curso');
+  const materiaSel = document.getElementById('cal-materia');
+  if (!cursoSel) return;
+
+  // Llenar select de cursos
+  const opciones = isAdmin
+    ? ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B']
+    : currentCursos;
+
+  cursoSel.innerHTML = '<option value="">— Seleccioná un curso —</option>' +
+    opciones.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // Pre-llenar materia si es docente
+  if (materiaSel && currentMateria && !isAdmin) {
+    materiaSel.value = currentMateria;
+  }
+}
+
+function setupAsistencia() {
+  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const container = document.getElementById('curso-selector-att');
+  if (!container) return;
+
+  // Todos los cursos para admin/directivo, solo los asignados para docente/preceptor
+  const TODOS = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
+  const opciones = (isAdmin || currentCursos.length === 0) ? TODOS : currentCursos;
+
+  container.innerHTML = opciones.map((cur, i) => {
+    const key = cur.replace('°','');
+    return `<div class="curso-chip${i===0?' active':''}" onclick="cambiarCursoAtt(this,'${key}')">${cur}</div>`;
+  }).join('');
+
+  // Auto-seleccionar el primero
+  if (opciones.length > 0) {
+    const primerKey = opciones[0].replace('°','');
+    const chip = container.querySelector('.curso-chip');
+    if (chip) cambiarCursoAtt(chip, primerKey);
+  }
 }
 
 function colorGrade(input, periodo) {
