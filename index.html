@@ -1251,24 +1251,46 @@ function subirArchivo() {
   const file = fileInput.files[0];
   if (file.size > 10 * 1024 * 1024) { showToast('El archivo supera los 10MB','❌'); return; }
 
-  showToast('Subiendo archivo...','⏳');
+  showToast('Subiendo archivo... puede tardar unos segundos','⏳');
+
   const reader = new FileReader();
-  reader.onload = e => {
-    const base64 = e.target.result.split(',')[1];
+  reader.onload = function(ev) {
+    const base64 = ev.target.result.split(',')[1];
     const nombreDisplay = document.getElementById('sidebar-name').textContent;
-    callWebApp({
+
+    const payload = {
       accion: 'subirArchivo',
-      contenido: base64, nombre: file.name, mime: file.type,
-      docenteUsuario: currentUser, docenteNombre: nombreDisplay,
-      curso, materia, descripcion: desc
-    }).then(res => {
+      contenido: base64,
+      nombre: file.name,
+      mime: file.type,
+      docenteUsuario: currentUser,
+      docenteNombre: nombreDisplay,
+      curso: curso,
+      materia: materia,
+      descripcion: desc
+    };
+
+    // Usamos fetch POST porque el base64 es demasiado grande para una URL (JSONP)
+    fetch(BACKEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' }, // text/plain evita preflight CORS
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(res => {
       if (res.ok) {
-        showToast('Archivo subido a Drive ✓','✅');
+        showToast('¡Archivo subido a Drive! ✓','✅');
         document.getElementById('up-file').value = '';
         document.getElementById('up-filename').textContent = 'PDF, Word, Excel, imágenes — máx. 10MB';
+        document.getElementById('up-titulo').value = '';
+        document.getElementById('up-desc').value = '';
       } else {
-        showToast(res.error || 'Error al subir','❌');
+        showToast(res.error || 'Error al subir el archivo','❌');
       }
+    })
+    .catch(err => {
+      console.error('Error subida:', err);
+      showToast('Error de conexión al subir. Revisá tu conexión.','❌');
     });
   };
   reader.readAsDataURL(file);
