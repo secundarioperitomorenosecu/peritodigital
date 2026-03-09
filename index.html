@@ -653,36 +653,53 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     <!-- SUBIR MATERIAL -->
     <div id="sec-subir" class="section">
       <div class="panel">
-        <div class="panel-header"><h3>☁️ Subir Material</h3></div>
+        <div class="panel-header"><h3>☁️ Compartir Material</h3></div>
         <div class="panel-body">
+
+          <!-- Instrucción paso a paso -->
+          <div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:14px 18px;margin-bottom:22px;max-width:560px">
+            <div style="font-weight:700;font-size:13px;color:#C0001A;margin-bottom:8px">📋 ¿Cómo compartir un archivo?</div>
+            <div style="font-size:12.5px;color:#555;line-height:1.8">
+              <b>1.</b> Subí el archivo a tu <b>Google Drive</b><br>
+              <b>2.</b> Hacé clic derecho → <b>Compartir</b> → <i>Cualquier persona con el enlace puede ver</i><br>
+              <b>3.</b> Copiá el enlace y pegalo abajo 👇
+            </div>
+          </div>
+
           <div style="display:flex;flex-direction:column;gap:16px;max-width:560px">
-            <div class="form-group">
-              <label>Curso</label>
-              <select id="up-curso" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
-                <option value="">— Seleccioná el curso —</option>
-                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
-                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
-                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
-              </select>
+            <div style="display:flex;gap:12px">
+              <div class="form-group" style="flex:1;margin:0">
+                <label>Curso</label>
+                <select id="up-curso" style="width:100%;padding:10px 13px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                  <option value="">— Seleccioná —</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;margin:0">
+                <label>Materia</label>
+                <input type="text" id="up-materia" placeholder="Ej: Matemática" style="width:100%;padding:10px 13px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
+              </div>
             </div>
+
             <div class="form-group">
-              <label>Materia</label>
-              <input type="text" id="up-materia" placeholder="Ej: Matemática, Biología..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+              <label>Nombre del archivo <span style="color:#C0001A">*</span></label>
+              <input type="text" id="up-nombre" placeholder="Ej: Guía práctica Unidad 3.pdf" style="width:100%;padding:10px 13px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
             </div>
+
+            <div class="form-group">
+              <label>Enlace de Google Drive <span style="color:#C0001A">*</span></label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="url" id="up-link" placeholder="https://drive.google.com/file/d/..." style="flex:1;padding:10px 13px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+                <button onclick="probarLink()" style="padding:10px 14px;background:#f0e9e0;border:1px solid #e8d5c4;border-radius:9px;font-size:12px;color:#555;cursor:pointer;white-space:nowrap">🔗 Probar</button>
+              </div>
+              <div id="up-link-status" style="font-size:11px;margin-top:4px;color:#888"></div>
+            </div>
+
             <div class="form-group">
               <label>Descripción (opcional)</label>
-              <input type="text" id="up-desc" placeholder="Breve descripción del archivo..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+              <input type="text" id="up-desc" placeholder="Breve descripción del contenido..." style="width:100%;padding:10px 13px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
             </div>
-            <div class="form-group">
-              <label>Archivo</label>
-              <div class="upload-zone" onclick="document.getElementById('up-file').click()">
-                <div class="upload-icon">📎</div>
-                <div class="upload-text">Hacé click para seleccionar un archivo</div>
-                <div class="upload-sub" id="up-filename">PDF, Word, Excel, imágenes — máx. 10MB</div>
-              </div>
-              <input type="file" id="up-file" style="display:none" onchange="document.getElementById('up-filename').textContent=this.files[0]?.name||'Sin archivo'"/>
-            </div>
-            <button class="btn-primary" style="max-width:200px" onclick="subirArchivo()">☁️ Subir a Drive →</button>
+
+            <button class="btn-primary" style="max-width:220px" onclick="subirArchivo()">📎 Registrar material →</button>
           </div>
         </div>
       </div>
@@ -1238,62 +1255,53 @@ function guardarCalificaciones() {
   Promise.all(promesas).then(() => showToast('Calificaciones guardadas ✓','✅'));
 }
 
+function probarLink() {
+  const link = document.getElementById('up-link').value.trim();
+  const status = document.getElementById('up-link-status');
+  if (!link) { status.textContent = ''; return; }
+  if (!link.includes('drive.google.com') && !link.startsWith('http')) {
+    status.style.color = '#C0001A';
+    status.textContent = '⚠️ El enlace no parece válido.';
+    return;
+  }
+  window.open(link, '_blank');
+  status.style.color = '#2e7d32';
+  status.textContent = '✓ Enlace abierto en nueva pestaña — verificá que se pueda ver sin login.';
+}
+
 function subirArchivo() {
   const curso   = document.getElementById('up-curso').value;
   const materia = document.getElementById('up-materia').value.trim();
+  const nombre  = document.getElementById('up-nombre').value.trim();
+  const link    = document.getElementById('up-link').value.trim();
   const desc    = document.getElementById('up-desc').value.trim();
-  const fileInput = document.getElementById('up-file');
 
   if (!curso)   { showToast('Seleccioná el curso','⚠️'); return; }
   if (!materia) { showToast('Ingresá la materia','⚠️'); return; }
-  if (!fileInput.files.length) { showToast('Seleccioná un archivo','⚠️'); return; }
+  if (!nombre)  { showToast('Ingresá el nombre del archivo','⚠️'); return; }
+  if (!link)    { showToast('Pegá el enlace de Drive','⚠️'); return; }
+  if (!link.startsWith('http')) { showToast('El enlace no es válido','⚠️'); return; }
 
-  const file = fileInput.files[0];
-  if (file.size > 10 * 1024 * 1024) { showToast('El archivo supera los 10MB','❌'); return; }
+  const nombreDisplay = document.getElementById('sidebar-name').textContent;
+  const extension = nombre.includes('.') ? nombre.split('.').pop().toUpperCase() : 'LINK';
 
-  showToast('Subiendo archivo... puede tardar unos segundos','⏳');
-
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    const base64 = ev.target.result.split(',')[1];
-    const nombreDisplay = document.getElementById('sidebar-name').textContent;
-
-    const payload = {
-      accion: 'subirArchivo',
-      contenido: base64,
-      nombre: file.name,
-      mime: file.type,
-      docenteUsuario: currentUser,
-      docenteNombre: nombreDisplay,
-      curso: curso,
-      materia: materia,
-      descripcion: desc
-    };
-
-    // Usamos fetch POST porque el base64 es demasiado grande para una URL (JSONP)
-    fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' }, // text/plain evita preflight CORS
-      body: JSON.stringify(payload)
-    })
-    .then(r => r.json())
-    .then(res => {
-      if (res.ok) {
-        showToast('¡Archivo subido a Drive! ✓','✅');
-        document.getElementById('up-file').value = '';
-        document.getElementById('up-filename').textContent = 'PDF, Word, Excel, imágenes — máx. 10MB';
-        document.getElementById('up-titulo').value = '';
-        document.getElementById('up-desc').value = '';
-      } else {
-        showToast(res.error || 'Error al subir el archivo','❌');
-      }
-    })
-    .catch(err => {
-      console.error('Error subida:', err);
-      showToast('Error de conexión al subir. Revisá tu conexión.','❌');
-    });
-  };
-  reader.readAsDataURL(file);
+  showToast('Registrando material...','⏳');
+  callWebApp({
+    accion: 'registrarArchivo',
+    nombre, url: link, mime: extension,
+    docenteUsuario: currentUser, docenteNombre: nombreDisplay,
+    curso, materia, descripcion: desc
+  }).then(res => {
+    if (res.ok) {
+      showToast('¡Material registrado! ✓','✅');
+      document.getElementById('up-nombre').value = '';
+      document.getElementById('up-link').value = '';
+      document.getElementById('up-desc').value = '';
+      document.getElementById('up-link-status').textContent = '';
+    } else {
+      showToast(res.error || 'Error al registrar','❌');
+    }
+  });
 }
 
 function cargarArchivos() {
