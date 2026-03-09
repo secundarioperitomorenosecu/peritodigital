@@ -945,6 +945,7 @@ function showSection(id,el){
   if(id === 'calendario') renderCalendar();
   if(id === 'calificaciones') setupCalificaciones();
   if(id === 'asistencia') setupAsistencia();
+  if(id === 'subir') setupSubir();
   if(id === 'dashboard') cargarDashboard();
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
@@ -1367,6 +1368,24 @@ function setupMuralCursos() {
   const TODOS = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
   cursoSel.innerHTML = '<option value="todos">Todos mis cursos</option>' +
     currentCursos.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function setupSubir() {
+  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const cursoSel = document.getElementById('up-curso');
+  const materiaSel = document.getElementById('up-materia');
+  if (!cursoSel) return;
+
+  const TODOS = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
+  const opciones = (isAdmin || currentCursos.length === 0) ? TODOS : currentCursos;
+
+  cursoSel.innerHTML = '<option value="">— Seleccioná —</option>' +
+    opciones.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // Pre-llenar materia si es docente
+  if (materiaSel && currentMateria && !isAdmin) {
+    materiaSel.value = currentMateria;
+  }
 }
 
 function setupCalificaciones() {
