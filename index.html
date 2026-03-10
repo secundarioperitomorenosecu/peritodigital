@@ -270,6 +270,73 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:498}
 .sidebar-overlay.open{display:block}
 
+.bottom-nav{
+  display:none;
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:58px;
+  background:#ffffff;
+  border-top:1.5px solid #e8d5c4;
+  z-index:500;
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:0 4px;
+  gap:0;
+}
+.bottom-nav::-webkit-scrollbar{display:none}
+.bottom-nav-inner{
+  display:flex;
+  align-items:center;
+  height:100%;
+  gap:0;
+  min-width:max-content;
+  padding:0 6px;
+}
+.bn-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:60px;
+  padding:4px 6px;
+  cursor:pointer;
+  border-radius:10px;
+  transition:all .2s;
+  gap:2px;
+  border:none;
+  background:transparent;
+  -webkit-tap-highlight-color:transparent;
+}
+.bn-item:active{background:#fdf8f3;transform:scale(.95)}
+.bn-item.active .bn-icon{background:rgba(192,0,26,.12)}
+.bn-item.active .bn-label{color:#C0001A;font-weight:700}
+.bn-icon{
+  width:34px;height:34px;
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:17px;
+  transition:all .2s;
+  position:relative;
+}
+.bn-label{
+  font-size:9px;
+  color:#888;
+  font-family:'Outfit',sans-serif;
+  font-weight:500;
+  letter-spacing:.2px;
+  white-space:nowrap;
+  transition:color .2s;
+}
+.bn-badge{
+  position:absolute;top:-2px;right:-2px;
+  background:#C0001A;color:#fff;
+  border-radius:50%;width:14px;height:14px;
+  font-size:8px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;border:1.5px solid #fff;
+}
+
 @media screen and (max-width:800px){
   /* ── Login ── */
   .login-card{
@@ -340,6 +407,15 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
   /* ── iOS zoom fix ── */
   input,select,textarea{font-size:16px !important}
+
+  /* ── Sidebar: ocultar en móvil ── */
+  .sidebar{display:none !important}
+  .sidebar-overlay{display:none !important}
+  .hamburger{display:none !important}
+  .main-content{margin-left:0 !important;padding:10px !important;padding-bottom:76px !important;padding-top:10px !important}
+
+  /* ── Bottom nav ── */
+  .bottom-nav{display:flex !important}
 }
 /* ────────────────────────────────────────────────────────────── */
 </style>
@@ -507,7 +583,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
 
 <!-- MODAL NUEVO USUARIO -->
-<div class="modal-overlay" id="modal-usr">
+<div class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-inner" id="bottom-nav-inner">
+    <!-- Se genera dinámicamente según el rol -->
+  </div>
+</div>
+
+
   <div class="modal" style="background:#ffffff;border:1px solid #e8d5c4;color:#1a1a1a;max-height:90vh;overflow-y:auto">
     <button class="modal-close" style="background:#f0e9e0;color:#555" onclick="cerrarModalUsuario()">✕</button>
     <h2 style="color:#1a1a1a">👤 Crear Nuevo Usuario</h2>
@@ -951,6 +1033,54 @@ function loginStaff(){
   });
 }
 
+// ── Bottom Nav (móvil) ─────────────────────────────────────────────────────
+function buildBottomNav(role) {
+  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(role);
+  const isPreceptor = role === 'preceptor';
+  const isDocente   = role === 'Docente';
+  const isAlumno    = role === 'alumno';
+  const items = [];
+
+  items.push({ id: 'dashboard', icon: '📊', label: 'Inicio' });
+  if (isAlumno) {
+    items.push({ id: 'mi-asistencia', icon: '✅', label: 'Asistencia' });
+    items.push({ id: 'mis-notas',     icon: '📝', label: 'Mis Notas' });
+    items.push({ id: 'mural',         icon: '📋', label: 'Mural' });
+  } else {
+    items.push({ id: 'asistencia',     icon: '✅', label: 'Asistencia' });
+    items.push({ id: 'calificaciones', icon: '📝', label: 'Notas' });
+    items.push({ id: 'mural',          icon: '📋', label: 'Mural' });
+    items.push({ id: 'archivos',       icon: '📁', label: 'Archivos' });
+    if (isDocente || isPreceptor)
+      items.push({ id: 'subir', icon: '☁️', label: 'Subir' });
+    items.push({ id: 'comunicados', icon: '📢', label: 'Comunicados' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'resumen-curso', icon: '🏫', label: 'Resumen' });
+    if (isAdmin) {
+      items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
+      items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
+      items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
+    }
+  }
+
+  const inner = document.getElementById('bottom-nav-inner');
+  if (!inner) return;
+  inner.innerHTML = items.map(item => `
+    <button class="bn-item" id="bn-${item.id}" onclick="showSection('${item.id}',null);syncBottomNav('${item.id}')">
+      <div class="bn-icon">${item.icon}</div>
+      <div class="bn-label">${item.label}</div>
+    </button>`).join('');
+}
+
+function syncBottomNav(activeId) {
+  document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
+  const active = document.getElementById('bn-' + activeId);
+  if (active) {
+    active.classList.add('active');
+    active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+}
+
 function doLogin(name, role, usuario, res){
   currentUser    = usuario || name;
   currentRole    = role;
@@ -962,7 +1092,10 @@ function doLogin(name, role, usuario, res){
   document.getElementById('app').style.display='block';
   if(window.innerWidth<=800)   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  if(window.innerWidth<=800) document.getElementById('hamburger').style.display='flex';
+  // Bottom nav en móvil — hamburguesa ya no se usa
+  buildBottomNav(role);
+  syncBottomNav('dashboard');
+  if(window.innerWidth<=800) document.getElementById('hamburger').style.display='none';
   document.getElementById('sidebar-name').textContent=name;
   const rl={teacher:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a'};
   document.getElementById('sidebar-role').textContent=rl[role]||role;
@@ -1016,6 +1149,11 @@ function showSection(id,el){
   if(el)el.classList.add('active');
   document.getElementById('page-title').textContent=SECTIONS[id]||id;
   document.getElementById('page-sub').textContent=SUBS[id]||'';
+  // Sincronizar barra inferior en móvil
+  syncBottomNav(id);
+  // Cerrar sidebar en móvil si estuviera abierto
+  document.getElementById('sidebar-nav-wrapper')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('open');
   // Cargar datos reales al entrar a cada sección
   if(id === 'mural') { cargarMural(); setupMuralCursos(); }
   if(id === 'calendario') renderCalendar();
