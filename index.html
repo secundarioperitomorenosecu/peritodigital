@@ -223,7 +223,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .btn-outline:hover{border-color:rgba(255,255,255,.28);color:var(--blanco)}
 .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center}
 .modal-overlay.show{display:flex}
-.modal{background:#161616;border:1px solid rgba(192,0,26,.3);border-radius:18px;padding:30px;width:90%;max-width:500px;animation:slideUp .3s cubic-bezier(.16,1,.3,1);position:relative}
+.modal{background:#ffffff;border:1px solid #e8d5c4;border-radius:18px;padding:30px;width:90%;max-width:500px;animation:slideUp .3s cubic-bezier(.16,1,.3,1);position:relative;display:none}
+.modal-overlay.show .modal{display:block}
 .modal h2{font-family:'Cinzel',serif;font-size:17px;margin-bottom:18px;color:var(--blanco)}
 .modal-close{position:absolute;top:14px;right:14px;background:#f0e9e0;border:none;color:#888;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:14px;transition:all .2s}
 .modal-close:hover{background:rgba(192,0,26,.2);color:var(--blanco)}
@@ -575,64 +576,6 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
     </div>
 
-<!-- MODAL NUEVO USUARIO -->
-<div class="bottom-nav" id="bottom-nav">
-  <div class="bottom-nav-inner" id="bottom-nav-inner">
-    <!-- Se genera dinámicamente según el rol -->
-  </div>
-</div>
-
-
-  <div class="modal" style="background:#ffffff;border:1px solid #e8d5c4;color:#1a1a1a;max-height:90vh;overflow-y:auto">
-    <button class="modal-close" style="background:#f0e9e0;color:#555" onclick="cerrarModalUsuario()">✕</button>
-    <h2 style="color:#1a1a1a">👤 Crear Nuevo Usuario</h2>
-    <div style="display:flex;flex-direction:column;gap:13px">
-      <div class="form-group">
-        <label style="color:#555">Nombre Completo</label>
-        <input id="nu-nombre" type="text" placeholder="Apellido, Nombre" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
-      </div>
-      <div class="form-group">
-        <label style="color:#555">Nombre de Usuario</label>
-        <input id="nu-usuario" type="text" placeholder="apellido.nombre" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
-      </div>
-      <div class="form-group">
-        <label style="color:#555">Contraseña Inicial</label>
-        <div style="display:flex;gap:8px">
-          <input id="nu-pass" type="text" placeholder="Mínimo 6 caracteres" style="flex:1;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
-          <button onclick="document.getElementById('nu-pass').value='Temp@'+new Date().getFullYear()" style="padding:10px 12px;background:#f0e9e0;border:1px solid #e8d5c4;border-radius:9px;font-size:12px;color:#555;cursor:pointer;white-space:nowrap">Auto</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label style="color:#555">Rol</label>
-        <select id="nu-rol" onchange="toggleCursosModal()" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
-          <option value="Docente">Docente</option>
-          <option value="Preceptor">Preceptor</option>
-          <option value="Director">Director/a</option>
-          <option value="Vicedirector">Vicedirector/a</option>
-          <option value="Secretario">Secretario/a</option>
-          <option value="Rep. Legal">Representante Legal</option>
-        </select>
-      </div>
-      <div class="form-group" id="nu-materia-group">
-        <label style="color:#555">Materia</label>
-        <input id="nu-materia" type="text" placeholder="Ej: Matemática, Biología..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
-      </div>
-      <div class="form-group" id="nu-cursos-group">
-        <label style="color:#555">Asignar Cursos <span style="font-size:11px;color:#aaa">(Ctrl+clic para múltiples)</span></label>
-        <select id="nu-cursos" multiple style="width:100%;height:110px;padding:6px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
-          <option>1°A</option><option>1°B</option>
-          <option>2°A</option><option>2°B</option>
-          <option>3°A</option><option>3°B</option>
-          <option>4°A</option><option>4°B</option>
-          <option>5°A</option><option>5°B</option>
-          <option>6°A</option><option>6°B</option>
-        </select>
-      </div>
-      <button class="btn-primary" onclick="crearUsuarioModal()">Crear Usuario →</button>
-    </div>
-  </div>
-</div>
-
     <!-- CALENDARIO -->
     <div id="sec-calendario" class="section">
       <div class="panel">
@@ -942,7 +885,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
 <!-- Modal Crear Usuario -->
 <div class="modal-overlay" id="modal-usr">
-  <div class="modal" style="background:#ffffff;border:1px solid #e8d5c4;color:#1a1a1a;max-height:90vh;overflow-y:auto">
+  <div class="modal">
     <button class="modal-close" style="background:#f0e9e0;color:#555" onclick="cerrarModalUsuario()">✕</button>
     <h2 style="color:#1a1a1a">👤 Crear Nuevo Usuario</h2>
     <div style="display:flex;flex-direction:column;gap:13px">
@@ -993,6 +936,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 </div>
 
 </div><!-- fin #app -->
+
+<div class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-inner" id="bottom-nav-inner"></div>
+</div>
 
 <script>
 // ── Conexión nativa con Google Apps Script ────────────────────────────
