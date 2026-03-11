@@ -99,7 +99,10 @@ body{font-family:'Outfit',sans-serif;background:var(--fondo);color:var(--texto);
 .sidebar-user{margin:12px;padding:13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px}
 .sidebar-user .user-name{font-size:13px;font-weight:600;color:#1a1a1a}
 .sidebar-user .user-role{font-size:10px;color:var(--rojo);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
-.sidebar-user .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-oscuro));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-bottom:7px}
+.sidebar-user .user-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--rojo),var(--rojo-oscuro));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;margin-bottom:7px;transition:.2s}
+.sidebar-user .user-avatar:hover #sidebar-avatar-overlay{display:flex !important}
+.sidebar-user .user-avatar.tiene-foto{background:none !important;font-size:0}
+.sidebar-user .user-avatar.tiene-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .sidebar-nav{flex:1;padding:6px 10px;overflow-y:auto}
 .nav-section-title{font-size:9px;font-weight:700;color:#aaa;letter-spacing:2px;text-transform:uppercase;padding:14px 8px 6px}
 .nav-item{display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:9px;cursor:pointer;transition:all .25s;color:#888;font-size:13px;font-weight:500;margin-bottom:2px;border:1px solid transparent}
@@ -280,37 +283,31 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   display:none;
   position:fixed;
   bottom:0;left:0;right:0;
-  height:58px;
   background:#ffffff;
   border-top:1.5px solid #e8d5c4;
   z-index:500;
-  overflow-x:auto;
-  overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  padding:0 4px;
-  gap:0;
+  padding:4px 4px 6px;
 }
-.bottom-nav::-webkit-scrollbar{display:none}
 .bottom-nav-inner{
   display:flex;
-  align-items:center;
-  height:100%;
+  flex-wrap:wrap;
+  justify-content:center;
   gap:0;
-  min-width:max-content;
-  padding:0 6px;
+  padding:0 2px;
 }
 .bn-item{
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  min-width:60px;
-  padding:4px 6px;
+  width:calc(100% / 5);
+  max-width:72px;
+  flex:0 0 auto;
+  padding:3px 2px;
   cursor:pointer;
   border-radius:10px;
   transition:all .2s;
-  gap:2px;
+  gap:1px;
   border:none;
   background:transparent;
   -webkit-tap-highlight-color:transparent;
@@ -319,10 +316,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .bn-item.active .bn-icon{background:rgba(192,0,26,.12)}
 .bn-item.active .bn-label{color:#C0001A;font-weight:700}
 .bn-icon{
-  width:34px;height:34px;
-  border-radius:10px;
+  width:30px;height:30px;
+  border-radius:8px;
   display:flex;align-items:center;justify-content:center;
-  font-size:17px;
+  font-size:16px;
   transition:all .2s;
   position:relative;
 }
@@ -331,7 +328,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   color:#888;
   font-family:'Outfit',sans-serif;
   font-weight:500;
-  letter-spacing:.2px;
+  letter-spacing:.1px;
   white-space:nowrap;
   transition:color .2s;
 }
@@ -411,7 +408,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   .sidebar{display:none !important}
   .sidebar-overlay{display:none !important}
   .hamburger{display:none !important}
-  .main-content{margin-left:0 !important;padding:10px !important;padding-bottom:76px !important;padding-top:10px !important}
+  .main-content{margin-left:0 !important;padding:10px !important;padding-bottom:110px !important;padding-top:10px !important}
 
   /* ── Bottom nav ── */
   .bottom-nav{display:flex !important}
@@ -448,7 +445,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="sidebar-header-text"><h2>Perito Digital</h2><p>Portal Educativo</p></div>
     </div>
     <div class="sidebar-user">
-      <div class="user-avatar" id="sidebar-avatar">AG</div>
+      <div class="user-avatar" id="sidebar-avatar" onclick="abrirSelectorFoto()" title="Cambiar foto de perfil" style="cursor:pointer;position:relative;overflow:hidden">AG
+        <div id="sidebar-avatar-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%">📷</div>
+      </div>
+      <input type="file" id="foto-perfil-input" accept="image/*" style="display:none" onchange="procesarFotoPerfil(this)"/>
       <div class="user-name" id="sidebar-name">Prof. García</div>
       <div class="user-role" id="sidebar-role">Docente</div>
     </div>
@@ -1017,6 +1017,19 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
   </main>
 
+<!-- Modal Selección de Hijo (tutor/madre/padre) -->
+<div class="modal-overlay" id="modal-hijo" style="display:none;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:700">
+  <div class="modal" style="max-width:360px;width:90%;background:#fff;border-radius:20px;padding:32px 28px;box-shadow:0 12px 40px rgba(0,0,0,.2);position:relative">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:36px;margin-bottom:8px">👨‍👩‍👧‍👦</div>
+      <h2 style="font-family:'Cinzel',serif;font-size:16px;color:#1a1a1a;margin-bottom:4px">Bienvenido/a</h2>
+      <p id="modal-hijo-nombre" style="font-size:14px;color:#C0001A;font-weight:700;margin-bottom:6px"></p>
+      <p style="font-size:12px;color:#888">¿Por cuál alumno querés consultar?</p>
+    </div>
+    <div id="modal-hijo-lista" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+</div>
+
 <!-- Modal Crear Usuario -->
 <div class="modal-overlay" id="modal-usr">
   <div class="modal">
@@ -1151,12 +1164,55 @@ function loginStaff(){
   showToast('Verificando credenciales...','⏳');
   callWebApp({ accion:'login', usuario, contrasenia:pass }).then(res => {
     if(res.ok){
-      doLogin(res.nombre, res.rol.toLowerCase(), res.usuario || usuario, res);
-      showToast('Bienvenido/a ' + res.nombre, '✅');
+      // Si es tutor con múltiples hijos, mostrar selector
+      if(res.rol === 'tutor' && res.hijos && res.hijos.length > 1) {
+        mostrarSelectorHijo(res);
+      } else {
+        doLogin(res.nombre, res.rol.toLowerCase(), res.usuario || usuario, res);
+        showToast('Bienvenido/a ' + res.nombre, '✅');
+      }
     } else {
       showToast(res.error || 'Usuario o contraseña incorrectos','❌');
     }
   });
+}
+
+function mostrarSelectorHijo(res) {
+  document.getElementById('modal-hijo-nombre').textContent = res.nombre;
+  const lista = document.getElementById('modal-hijo-lista');
+  lista.innerHTML = res.hijos.map(hijo => `
+    <button onclick="elegirHijo('${hijo.legajo}','${hijo.nombre}','${hijo.curso}', event)"
+      style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fdf8f3;border:1.5px solid #e8d5c4;border-radius:12px;cursor:pointer;transition:all .2s;width:100%;text-align:left"
+      onmouseover="this.style.borderColor='#C0001A';this.style.background='#fff5f5'"
+      onmouseout="this.style.borderColor='#e8d5c4';this.style.background='#fdf8f3'">
+      <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#C0001A,#8b0013);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0">
+        ${hijo.nombre.split(/[\s,]+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase()}
+      </div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:#1a1a1a">${hijo.nombre}</div>
+        <div style="font-size:12px;color:#888;margin-top:2px">Curso ${hijo.curso}</div>
+      </div>
+    </button>`).join('');
+  // Guardar datos del tutor para usarlos al elegir hijo
+  window._tutorRes = res;
+  document.getElementById('modal-hijo').style.display = 'flex';
+}
+
+function elegirHijo(legajo, nombre, curso, e) {
+  document.getElementById('modal-hijo').style.display = 'none';
+  const res = window._tutorRes || {};
+  // Simular sesión de alumno para el hijo elegido
+  const hijoRes = {
+    ok: true,
+    rol: 'alumno',
+    nombre: nombre,
+    usuario: legajo,
+    curso: curso,
+    esTutor: true,
+    tutorNombre: res.nombre
+  };
+  doLogin(nombre, 'alumno', legajo, hijoRes);
+  showToast('Consultando como ' + nombre, '✅');
 }
 
 // ── Bottom Nav (móvil) ─────────────────────────────────────────────────────
@@ -1182,6 +1238,8 @@ function buildBottomNav(role) {
     items.push({ id: 'comunicados', icon: '📢', label: 'Comunicados' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'resumen-curso', icon: '🏫', label: 'Resumen' });
+    if (isAdmin || isEOE)
+      items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
     if (isAdmin) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
       items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
@@ -1228,6 +1286,17 @@ function doLogin(name, role, usuario, res){
   document.getElementById('sidebar-role').textContent=rl[role]||role;
   const ini=name.split(/[\s,]+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase();
   document.getElementById('sidebar-avatar').textContent=ini;
+  // Restaurar overlay dentro del avatar
+  const ov = document.createElement('div');
+  ov.id = 'sidebar-avatar-overlay';
+  ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%';
+  ov.textContent = '📷';
+  const av = document.getElementById('sidebar-avatar');
+  av.classList.remove('tiene-foto');
+  // Limpiar imgs previas
+  av.querySelectorAll('img').forEach(i => i.remove());
+  av.querySelector('#sidebar-avatar-overlay') || av.appendChild(ov);
+  cargarFotoPerfilGuardada();
   const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
   const isPreceptor= role === 'preceptor';
   const isDocente  = role === 'Docente' || role === 'docente' || role === 'teacher';
@@ -1235,6 +1304,7 @@ function doLogin(name, role, usuario, res){
   const isStudent  = role === 'alumno';
   const canSeeResumen = isAdmin || isPreceptor || isDocente;
   const canSeeEOE  = isAdmin || isEOE;
+  const canSeeResumenAlumno = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
   ['nav-asistencia','nav-calificaciones'].forEach(id =>
@@ -1245,7 +1315,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-archivos').style.display = isEOE ? 'none' : 'flex';
   document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente || isEOE) ? 'block' : 'none';
   document.getElementById('nav-resumen-curso').style.display  = canSeeResumen ? 'flex' : 'none';
-  document.getElementById('nav-resumen-alumno').style.display = canSeeResumen ? 'flex' : 'none';
+  document.getElementById('nav-resumen-alumno').style.display = canSeeResumenAlumno ? 'flex' : 'none';
   document.getElementById('nav-reportes').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
@@ -1439,29 +1509,44 @@ function cargarDashboard() {
     if (el && val !== undefined && val !== null) el.textContent = val;
   };
 
-  callWebApp({ accion: 'obtenerEstadisticas', usuario: currentUser, rol: currentRole }).then(res => {
-    console.log('[Dashboard]', JSON.stringify(res));
-    if (!res || !res.ok) { console.warn('[Dashboard] Error:', res?.error); return; }
-    const s = res.stats;
-    if (!s) return;
-    if (isAdmin) {
-      set('stat-archivos',      s.totalArchivos);
-      set('stat-alumnos',       s.totalAlumnos);
-      set('stat-docentes',      s.totalDocentes);
-      set('stat-publicaciones', s.totalPublicaciones);
-    } else {
-      set('stat-archivos',      s.misArchivos);
-      set('stat-alumnos',       s.misAlumnos);
-      set('stat-docentes',      s.misCursos);
-      set('stat-publicaciones', s.misPublicaciones);
-      const ids = ['stat-archivos','stat-alumnos','stat-docentes','stat-publicaciones'];
-      const labs = ['Mis Archivos','Mis Alumnos','Mis Cursos','Mis Publicaciones'];
-      ids.forEach((id,i) => {
-        const card = document.getElementById(id)?.closest('.stat-card');
-        if (card) { const lbl = card.querySelector('.stat-label'); if(lbl) lbl.textContent = labs[i]; }
-      });
-    }
-  });
+  // Usar obtenerEstadisticas si está disponible (deployment nuevo)
+  // Si falla, construir los números desde endpoints ya existentes
+  callWebApp({ accion: 'obtenerEstadisticas', usuario: currentUser, rol: currentRole })
+    .then(res => {
+      console.log('[Dashboard estadisticas]', JSON.stringify(res));
+      if (res && res.ok && res.stats) {
+        const s = res.stats;
+        if (isAdmin) {
+          set('stat-archivos',      s.totalArchivos      ?? '—');
+          set('stat-alumnos',       s.totalAlumnos       ?? '—');
+          set('stat-docentes',      s.totalDocentes      ?? '—');
+          set('stat-publicaciones', s.totalPublicaciones ?? '—');
+        } else {
+          set('stat-archivos',      s.misArchivos      ?? 0);
+          set('stat-alumnos',       s.misAlumnos       ?? 0);
+          set('stat-docentes',      s.misCursos        ?? 0);
+          set('stat-publicaciones', s.misPublicaciones ?? 0);
+          ['stat-archivos','stat-alumnos','stat-docentes','stat-publicaciones'].forEach((id,i) => {
+            const card = document.getElementById(id)?.closest('.stat-card');
+            if (card) { const lbl = card.querySelector('.stat-label'); if(lbl) lbl.textContent = ['Mis Archivos','Mis Alumnos','Mis Cursos','Mis Publicaciones'][i]; }
+          });
+        }
+        return;
+      }
+      // Fallback: construir desde obtenerPublicaciones (endpoint que ya funciona)
+      console.warn('[Dashboard] obtenerEstadisticas no disponible, usando fallback');
+      callWebApp({ accion: 'obtenerPublicaciones', curso: 'TODOS', soloActivas: true })
+        .then(r2 => {
+          const total = r2?.publicaciones?.length ?? 0;
+          set('stat-publicaciones', total);
+          console.log('[Dashboard fallback] publicaciones:', total);
+        });
+      // Mostrar 0 en los demás en vez de dejar el guión
+      set('stat-archivos', 0);
+      set('stat-alumnos',  0);
+      set('stat-docentes', 0);
+    })
+    .catch(e => console.error('[Dashboard] excepción:', e));
 }
 
 let cursoActualAtt = '3°B';
@@ -1812,16 +1897,26 @@ function crearUsuarioModal() {
 function cargarUsuarios() {
   const tb = document.getElementById('users-table');
   if (!tb) return;
-  callWebApp({ accion: 'obtenerUsuarios' }).then(res => {
-    if (!res.ok || !res.usuarios || res.usuarios.length === 0) {
+  tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">⏳ Cargando usuarios...</td></tr>';
+
+  // Pedir directivos y docentes en paralelo
+  Promise.all([
+    callWebApp({ accion: 'listarDirectivos' }),
+    callWebApp({ accion: 'listarDocentes' })
+  ]).then(([resDir, resDoc]) => {
+    const usuarios = [];
+    if (resDir.ok && resDir.usuarios) usuarios.push(...resDir.usuarios);
+    if (resDoc.ok && resDoc.usuarios) usuarios.push(...resDoc.usuarios);
+
+    if (usuarios.length === 0) {
       tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Sin usuarios cargados.</td></tr>';
       return;
     }
-    tb.innerHTML = res.usuarios.map(u => `<tr>
+    tb.innerHTML = usuarios.map(u => `<tr>
       <td class="td-name">${u.nombre||'—'}</td>
       <td>${u.usuario||'—'}</td>
       <td><span class="chip">${u.rol||'—'}</span></td>
-      <td style="font-size:12px">${u.cursos||'—'}</td>
+      <td style="font-size:12px">${u.cursos||u.materia||'—'}</td>
       <td style="font-size:11px;color:#555">${u.ultimoAcceso||'—'}</td>
       <td><span class="status-dot ${u.activo?'green':'red'}"></span>${u.activo?'Activo':'Inactivo'}</td>
       <td><button class="btn btn-sm btn-danger" onclick="showToast('Función disponible próximamente','⚠️')">✏️</button></td>
@@ -2572,7 +2667,51 @@ function crearEventoInstitucional() {
   });
 }
 
-function toggleFechaMural() {
+
+// ── Foto de perfil ────────────────────────────────────────────────────
+function abrirSelectorFoto() {
+  document.getElementById('foto-perfil-input').click();
+}
+
+function procesarFotoPerfil(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('La imagen debe ser menor a 2MB','⚠️');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result; // data:image/...;base64,...
+    // Guardar en localStorage asociado al usuario
+    localStorage.setItem('foto_' + currentUser, base64);
+    aplicarFotoPerfil(base64);
+    showToast('Foto de perfil actualizada ✓','✅');
+  };
+  reader.readAsDataURL(file);
+}
+
+function aplicarFotoPerfil(base64) {
+  const av = document.getElementById('sidebar-avatar');
+  if (!av) return;
+  // Limpiar iniciales y poner imagen
+  const overlay = document.getElementById('sidebar-avatar-overlay');
+  av.classList.add('tiene-foto');
+  // Remover img anterior si existe
+  const imgAnterior = av.querySelector('img');
+  if (imgAnterior) imgAnterior.remove();
+  const img = document.createElement('img');
+  img.src = base64;
+  av.insertBefore(img, overlay);
+}
+
+function cargarFotoPerfilGuardada() {
+  if (!currentUser) return;
+  const foto = localStorage.getItem('foto_' + currentUser);
+  if (foto) aplicarFotoPerfil(foto);
+}
+
+
   const tipo = document.getElementById('post-tipo')?.value;
   const group = document.getElementById('post-fecha-group');
   const req   = document.getElementById('post-fecha-req');
