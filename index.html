@@ -470,6 +470,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-resumen-alumno" onclick="showSection('resumen-alumno',this)"><span class="nav-icon">👤</span> Resumen por Alumno</div>
       <div class="nav-item" id="nav-reportes" onclick="showSection('reportes',this)"><span class="nav-icon">📈</span> Reportes</div>
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
+      <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
     </div>
     <div class="sidebar-footer">
@@ -939,6 +940,81 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
     </div>
 
+    <!-- EOE — Equipo de Orientación Escolar -->
+    <div id="sec-eoe" class="section">
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-header">
+          <h3>🧠 Legajos EOE — Orientación Escolar</h3>
+          <button class="btn btn-primary-sm btn-sm" onclick="toggleNuevoLegajoEOE()">+ Nuevo Legajo</button>
+        </div>
+        <div class="panel-body" id="eoe-form-wrapper" style="display:none">
+          <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:16px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label>Alumno (Apellido, Nombre)</label>
+                <input type="text" id="eoe-alumno" placeholder="García, María" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
+              </div>
+              <div class="form-group">
+                <label>Curso</label>
+                <select id="eoe-curso" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                  <option value="">— Seleccioná —</option>
+                  <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
+                  <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
+                  <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Tipo de situación</label>
+              <select id="eoe-tipo" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                <option value="convivencia">🤝 Convivencia</option>
+                <option value="academica">📚 Problemática académica</option>
+                <option value="familiar">👨‍👩‍👧 Situación familiar</option>
+                <option value="salud">🏥 Salud / Discapacidad</option>
+                <option value="conducta">⚠️ Conducta</option>
+                <option value="otro">📌 Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Descripción de la situación</label>
+              <textarea id="eoe-descripcion" rows="4" placeholder="Describí la situación, intervenciones realizadas, acuerdos, seguimiento..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;resize:vertical"></textarea>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn-primary" onclick="guardarLegajoEOE()" style="max-width:200px">Guardar Legajo →</button>
+              <button class="btn btn-outline btn-sm" onclick="toggleNuevoLegajoEOE()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <select id="eoe-filtro-curso" onchange="cargarLegajosEOE()" style="padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+            <option value="">Todos los cursos</option>
+            <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
+            <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
+            <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+          </select>
+          <select id="eoe-filtro-tipo" onchange="cargarLegajosEOE()" style="padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+            <option value="">Todos los tipos</option>
+            <option value="convivencia">Convivencia</option>
+            <option value="academica">Académica</option>
+            <option value="familiar">Familiar</option>
+            <option value="salud">Salud</option>
+            <option value="conducta">Conducta</option>
+            <option value="otro">Otro</option>
+          </select>
+          <button class="btn btn-sm btn-outline" onclick="cargarLegajosEOE()">↺ Actualizar</button>
+        </div>
+      </div>
+
+      <!-- Lista de legajos -->
+      <div id="eoe-lista">
+        <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando legajos...</div>
+      </div>
+    </div>
+
   </main>
 
 <!-- Modal Crear Usuario -->
@@ -1050,8 +1126,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',comunicados:'Comunicados'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -1147,30 +1223,31 @@ function doLogin(name, role, usuario, res){
   syncBottomNav('dashboard');
   if(window.innerWidth<=800) document.getElementById('hamburger').style.display='none';
   document.getElementById('sidebar-name').textContent=name;
-  const rl={teacher:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a'};
+  const rl={teacher:'Docente',Docente:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a',preceptor:'Preceptor/a',eoe:'Eq. Orientación'};
   document.getElementById('sidebar-role').textContent=rl[role]||role;
   const ini=name.split(/[\s,]+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase();
   document.getElementById('sidebar-avatar').textContent=ini;
   const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
   const isPreceptor= role === 'preceptor';
-  const isDocente  = role === 'docente' || role === 'teacher';
+  const isDocente  = role === 'Docente' || role === 'docente' || role === 'teacher';
+  const isEOE      = role === 'eoe';
   const isStudent  = role === 'alumno';
   const canSeeResumen = isAdmin || isPreceptor || isDocente;
+  const canSeeEOE  = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
   ['nav-asistencia','nav-calificaciones'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
   document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) ? 'flex' : 'none';
-  // Mural: directivos, docentes y preceptores pueden publicar
   const panelPost = document.getElementById('panel-nuevo-post');
   if (panelPost) panelPost.style.display = (isAdmin || isDocente || isPreceptor) ? 'block' : 'none';
-  document.getElementById('nav-archivos').style.display = 'flex';
-  document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente) ? 'block' : 'none';
+  document.getElementById('nav-archivos').style.display = isEOE ? 'none' : 'flex';
+  document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente || isEOE) ? 'block' : 'none';
   document.getElementById('nav-resumen-curso').style.display  = canSeeResumen ? 'flex' : 'none';
   document.getElementById('nav-resumen-alumno').style.display = canSeeResumen ? 'flex' : 'none';
   document.getElementById('nav-reportes').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
-  // Secciones exclusivas del alumno
+  document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -1210,7 +1287,7 @@ function showSection(id,el){
   if(id === 'calificaciones') setupCalificaciones();
   if(id === 'asistencia') setupAsistencia();
   if(id === 'subir') setupSubir();
-  if(id === 'dashboard') cargarDashboard();
+  if(id === 'eoe') cargarLegajosEOE();
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
   if(id === 'mis-notas') cargarMisNotas();
@@ -1246,7 +1323,7 @@ function cargarMural() {
         <div class="post-footer">
           ${p.fechaEvento ? `<span class="post-footer-chip">📅 ${p.fechaEvento}</span>` : ''}
           <span class="post-footer-chip">📌 ${p.curso||'General'}</span>
-          ${currentRole==='directivo'||currentRole==='admin' ? `<button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="eliminarPost('${p.id}')">🗑️</button>` : ''}
+          ${canDeletePost(p) ? `<button class="btn btn-sm btn-danger" style="margin-left:auto;background:rgba(192,0,26,.15);border:1px solid rgba(192,0,26,.3);color:#C0001A;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px" onclick="eliminarPost('${p.id}','${p.autor_usuario||p.docente||''}')">🗑️</button>` : ''}
         </div>
       </div>`).join('');
   });
@@ -1277,27 +1354,111 @@ function filtrarMural(curso, el) {
         <div class="post-footer">
           ${p.fechaEvento ? `<span class="post-footer-chip">📅 ${p.fechaEvento}</span>` : ''}
           <span class="post-footer-chip">📌 ${p.curso||'General'}</span>
-          ${currentRole==='directivo'||currentRole==='admin' ? `<button class="btn btn-sm btn-danger" style="margin-left:auto" onclick="eliminarPost('${p.id}')">🗑️</button>` : ''}
+          ${canDeletePost(p) ? `<button class="btn btn-sm btn-danger" style="margin-left:auto;background:rgba(192,0,26,.15);border:1px solid rgba(192,0,26,.3);color:#C0001A;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px" onclick="eliminarPost('${p.id}','${p.autor_usuario||p.docente||''}')">🗑️</button>` : ''}
         </div>
       </div>`).join('');
   });
 }
 
-function eliminarPost(id) {
+// ── EOE — Equipo de Orientación Escolar ────────────────────────────────
+function toggleNuevoLegajoEOE() {
+  const w = document.getElementById('eoe-form-wrapper');
+  if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
+}
+
+function guardarLegajoEOE() {
+  const alumno = (document.getElementById('eoe-alumno')?.value || '').trim();
+  const curso  = document.getElementById('eoe-curso')?.value || '';
+  const tipo   = document.getElementById('eoe-tipo')?.value || 'otro';
+  const desc   = (document.getElementById('eoe-descripcion')?.value || '').trim();
+  if (!alumno) { showToast('Ingresá el nombre del alumno','⚠️'); return; }
+  if (!curso)  { showToast('Seleccioná el curso','⚠️'); return; }
+  if (!desc)   { showToast('Escribí la descripción','⚠️'); return; }
+  showToast('Guardando...','⏳');
+  callWebApp({ accion:'crearLegajoEOE', alumno, curso, tipo, descripcion: desc, autor: currentUser, autorNombre: currentNombre }).then(res => {
+    if (res?.ok) {
+      showToast('Legajo guardado ✓','✅');
+      document.getElementById('eoe-alumno').value = '';
+      document.getElementById('eoe-descripcion').value = '';
+      toggleNuevoLegajoEOE();
+      cargarLegajosEOE();
+    } else { showToast('Error al guardar','❌'); }
+  });
+}
+
+function cargarLegajosEOE() {
+  const curso = document.getElementById('eoe-filtro-curso')?.value || '';
+  const tipo  = document.getElementById('eoe-filtro-tipo')?.value || '';
+  const lista = document.getElementById('eoe-lista');
+  if (!lista) return;
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando...</div>';
+  callWebApp({ accion:'obtenerLegajosEOE', curso, tipo }).then(res => {
+    if (!res?.ok || !res.legajos?.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">📋 Sin legajos registrados</div>';
+      return;
+    }
+    const TIPO_LABEL = { convivencia:'🤝 Convivencia', academica:'📚 Académica', familiar:'👨‍👩‍👧 Familiar', salud:'🏥 Salud', conducta:'⚠️ Conducta', otro:'📌 Otro' };
+    const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
+    lista.innerHTML = res.legajos.map(l => `
+      <div class="panel" style="margin-bottom:12px;border-left:4px solid #C0001A">
+        <div class="panel-body">
+          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div style="font-weight:700;font-size:14px;color:#1a1a1a">${l.alumno}</div>
+              <div style="font-size:12px;color:#888;margin-top:2px">${l.curso} · ${new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR')}</div>
+            </div>
+            <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'}">${TIPO_LABEL[l.tipo]||l.tipo}</span>
+          </div>
+          <div style="margin-top:10px;font-size:13px;color:#333;line-height:1.6;background:#fdf8f3;padding:10px;border-radius:8px">${l.descripcion}</div>
+          <div style="margin-top:8px;font-size:11px;color:#aaa">Registrado por: ${l.autorNombre||l.autor}</div>
+        </div>
+      </div>`).join('');
+  });
+}
+
+
+  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isPreceptor = currentRole === 'preceptor';
+  const esAutor     = (p.autor_usuario || p.docente || '') === currentUser;
+  return isAdmin || isPreceptor || esAutor;
+}
+
+function eliminarPost(id, autorOriginal) {
   if (!confirm('¿Eliminar esta publicación?')) return;
   callWebApp({ accion: 'eliminarPublicacion', id, usuario: currentUser, rol: currentRole }).then(res => {
     if (res.ok) { showToast('Publicación eliminada','🗑️'); cargarMural(); }
-    else showToast('Error al eliminar','❌');
+    else showToast(res.error || 'Sin permisos para eliminar','❌');
   });
 }
 
 function cargarDashboard() {
-  callWebApp({ accion: 'reporte' }).then(res => {
-    if (!res.ok) return;
-    if (res.totalArchivos !== undefined) document.getElementById('stat-archivos').textContent = res.totalArchivos;
-    if (res.totalAlumnos !== undefined) document.getElementById('stat-alumnos').textContent = res.totalAlumnos;
-    if (res.totalDocentes !== undefined) document.getElementById('stat-docentes').textContent = res.totalDocentes;
-    if (res.totalPublicaciones !== undefined) document.getElementById('stat-publicaciones').textContent = res.totalPublicaciones;
+  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  callWebApp({ accion: 'obtenerEstadisticas', usuario: currentUser, rol: currentRole }).then(res => {
+    if (!res || !res.ok) return;
+    const s = res.stats;
+    const set = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.textContent = val; };
+    if (isAdmin) {
+      set('stat-archivos',      s.totalArchivos);
+      set('stat-alumnos',       s.totalAlumnos);
+      set('stat-docentes',      s.totalDocentes);
+      set('stat-publicaciones', s.totalPublicaciones);
+      // Labels para admin
+      const labels = document.querySelectorAll('.stat-label');
+      // ya tienen los labels correctos
+    } else {
+      // Docente: sus datos propios
+      set('stat-archivos',      s.misArchivos);
+      set('stat-alumnos',       s.misAlumnos);
+      set('stat-docentes',      s.misCursos);
+      set('stat-publicaciones', s.misPublicaciones);
+      // Cambiar labels
+      const ids = ['stat-archivos','stat-alumnos','stat-docentes','stat-publicaciones'];
+      const labs = ['Mis Archivos','Mis Alumnos','Mis Cursos','Mis Publicaciones'];
+      ids.forEach((id,i) => {
+        const card = document.getElementById(id)?.closest('.stat-card');
+        if (card) { const lbl = card.querySelector('.stat-label'); if(lbl) lbl.textContent = labs[i]; }
+      });
+    }
   });
 }
 
