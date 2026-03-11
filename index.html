@@ -713,12 +713,12 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     <div id="sec-asistencia" class="section">
       <div class="panel">
         <div class="panel-header">
-          <h3>✅ Toma de Asistencia</h3>
+          <h3 id="att-panel-titulo">✅ Toma de Asistencia</h3>
           <div style="display:flex;align-items:center;gap:10px">
             <span id="cnt-p" style="font-size:12px;color:#4CAF50;font-weight:700">P: 0</span>
             <span id="cnt-a" style="font-size:12px;color:#F44336;font-weight:700">A: 0</span>
             <span id="cnt-t" style="font-size:12px;color:#FF9800;font-weight:700">T: 0</span>
-            <button class="btn btn-success btn-sm" onclick="guardarAttendance()">💾 Guardar</button>
+            <button class="btn btn-success btn-sm" id="btn-guardar-att" onclick="guardarAttendance()">💾 Guardar</button>
           </div>
         </div>
         <div class="panel-body">
@@ -1362,7 +1362,17 @@ function buildAttendance(){
     const ini=(parts[1]?parts[1].trim()[0]:'?')+(parts[0]?parts[0][0]:'?');
     const isTarde = attendanceState[i] === 'tarde';
     const horaVal = tardyTimes[i] || '';
-    c.innerHTML=`
+    const modoLectura = window._attModoLectura;
+    const estadoLabel = attendanceState[i]==='presente' ? 'P' : attendanceState[i]==='ausente' ? 'A' : 'T';
+    const estadoColor = attendanceState[i]==='presente' ? '#4CAF50' : attendanceState[i]==='ausente' ? '#F44336' : '#FF9800';
+    c.innerHTML = modoLectura ? `
+      <div class="student-avatar-sm">${ini}</div>
+      <div class="student-name">${s}</div>
+      <div class="attendance-btns">
+        <span style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:700;background:${estadoColor}22;color:${estadoColor}">${estadoLabel}</span>
+        ${isTarde && horaVal ? `<span style="font-size:10px;color:#FF9800">🕐 ${horaVal}</span>` : ''}
+      </div>
+    ` : `
       <div class="student-avatar-sm">${ini}</div>
       <div class="student-name">${s}</div>
       <div class="attendance-btns">
@@ -1720,11 +1730,19 @@ function setupCalificaciones() {
 }
 
 function setupAsistencia() {
-  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isPreceptor = currentRole === 'preceptor';
+  const puedeEditar = isAdmin || isPreceptor;
+
+  const titulo     = document.getElementById('att-panel-titulo');
+  const btnGuardar = document.getElementById('btn-guardar-att');
+  if (titulo)     titulo.textContent = puedeEditar ? '✅ Toma de Asistencia' : '🔍 Consulta de Asistencia';
+  if (btnGuardar) btnGuardar.style.display = puedeEditar ? 'inline-flex' : 'none';
+  window._attModoLectura = !puedeEditar;
+
   const container = document.getElementById('curso-selector-att');
   if (!container) return;
 
-  // Todos los cursos para admin/directivo, solo los asignados para docente/preceptor
   const TODOS = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
   const opciones = (isAdmin || currentCursos.length === 0) ? TODOS : currentCursos;
 
@@ -1733,7 +1751,6 @@ function setupAsistencia() {
     return `<div class="curso-chip${i===0?' active':''}" onclick="cambiarCursoAtt(this,'${key}')">${cur}</div>`;
   }).join('');
 
-  // Auto-seleccionar el primero
   if (opciones.length > 0) {
     const primerKey = opciones[0].replace('°','');
     const chip = container.querySelector('.curso-chip');
