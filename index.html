@@ -1218,10 +1218,11 @@ function doLogin(name, role, usuario, res){
   document.getElementById('app').style.display='block';
   if(window.innerWidth<=800)   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
-  // Bottom nav en móvil — hamburguesa ya no se usa
   buildBottomNav(role);
   syncBottomNav('dashboard');
   if(window.innerWidth<=800) document.getElementById('hamburger').style.display='none';
+  // Cargar dashboard al entrar
+  setTimeout(cargarDashboard, 500);
   document.getElementById('sidebar-name').textContent=name;
   const rl={teacher:'Docente',Docente:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a',preceptor:'Preceptor/a',eoe:'Eq. Orientación'};
   document.getElementById('sidebar-role').textContent=rl[role]||role;
@@ -1282,6 +1283,7 @@ function showSection(id,el){
   document.getElementById('sidebar-nav-wrapper')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('open');
   // Cargar datos reales al entrar a cada sección
+  if(id === 'dashboard') cargarDashboard();
   if(id === 'mural') { cargarMural(); setupMuralCursos(); }
   if(id === 'calendario') renderCalendar();
   if(id === 'calificaciones') setupCalificaciones();
