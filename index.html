@@ -1303,8 +1303,8 @@ function doLogin(name, role, usuario, res){
   const isEOE      = role === 'eoe';
   const isStudent  = role === 'alumno';
   const canSeeResumen = isAdmin || isPreceptor || isDocente;
-  const canSeeEOE  = isAdmin || isEOE;
   const canSeeResumenAlumno = isAdmin || isEOE;
+  const canSeeEOE  = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
   ['nav-asistencia','nav-calificaciones'].forEach(id =>
