@@ -1245,6 +1245,8 @@ function buildBottomNav(role) {
       items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
       items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
     }
+    if (isAdmin || isEOE)
+      items.push({ id: 'eoe', icon: '🧠', label: 'EOE' });
   }
 
   const inner = document.getElementById('bottom-nav-inner');
