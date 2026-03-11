@@ -168,6 +168,11 @@ body{font-family:'Outfit',sans-serif;background:var(--fondo);color:var(--texto);
 .cal-day.other-month{opacity:.25}
 .cal-day-num{font-size:12px;font-weight:600;color:#1a1a1a;margin-bottom:3px}
 .cal-day.today .cal-day-num{color:var(--rojo-claro)}
+.cal-event-dot{font-size:9px;line-height:1.4;border-radius:3px;padding:1px 4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cal-event-dot.tipo-prueba,.cal-event-dot.tipo-tp{background:#ffebee;color:#C0001A;font-weight:600}
+.cal-event-dot.tipo-feriado,.cal-event-dot.tipo-acto,.cal-event-dot.tipo-reunion,.cal-event-dot.tipo-capacitacion,.cal-event-dot.tipo-otro{background:#e3f2fd;color:#1565C0;font-weight:600}
+.cal-event-dot.tipo-lectura,.cal-event-dot.tipo-material{background:#fff3e0;color:#E65100}
+.cal-event-dot.tipo-comunicado{background:#e8f5e9;color:#2E7D32}
 .cal-event{font-size:9px;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal-event.prueba{background:rgba(255,152,0,.3);color:#FFB74D}
 .cal-event.tp{background:rgba(33,150,243,.3);color:#64B5F6}
@@ -517,7 +522,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div class="form-group">
               <label>Tipo</label>
-              <select id="post-tipo">
+              <select id="post-tipo" onchange="toggleFechaMural()">
                 <option value="prueba">📝 Prueba / Evaluación</option>
                 <option value="tp">📎 Trabajo Práctico</option>
                 <option value="lectura">📖 Lectura</option>
@@ -537,6 +542,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
                 <option>6°A</option><option>6°B</option>
               </select>
             </div>
+          </div>
+          <div class="form-group" id="post-fecha-group" style="margin-bottom:12px">
+            <label>📅 Fecha del evento <span style="color:#C0001A;font-size:11px" id="post-fecha-req">*requerida para este tipo</span></label>
+            <input type="date" id="post-fecha" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
           </div>
           <div class="form-group" style="margin-bottom:12px">
             <label>Título</label>
@@ -578,7 +587,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
     <!-- CALENDARIO -->
     <div id="sec-calendario" class="section">
-      <div class="panel">
+      <div class="panel" style="margin-bottom:18px">
         <div class="panel-header">
           <div style="display:flex;align-items:center;gap:12px">
             <button class="btn btn-sm btn-outline" onclick="cambiarMes(-1)">◀</button>
@@ -588,6 +597,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <button class="btn btn-sm btn-outline" onclick="irHoy()">Hoy</button>
         </div>
         <div class="panel-body">
+          <!-- Leyenda -->
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:11px">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#C0001A;display:inline-block"></span>Prueba/TP</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#2196F3;display:inline-block"></span>Institucional</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#FF9800;display:inline-block"></span>Lectura/Material</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#4CAF50;display:inline-block"></span>Aviso</span>
+          </div>
           <div class="calendar-grid" style="margin-bottom:6px">
             <div class="cal-header">DOM</div><div class="cal-header">LUN</div>
             <div class="cal-header">MAR</div><div class="cal-header">MIÉ</div>
@@ -595,6 +611,48 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <div class="cal-header">SÁB</div>
           </div>
           <div class="calendar-grid" id="cal-grid"></div>
+        </div>
+      </div>
+
+      <!-- Panel eventos del mes -->
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-header"><h3>📋 Eventos del mes</h3></div>
+        <div class="panel-body" id="cal-eventos-lista">
+          <div style="text-align:center;color:rgba(0,0,0,.3);padding:20px;font-size:13px">Cargando eventos...</div>
+        </div>
+      </div>
+
+      <!-- Panel nuevo evento institucional (solo admins) -->
+      <div class="panel" id="panel-nuevo-evento" style="display:none">
+        <div class="panel-header"><h3>🏫 Nuevo Evento Institucional</h3></div>
+        <div class="panel-body">
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div class="form-group">
+                <label>Tipo</label>
+                <select id="ev-tipo" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                  <option value="feriado">🔴 Feriado</option>
+                  <option value="acto">🎖️ Acto escolar</option>
+                  <option value="reunion">👥 Reunión de padres</option>
+                  <option value="capacitacion">📚 Capacitación docente</option>
+                  <option value="otro">📌 Otro</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" id="ev-fecha" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Título del evento</label>
+              <input type="text" id="ev-titulo" placeholder="Ej: Día del Maestro, Reunión de padres 3°A..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+            </div>
+            <div class="form-group">
+              <label>Descripción (opcional)</label>
+              <textarea id="ev-desc" rows="2" placeholder="Detalle del evento..." style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;resize:vertical"></textarea>
+            </div>
+            <button class="btn-primary" onclick="crearEventoInstitucional()" style="max-width:220px">Agregar al Calendario →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2007,7 +2065,7 @@ function toggleNuevoPost() {
 }
 
 function limpiarFormMural() {
-  ['post-titulo','post-cuerpo'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['post-titulo','post-cuerpo','post-fecha'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
 }
 
 function publicarEnMural() {
@@ -2015,9 +2073,12 @@ function publicarEnMural() {
   const cuerpo = (document.getElementById('post-cuerpo')?.value || '').trim();
   const tipo   = document.getElementById('post-tipo')?.value || 'comunicado';
   const curso  = document.getElementById('post-curso')?.value || 'todos';
+  const fecha  = document.getElementById('post-fecha')?.value || '';
+  const necesitaFecha = ['prueba','tp','lectura'].includes(tipo);
   if (!titulo) { showToast('Escribí un título para la publicación','⚠️'); return; }
+  if (necesitaFecha && !fecha) { showToast('Este tipo requiere una fecha','⚠️'); return; }
   showToast('Publicando...', '⏳');
-  callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso,
+  callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso, fechaEvento: fecha,
     autor_usuario: currentUser, autor_nombre: currentNombre, rol_autor: currentRole
   }).then(res => {
     if (res && res.ok) {
@@ -2029,6 +2090,8 @@ function publicarEnMural() {
     }
   });
 }
+}
+
 
 function toggleNuevoComunicado() {
   const form = document.getElementById('form-comunicado');
@@ -2211,36 +2274,68 @@ function cambiarMes(delta) {
   renderCalendar();
 }
 
+// ── Calendario ─────────────────────────────────────────────────────────
+let calEventos = []; // cache de eventos del mes
+
 function renderCalendar() {
   document.getElementById('cal-titulo').textContent = MESES_CAL[calMonth] + ' ' + calYear;
-
   const grid  = document.getElementById('cal-grid');
   if (!grid) return;
-  grid.innerHTML = '';
 
-  const primerDia = new Date(calYear, calMonth, 1).getDay(); // 0=dom
+  // Cargar eventos del backend
+  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  // Mostrar panel nuevo evento solo a admins
+  const panelEv = document.getElementById('panel-nuevo-evento');
+  if (panelEv) panelEv.style.display = isAdmin ? 'block' : 'none';
+
+  // Pedir publicaciones del mural + eventos institucionales
+  Promise.all([
+    callWebApp({ accion: 'obtenerPublicaciones', curso: '', soloActivas: true }),
+    callWebApp({ accion: 'obtenerEventosInstitucionales' })
+  ]).then(([resMural, resEv]) => {
+    calEventos = [];
+    if (resMural?.ok) {
+      resMural.publicaciones.forEach(p => {
+        if (p.fechaEvento) calEventos.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, curso: p.curso, origen: 'mural' });
+      });
+    }
+    if (resEv?.ok) {
+      resEv.eventos.forEach(e => calEventos.push({ fecha: e.fecha, titulo: e.titulo, tipo: e.tipo, origen: 'institucional' }));
+    }
+    dibujarGrid();
+    renderEventosMes();
+  }).catch(() => { dibujarGrid(); });
+}
+
+function dibujarGrid() {
+  const grid = document.getElementById('cal-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const primerDia = new Date(calYear, calMonth, 1).getDay();
   const diasMes   = new Date(calYear, calMonth + 1, 0).getDate();
   const hoy       = new Date();
-
-  // Días del mes anterior (grises)
   const diasAntes = new Date(calYear, calMonth, 0).getDate();
+
   for (let i = primerDia - 1; i >= 0; i--) {
     const d = document.createElement('div');
     d.className = 'cal-day other-month';
     d.innerHTML = '<div class="cal-day-num">' + (diasAntes - i) + '</div>';
     grid.appendChild(d);
   }
-
-  // Días del mes actual
   for (let d = 1; d <= diasMes; d++) {
     const div = document.createElement('div');
     const esHoy = (d === hoy.getDate() && calMonth === hoy.getMonth() && calYear === hoy.getFullYear());
     div.className = 'cal-day' + (esHoy ? ' today' : '');
-    div.innerHTML = '<div class="cal-day-num">' + d + '</div>';
+    const fechaStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    const evsDia = calEventos.filter(e => (e.fecha || '').substring(0,10) === fechaStr);
+    let html = '<div class="cal-day-num">' + d + '</div>';
+    evsDia.slice(0,3).forEach(e => {
+      html += `<div class="cal-event-dot tipo-${e.tipo}" title="${e.titulo}">${e.titulo}</div>`;
+    });
+    if (evsDia.length > 3) html += `<div style="font-size:9px;color:#aaa">+${evsDia.length-3} más</div>`;
+    div.innerHTML = html;
     grid.appendChild(div);
   }
-
-  // Días del mes siguiente para completar la grilla
   const totalCeldas = primerDia + diasMes;
   const resto = totalCeldas % 7 === 0 ? 0 : 7 - (totalCeldas % 7);
   for (let i = 1; i <= resto; i++) {
@@ -2250,6 +2345,64 @@ function renderCalendar() {
     grid.appendChild(d);
   }
 }
+
+function renderEventosMes() {
+  const contenedor = document.getElementById('cal-eventos-lista');
+  if (!contenedor) return;
+  const evsMes = calEventos.filter(e => {
+    const f = new Date(e.fecha);
+    return f.getMonth() === calMonth && f.getFullYear() === calYear;
+  }).sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+
+  if (!evsMes.length) {
+    contenedor.innerHTML = '<div style="text-align:center;color:rgba(0,0,0,.3);padding:20px;font-size:13px">Sin eventos este mes</div>';
+    return;
+  }
+  const TIPO_LABEL = { prueba:'Prueba', tp:'Trabajo Práctico', lectura:'Lectura', material:'Material', comunicado:'Aviso', feriado:'Feriado', acto:'Acto escolar', reunion:'Reunión padres', capacitacion:'Capacitación', otro:'Evento' };
+  contenedor.innerHTML = evsMes.map(e => {
+    const f = new Date(e.fecha + 'T12:00:00');
+    const dia = f.toLocaleDateString('es-AR', { weekday:'short', day:'numeric', month:'short' });
+    const badge = e.origen === 'institucional' ? '🏫' : (e.curso && e.curso !== 'todos' ? e.curso : '📢');
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0e6d8">
+      <div style="min-width:90px;font-size:12px;color:#888;font-weight:600">${dia}</div>
+      <div class="cal-event-dot tipo-${e.tipo}" style="font-size:11px;padding:3px 8px">${TIPO_LABEL[e.tipo]||e.tipo}</div>
+      <div style="flex:1;font-size:13px;color:#1a1a1a;font-weight:500">${e.titulo}</div>
+      <div style="font-size:11px;color:#aaa">${badge}</div>
+    </div>`;
+  }).join('');
+}
+
+function crearEventoInstitucional() {
+  const titulo = (document.getElementById('ev-titulo')?.value || '').trim();
+  const fecha  = document.getElementById('ev-fecha')?.value || '';
+  const tipo   = document.getElementById('ev-tipo')?.value || 'otro';
+  const desc   = (document.getElementById('ev-desc')?.value || '').trim();
+  if (!titulo) { showToast('Escribí un título para el evento','⚠️'); return; }
+  if (!fecha)  { showToast('Elegí una fecha','⚠️'); return; }
+  showToast('Guardando evento...','⏳');
+  callWebApp({ accion:'crearEventoInstitucional', titulo, fecha, tipo, descripcion: desc, autor: currentUser }).then(res => {
+    if (res?.ok) {
+      showToast('Evento agregado al calendario ✓','✅');
+      document.getElementById('ev-titulo').value = '';
+      document.getElementById('ev-fecha').value = '';
+      document.getElementById('ev-desc').value = '';
+      renderCalendar();
+    } else {
+      showToast('Error al guardar el evento','❌');
+    }
+  });
+}
+
+function toggleFechaMural() {
+  const tipo = document.getElementById('post-tipo')?.value;
+  const group = document.getElementById('post-fecha-group');
+  const req   = document.getElementById('post-fecha-req');
+  if (!group) return;
+  const necesitaFecha = ['prueba','tp','lectura'].includes(tipo);
+  group.style.display = 'block';
+  if (req) req.style.display = necesitaFecha ? 'inline' : 'none';
+}
+
 </script>
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
 </body>
