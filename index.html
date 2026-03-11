@@ -1432,30 +1432,39 @@ function eliminarPost(id, autorOriginal) {
 
 function cargarDashboard() {
   const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.textContent = val;
+  };
+
   callWebApp({ accion: 'obtenerEstadisticas', usuario: currentUser, rol: currentRole }).then(res => {
-    if (!res || !res.ok) return;
-    const s = res.stats;
-    const set = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.textContent = val; };
-    if (isAdmin) {
-      set('stat-archivos',      s.totalArchivos);
-      set('stat-alumnos',       s.totalAlumnos);
-      set('stat-docentes',      s.totalDocentes);
-      set('stat-publicaciones', s.totalPublicaciones);
-      // Labels para admin
-      const labels = document.querySelectorAll('.stat-label');
-      // ya tienen los labels correctos
+    if (res && res.ok && res.stats) {
+      const s = res.stats;
+      if (isAdmin) {
+        set('stat-archivos',      s.totalArchivos);
+        set('stat-alumnos',       s.totalAlumnos);
+        set('stat-docentes',      s.totalDocentes);
+        set('stat-publicaciones', s.totalPublicaciones);
+      } else {
+        set('stat-archivos',      s.misArchivos);
+        set('stat-alumnos',       s.misAlumnos);
+        set('stat-docentes',      s.misCursos);
+        set('stat-publicaciones', s.misPublicaciones);
+        const ids = ['stat-archivos','stat-alumnos','stat-docentes','stat-publicaciones'];
+        const labs = ['Mis Archivos','Mis Alumnos','Mis Cursos','Mis Publicaciones'];
+        ids.forEach((id,i) => {
+          const card = document.getElementById(id)?.closest('.stat-card');
+          if (card) { const lbl = card.querySelector('.stat-label'); if(lbl) lbl.textContent = labs[i]; }
+        });
+      }
     } else {
-      // Docente: sus datos propios
-      set('stat-archivos',      s.misArchivos);
-      set('stat-alumnos',       s.misAlumnos);
-      set('stat-docentes',      s.misCursos);
-      set('stat-publicaciones', s.misPublicaciones);
-      // Cambiar labels
-      const ids = ['stat-archivos','stat-alumnos','stat-docentes','stat-publicaciones'];
-      const labs = ['Mis Archivos','Mis Alumnos','Mis Cursos','Mis Publicaciones'];
-      ids.forEach((id,i) => {
-        const card = document.getElementById(id)?.closest('.stat-card');
-        if (card) { const lbl = card.querySelector('.stat-label'); if(lbl) lbl.textContent = labs[i]; }
+      // Fallback: deployment viejo — intentar con 'reporte'
+      callWebApp({ accion: 'reporte' }).then(r => {
+        if (!r || !r.ok) return;
+        if (r.totalArchivos   !== undefined) set('stat-archivos',      r.totalArchivos);
+        if (r.totalAlumnos    !== undefined) set('stat-alumnos',       r.totalAlumnos);
+        if (r.totalDocentes   !== undefined) set('stat-docentes',      r.totalDocentes);
+        if (r.totalPublicaciones !== undefined) set('stat-publicaciones', r.totalPublicaciones);
       });
     }
   });
