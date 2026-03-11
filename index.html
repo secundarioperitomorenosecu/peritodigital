@@ -1415,8 +1415,7 @@ function cargarLegajosEOE() {
       </div>`).join('');
   });
 }
-
-
+function canDeletePost(p) {
   const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
   const isPreceptor = currentRole === 'preceptor';
   const esAutor     = (p.autor_usuario || p.docente || '') === currentUser;
