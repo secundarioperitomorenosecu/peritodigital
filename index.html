@@ -17,6 +17,10 @@
 </script>
 <title>PM Digital – Colegio Perito Moreno</title>
 
+<!-- Firebase Push Notifications -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+
 <!-- PWA -->
 <meta name="application-name" content="PM Digital">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1279,6 +1283,8 @@ function doLogin(name, role, usuario, res){
   if(res && res.materias && res.materias !== 'TODAS') currentMateria = res.materias;
   if(res && res.cursos)   currentCursos = res.cursos === 'TODOS' ? [] : res.cursos.split(',').map(s=>s.trim()).filter(Boolean);
   if(role === 'alumno' && res && res.curso) currentCursoAlumno = res.curso;
+  // Iniciar notificaciones push después del login
+  setTimeout(() => { try { initPush().then(() => initPushForeground()); } catch(e){} }, 2000);
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   if(window.innerWidth<=800)   document.getElementById('login-screen').style.display='none';
@@ -1294,17 +1300,15 @@ function doLogin(name, role, usuario, res){
   const rolLabel = (res && res.esTutor) ? 'Padre/Madre' : (rl[role] || role);
   document.getElementById('sidebar-role').textContent = rolLabel;
   const ini=name.split(/[\s,]+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase();
-  document.getElementById('sidebar-avatar').textContent=ini;
-  // Restaurar overlay dentro del avatar
-  const ov = document.createElement('div');
-  ov.id = 'sidebar-avatar-overlay';
-  ov.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%';
-  ov.textContent = '📷';
+  // Resetear avatar con iniciales
   const av = document.getElementById('sidebar-avatar');
   av.classList.remove('tiene-foto');
-  // Limpiar imgs previas
   av.querySelectorAll('img').forEach(i => i.remove());
-  av.querySelector('#sidebar-avatar-overlay') || av.appendChild(ov);
+  // Poner iniciales como texto directo (el overlay ya está en el HTML)
+  const ovExistente = document.getElementById('sidebar-avatar-overlay');
+  av.childNodes.forEach(n => { if(n.nodeType === 3) n.remove(); }); // limpiar textos
+  av.insertBefore(document.createTextNode(ini), av.firstChild);
+  // Cargar foto guardada si existe
   cargarFotoPerfilGuardada();
   const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
   const isPreceptor= role === 'preceptor';
@@ -2757,6 +2761,55 @@ function toggleFechaMural() {
   const necesitaFecha = ['prueba','tp','lectura'].includes(tipo);
   group.style.display = 'block';
   if (req) req.style.display = necesitaFecha ? 'inline' : 'none';
+}
+
+
+
+// ═══════════════════════════════════════
+//  NOTIFICACIONES PUSH — Firebase FCM
+// ═══════════════════════════════════════
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCqgodGSR4j71ZHmbVkseZ_-RSOZ_wYlXM",
+  authDomain: "perito-digital.firebaseapp.com",
+  projectId: "perito-digital",
+  storageBucket: "perito-digital.firebasestorage.app",
+  messagingSenderId: "799762529126",
+  appId: "1:799762529126:web:d9dd8867c7f28d2c33a6a7"
+};
+const VAPID_KEY = "BF65YD_EP3I5Q8mu3gUq-238fgIDAgB6dOtQoZhVaJvPWAT3dKHH6nhTDp0jGtsq_xfFMpcWoP1SNp6YUkKE3K8";
+
+let firebaseApp = null;
+let fcmMessaging = null;
+
+async function initPush() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
+  try {
+    if (!firebaseApp) {
+      firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+      fcmMessaging = firebase.messaging();
+    }
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    const reg = await navigator.serviceWorker.register('/peritodigital/firebase-messaging-sw.js');
+    const token = await fcmMessaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if (token && currentUser) {
+      callWebApp({ accion: 'guardarTokenPush', usuario: currentUser, token: token });
+    }
+  } catch(e) {
+    console.log('Push init error:', e);
+  }
+}
+
+// Notificación cuando la app está abierta (foreground)
+function initPushForeground() {
+  if (!fcmMessaging) return;
+  fcmMessaging.onMessage(function(payload) {
+    const titulo = payload.notification?.title || 'PM Digital';
+    const cuerpo = payload.notification?.body || '';
+    showToast(titulo + ' — ' + cuerpo, '🔔');
+  });
 }
 
 </script>
