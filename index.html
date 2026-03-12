@@ -1308,7 +1308,7 @@ function doLogin(name, role, usuario, res){
   const ovExistente = document.getElementById('sidebar-avatar-overlay');
   av.childNodes.forEach(n => { if(n.nodeType === 3) n.remove(); }); // limpiar textos
   av.insertBefore(document.createTextNode(ini), av.firstChild);
-  // Cargar foto guardada si existe
+  // Cargar foto DESPUÉS de poner las iniciales — sobreescribe si hay foto guardada
   cargarFotoPerfilGuardada();
   const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
   const isPreceptor= role === 'preceptor';
