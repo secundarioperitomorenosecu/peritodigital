@@ -449,7 +449,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="sidebar-header-text"><h2>Perito Digital</h2><p>Portal Educativo</p></div>
     </div>
     <div class="sidebar-user">
-      <div class="user-avatar" id="sidebar-avatar" onclick="abrirSelectorFoto()" title="Cambiar foto de perfil" style="cursor:pointer;position:relative;overflow:hidden">AG
+      <div class="user-avatar" id="sidebar-avatar" onclick="abrirSelectorFoto()" title="Cambiar foto de perfil" style="cursor:pointer;position:relative;overflow:hidden"><span id="sidebar-avatar-text"></span>
         <div id="sidebar-avatar-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%">📷</div>
       </div>
       <input type="file" id="foto-perfil-input" accept="image/*" style="display:none" onchange="procesarFotoPerfil(this)"/>
@@ -1340,10 +1340,7 @@ function doLogin(name, role, usuario, res){
   const av = document.getElementById('sidebar-avatar');
   av.classList.remove('tiene-foto');
   av.querySelectorAll('img').forEach(i => i.remove());
-  // Poner iniciales como texto directo (el overlay ya está en el HTML)
-  const ovExistente = document.getElementById('sidebar-avatar-overlay');
-  av.childNodes.forEach(n => { if(n.nodeType === 3) n.remove(); }); // limpiar textos
-  av.insertBefore(document.createTextNode(ini), av.firstChild);
+  document.getElementById('sidebar-avatar-text').textContent = ini;
   // Cargar foto DESPUÉS de poner las iniciales — sobreescribe si hay foto guardada
   cargarFotoPerfilGuardada();
   const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
