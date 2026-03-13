@@ -449,7 +449,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="sidebar-header-text"><h2>Perito Digital</h2><p>Portal Educativo</p></div>
     </div>
     <div class="sidebar-user">
-      <div class="user-avatar" id="sidebar-avatar" onclick="abrirSelectorFoto()" title="Cambiar foto de perfil" style="cursor:pointer;position:relative;overflow:hidden"><span id="sidebar-avatar-text"></span>
+      <div class="user-avatar" id="sidebar-avatar" onclick="abrirSelectorFoto()" title="Cambiar foto de perfil" style="cursor:pointer;position:relative;overflow:hidden;color:white">
         <div id="sidebar-avatar-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%">📷</div>
       </div>
       <input type="file" id="foto-perfil-input" accept="image/*" style="display:none" onchange="procesarFotoPerfil(this)"/>
@@ -1340,7 +1340,11 @@ function doLogin(name, role, usuario, res){
   const av = document.getElementById('sidebar-avatar');
   av.classList.remove('tiene-foto');
   av.querySelectorAll('img').forEach(i => i.remove());
-  document.getElementById('sidebar-avatar-text').textContent = ini;
+  // Poner iniciales directamente en el atributo data y en el contenido
+  av.setAttribute('data-ini', ini);
+  av.style.cssText = av.style.cssText; // forzar repaint
+  const ovEl = document.getElementById('sidebar-avatar-overlay');
+  av.innerHTML = ini + '<div id="sidebar-avatar-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%">📷</div>';
   // Cargar foto DESPUÉS de poner las iniciales — sobreescribe si hay foto guardada
   cargarFotoPerfilGuardada();
   const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
@@ -2777,14 +2781,21 @@ function procesarFotoPerfil(input) {
 function aplicarFotoPerfil(base64) {
   const av = document.getElementById('sidebar-avatar');
   if (!av) return;
-  // Limpiar iniciales y poner imagen
-  const overlay = document.getElementById('sidebar-avatar-overlay');
   av.classList.add('tiene-foto');
   // Remover img anterior si existe
-  const imgAnterior = av.querySelector('img');
-  if (imgAnterior) imgAnterior.remove();
+  av.querySelectorAll('img').forEach(i => i.remove());
   const img = document.createElement('img');
   img.src = base64;
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%';
+  // Asegurar overlay existe
+  let overlay = document.getElementById('sidebar-avatar-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'sidebar-avatar-overlay';
+    overlay.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%';
+    overlay.textContent = '📷';
+    av.appendChild(overlay);
+  }
   av.insertBefore(img, overlay);
 }
 
