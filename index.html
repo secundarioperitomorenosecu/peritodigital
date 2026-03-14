@@ -1264,7 +1264,8 @@ function elegirHijo(legajo, nombre, curso, e) {
 function buildBottomNav(role) {
   const isAdmin     = ['director','vicedirector','secretary','legal'].includes(role);
   const isPreceptor = role === 'preceptor';
-  const isDocente   = role === 'Docente';
+  const isDocente   = role === 'Docente' || role === 'docente' || role === 'teacher';
+  const isEOE       = role === 'eoe';
   const isAlumno    = role === 'alumno';
   const items = [];
 
