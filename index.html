@@ -498,20 +498,35 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="section active">
-      <div class="stats-grid">
+      <!-- Tarjetas docentes/directivos -->
+      <div class="stats-grid" id="dash-staff">
         <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">📁</div><div class="stat-value" id="stat-archivos">—</div><div class="stat-label">Archivos Subidos</div></div>
         <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">👨‍🎓</div><div class="stat-value" id="stat-alumnos">—</div><div class="stat-label">Alumnos Activos</div></div>
         <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">👩‍🏫</div><div class="stat-value" id="stat-docentes">—</div><div class="stat-label">Docentes</div></div>
         <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">📋</div><div class="stat-value" id="stat-publicaciones">—</div><div class="stat-label">Publicaciones</div></div>
       </div>
+      <!-- Tarjetas alumno -->
+      <div class="stats-grid" id="dash-alumno" style="display:none">
+        <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">✅</div><div class="stat-value" id="dash-pct-asistencia">—</div><div class="stat-label">Asistencia</div></div>
+        <div class="stat-card" style="--color:#C0001A"><div class="stat-icon">❌</div><div class="stat-value" id="dash-inasistencias">—</div><div class="stat-label">Inasistencias</div></div>
+        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value" id="dash-materias-riesgo">—</div><div class="stat-label">Materias en riesgo</div></div>
+        <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">📢</div><div class="stat-value" id="dash-comunicados">—</div><div class="stat-label">Comunicados</div></div>
+      </div>
       <div class="panel" style="margin-top:20px">
         <div class="panel-header"><h3>👋 Bienvenido/a a Perito Digital</h3></div>
-        <div class="panel-body" style="color:rgba(0,0,0,.5);font-size:14px;line-height:1.8">
+        <div class="panel-body" id="dash-bienvenida-staff" style="color:rgba(0,0,0,.5);font-size:14px;line-height:1.8">
           <p>Usá el menú de la izquierda para navegar entre las secciones.</p>
           <p>📋 <strong>Mural</strong> — publicaciones de pruebas, TPs y lecturas</p>
           <p>✅ <strong>Asistencia</strong> — tomá asistencia por curso y fecha</p>
           <p>📊 <strong>Calificaciones</strong> — cargá notas por período</p>
           <p>📁 <strong>Archivos</strong> — subí y compartí material con alumnos</p>
+        </div>
+        <div class="panel-body" id="dash-bienvenida-alumno" style="display:none;color:rgba(0,0,0,.5);font-size:14px;line-height:1.8">
+          <p>Usá el menú de la izquierda para navegar entre las secciones.</p>
+          <p>📋 <strong>Mural</strong> — novedades de tu curso</p>
+          <p>✅ <strong>Mi Asistencia</strong> — revisá tu historial de presencia</p>
+          <p>📊 <strong>Mis Notas</strong> — consultá tus calificaciones por materia</p>
+          <p>📢 <strong>Comunicados</strong> — mensajes del colegio</p>
         </div>
       </div>
     </div>
@@ -1429,6 +1444,9 @@ function cargarMural() {
   const feed = document.getElementById('mural-feed');
   if (!feed) return;
   feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando publicaciones...</div>';
+  // Ocultar filtros de curso para alumnos y tutores
+  const filtros = document.getElementById('mural-filtros-cursos');
+  if (filtros) filtros.style.display = (currentRol === 'alumno' || currentRol === 'tutor') ? 'none' : 'flex';
   const cursoFiltro = (currentRol === 'alumno' || currentRol === 'tutor') ? currentCurso : 'todos';
   callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true }).then(res => {
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
@@ -1572,14 +1590,50 @@ function eliminarPost(id, autorOriginal) {
 }
 
 function cargarDashboard() {
-  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin  = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAlumno = currentRole === 'alumno' || currentRole === 'tutor';
   const set = (id, val) => {
     const el = document.getElementById(id);
     if (el && val !== undefined && val !== null) el.textContent = val;
   };
 
-  // Usar obtenerEstadisticas si está disponible (deployment nuevo)
-  // Si falla, construir los números desde endpoints ya existentes
+  // Mostrar el dashboard correcto según rol
+  const dashStaff  = document.getElementById('dash-staff');
+  const dashAlumno = document.getElementById('dash-alumno');
+  const bienStaff  = document.getElementById('dash-bienvenida-staff');
+  const bienAlumno = document.getElementById('dash-bienvenida-alumno');
+  if (dashStaff)  dashStaff.style.display  = isAlumno ? 'none' : 'grid';
+  if (dashAlumno) dashAlumno.style.display = isAlumno ? 'grid' : 'none';
+  if (bienStaff)  bienStaff.style.display  = isAlumno ? 'none' : 'block';
+  if (bienAlumno) bienAlumno.style.display = isAlumno ? 'block' : 'none';
+
+  // Dashboard alumno: cargar datos de asistencia
+  if (isAlumno && currentCursoAlumno) {
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
+      if (!res || !res.ok) return;
+      const registros = res.registros || [];
+      const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'J' || r.estado === 'AM').length;
+      const tardes    = registros.filter(r => r.estado === 'T').length;
+      const total     = registros.length;
+      const inasist   = ausentes + (tardes * 0.25);
+      const pct       = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
+      // Color semáforo en inasistencias
+      const cardInasist = document.getElementById('dash-inasistencias')?.closest('.stat-card');
+      const color = inasist >= 20 ? '#C0001A' : inasist >= 10 ? '#FF9800' : '#4CAF50';
+      if (cardInasist) cardInasist.style.setProperty('--color', color);
+      set('dash-pct-asistencia', pct + '%');
+      set('dash-inasistencias', inasist % 1 === 0 ? inasist : inasist.toFixed(2));
+      set('dash-materias-riesgo', '—'); // Se calculará cuando tengamos horarios
+    });
+    // Comunicados sin leer
+    callWebApp({ accion: 'obtenerComunicados', usuario: currentUser, rol: currentRole, curso: currentCursoAlumno }).then(res => {
+      const total = res?.comunicados?.length ?? 0;
+      set('dash-comunicados', total);
+    });
+    return;
+  }
+
+  // Dashboard staff: usar obtenerEstadisticas
   callWebApp({ accion: 'obtenerEstadisticas', usuario: currentUser, rol: currentRole })
     .then(res => {
       console.log('[Dashboard estadisticas]', JSON.stringify(res));
