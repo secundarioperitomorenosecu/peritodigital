@@ -541,12 +541,12 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
               <label>Curso</label>
               <select id="post-curso">
                 <option value="todos">Todos los cursos</option>
-                <option>1°A</option><option>1°B</option>
-                <option>2°A</option><option>2°B</option>
-                <option>3°A</option><option>3°B</option>
-                <option>4°A</option><option>4°B</option>
-                <option>5°A</option><option>5°B</option>
-                <option>6°A</option><option>6°B</option>
+                <option value="1A">1°A</option><option value="1B">1°B</option>
+                <option value="2A">2°A</option><option value="2B">2°B</option>
+                <option value="3A">3°A</option><option value="3B">3°B</option>
+                <option value="4A">4°A</option><option value="4B">4°B</option>
+                <option value="5A">5°A</option><option value="5B">5°B</option>
+                <option value="6A">6°A</option><option value="6B">6°B</option>
               </select>
             </div>
           </div>
@@ -886,9 +886,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
             <select id="rc-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
               <option value="">— Seleccioná un curso —</option>
-              <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
-              <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
-              <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+              <option value="1A">1°A</option><option value="1B">1°B</option><option value="2A">2°A</option><option value="2B">2°B</option>
+              <option value="3A">3°A</option><option value="3B">3°B</option><option value="4A">4°A</option><option value="4B">4°B</option>
+              <option value="5A">5°A</option><option value="5B">5°B</option><option value="6A">6°A</option><option value="6B">6°B</option>
             </select>
             <select id="rc-vista" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
               <option value="asistencia">Asistencia</option>
@@ -910,9 +910,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             </select>
             <select id="ra-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarAlumnosDeCurso()">
               <option value="">— Seleccioná un curso —</option>
-              <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
-              <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
-              <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+              <option value="1A">1°A</option><option value="1B">1°B</option><option value="2A">2°A</option><option value="2B">2°B</option>
+              <option value="3A">3°A</option><option value="3B">3°B</option><option value="4A">4°A</option><option value="4B">4°B</option>
+              <option value="5A">5°A</option><option value="5B">5°B</option><option value="6A">6°A</option><option value="6B">6°B</option>
             </select>
             <select id="ra-alumno" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenAlumno()">
               <option value="">— Seleccioná un alumno —</option>
@@ -944,9 +944,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center">
             <select id="evol-curso" style="padding:8px 14px;background:#fff;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px" onchange="cargarAlumnosEvolucion()">
               <option value="">— Seleccioná un curso —</option>
-              <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
-              <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
-              <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+              <option value="1A">1°A</option><option value="1B">1°B</option><option value="2A">2°A</option><option value="2B">2°B</option>
+              <option value="3A">3°A</option><option value="3B">3°B</option><option value="4A">4°A</option><option value="4B">4°B</option>
+              <option value="5A">5°A</option><option value="5B">5°B</option><option value="6A">6°A</option><option value="6B">6°B</option>
             </select>
             <select id="evol-alumno" style="padding:8px 14px;background:#fff;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px" onchange="cargarEvolucion()">
               <option value="">— Seleccioná un alumno —</option>
@@ -1000,9 +1000,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
                 <label>Curso</label>
                 <select id="eoe-curso" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
                   <option value="">— Seleccioná —</option>
-                  <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
-                  <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
-                  <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+                  <option value="1A">1°A</option><option value="1B">1°B</option><option value="2A">2°A</option><option value="2B">2°B</option>
+                  <option value="3A">3°A</option><option value="3B">3°B</option><option value="4A">4°A</option><option value="4B">4°B</option>
+                  <option value="5A">5°A</option><option value="5B">5°B</option><option value="6A">6°A</option><option value="6B">6°B</option>
                 </select>
               </div>
             </div>
@@ -1034,9 +1034,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div class="panel-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
           <select id="eoe-filtro-curso" onchange="cargarLegajosEOE()" style="padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
             <option value="">Todos los cursos</option>
-            <option>1°A</option><option>1°B</option><option>2°A</option><option>2°B</option>
-            <option>3°A</option><option>3°B</option><option>4°A</option><option>4°B</option>
-            <option>5°A</option><option>5°B</option><option>6°A</option><option>6°B</option>
+            <option value="1A">1°A</option><option value="1B">1°B</option><option value="2A">2°A</option><option value="2B">2°B</option>
+            <option value="3A">3°A</option><option value="3B">3°B</option><option value="4A">4°A</option><option value="4B">4°B</option>
+            <option value="5A">5°A</option><option value="5B">5°B</option><option value="6A">6°A</option><option value="6B">6°B</option>
           </select>
           <select id="eoe-filtro-tipo" onchange="cargarLegajosEOE()" style="padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
             <option value="">Todos los tipos</option>
@@ -1114,12 +1114,12 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="form-group" id="nu-cursos-group">
         <label style="color:#555">Asignar Cursos <span style="font-size:11px;color:#aaa">(Ctrl+clic para múltiples)</span></label>
         <select id="nu-cursos" multiple style="width:100%;height:110px;padding:6px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
-          <option>1°A</option><option>1°B</option>
-          <option>2°A</option><option>2°B</option>
-          <option>3°A</option><option>3°B</option>
-          <option>4°A</option><option>4°B</option>
-          <option>5°A</option><option>5°B</option>
-          <option>6°A</option><option>6°B</option>
+          <option value="1A">1°A</option><option value="1B">1°B</option>
+          <option value="2A">2°A</option><option value="2B">2°B</option>
+          <option value="3A">3°A</option><option value="3B">3°B</option>
+          <option value="4A">4°A</option><option value="4B">4°B</option>
+          <option value="5A">5°A</option><option value="5B">5°B</option>
+          <option value="6A">6°A</option><option value="6B">6°B</option>
         </select>
       </div>
       <button class="btn-primary" onclick="crearUsuarioModal()">Crear Usuario →</button>
@@ -1138,7 +1138,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 // Al estar hosteado dentro de AppScript, usamos google.script.run
 // que no tiene problemas de CORS
 
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbz6kxXfKYPQuaWm61f7QoULsEb2v4YZwnrNo-nnL6hs4ki-QJUgp6w-axki-v57mvAfeg/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyuvfk1rpz5N0pZbq0S5SYtmjsuFiqpW9KvKMfCH-FZu0fqUCB0fe0Twnv66N5_1hd9gA/exec';
 
 // Bind login button y Enter en password — sin onclick en HTML
 document.addEventListener('DOMContentLoaded', function() {
@@ -1429,7 +1429,8 @@ function cargarMural() {
   const feed = document.getElementById('mural-feed');
   if (!feed) return;
   feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando publicaciones...</div>';
-  callWebApp({ accion: 'obtenerPublicaciones', curso: 'todos', soloActivas: true }).then(res => {
+  const cursoFiltro = (currentRol === 'alumno' || currentRol === 'tutor') ? currentCurso : 'todos';
+  callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true }).then(res => {
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
       feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3);font-size:13px">📋 No hay publicaciones aún.<br><span style="font-size:11px">Los docentes pueden publicar desde este mural.</span></div>';
       return;
