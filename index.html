@@ -1446,8 +1446,8 @@ function cargarMural() {
   feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando publicaciones...</div>';
   // Ocultar filtros de curso para alumnos y tutores
   const filtros = document.getElementById('mural-filtros-cursos');
-  if (filtros) filtros.style.display = (currentRol === 'alumno' || currentRol === 'tutor') ? 'none' : 'flex';
-  const cursoFiltro = (currentRol === 'alumno' || currentRol === 'tutor') ? currentCurso : 'todos';
+  if (filtros) filtros.style.display = (currentRole === 'alumno' || currentRole === 'tutor') ? 'none' : 'flex';
+  const cursoFiltro = (currentRole === 'alumno' || currentRole === 'tutor') ? currentCursoAlumno : 'todos';
   callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true }).then(res => {
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
       feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3);font-size:13px">📋 No hay publicaciones aún.<br><span style="font-size:11px">Los docentes pueden publicar desde este mural.</span></div>';
