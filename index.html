@@ -1847,13 +1847,41 @@ function buildGrades(){
     tb.innerHTML='<tr><td colspan="3" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>';
     return;
   }
+
+  const esBimestral = (periodo === '1BIM' || periodo === '3BIM');
+  const esDicFeb    = (periodo === 'DIC'  || periodo === 'FEB');
+
+  let opcionesHTML = '';
+  if (esBimestral) {
+    opcionesHTML = `<option value="">-</option>
+      <option value="TEA" style="color:#4CAF50">TEA</option>
+      <option value="TEP" style="color:#FFC107">TEP</option>
+      <option value="TED" style="color:#FF5252">TED</option>`;
+  } else if (esDicFeb) {
+    opcionesHTML = '<option value="">-</option>' +
+      [1,2,3,4,5,6,7,8,9,10].map(n =>
+        `<option value="${n}">${n}</option>`
+      ).join('');
+  } else {
+    // cuatrimestre
+    opcionesHTML = '<option value="">-</option>' +
+      [1,2,3,4,5,6,7,8,9,10].map(n =>
+        `<option value="${n}">${n}</option>`
+      ).join('');
+  }
+
   tb.innerHTML = lista.map((s,i) => {
+    const mostrarEstado = !esBimestral;
     return `<tr>
       <td class="td-name">${s}</td>
-      <td style="text-align:center"><input class="grade-input" id="grade-${i}" placeholder="-"
-        style="width:80px;text-align:center"
-        onchange="colorGrade(this, '${periodo}')"/></td>
-      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(0,0,0,.5);text-align:center">—</td>
+      <td style="text-align:center">
+        <select class="grade-input" id="grade-${i}"
+          style="width:80px;text-align:center;padding:4px;border:1px solid #e8d5c4;border-radius:6px;background:#fdf8f3;font-family:inherit;font-size:13px"
+          onchange="colorGradeSelect(this, '${periodo}', ${i})">
+          ${opcionesHTML}
+        </select>
+      </td>
+      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(0,0,0,.5);text-align:center">${mostrarEstado ? '—' : ''}</td>
     </tr>`;
   }).join('');
 }
@@ -2197,23 +2225,46 @@ function setupAsistencia() {
 }
 
 function colorGrade(input, periodo) {
-  const val = input.value.trim().toUpperCase();
-  const n = parseFloat(val);
-  // Bimestrales: TEA/TEP/TED
+  // Mantenido por compatibilidad — ya no se usa directamente
+}
+
+function colorGradeSelect(sel, periodo, idx) {
+  const val = sel.value;
+  const n   = parseFloat(val);
+  const estadoEl = document.getElementById('estado-grade-' + idx);
+
+  // Color del select
   if (periodo === '1BIM' || periodo === '3BIM') {
-    if (val === 'TEA') { input.style.color='#4CAF50'; }
-    else if (val === 'TEP') { input.style.color='#FFC107'; }
-    else if (val === 'TED') { input.style.color='#FF5252'; }
-    input.value = val;
-    return;
+    if (val === 'TEA') sel.style.color = '#4CAF50';
+    else if (val === 'TEP') sel.style.color = '#FFC107';
+    else if (val === 'TED') sel.style.color = '#FF5252';
+    else sel.style.color = '';
+    return; // bimestrales no tienen estado
   }
-  // Numérica
-  if (!isNaN(n)) {
+
+  if (!isNaN(n) && val !== '') {
+    const aprobadoDicFeb = (periodo === 'DIC' || periodo === 'FEB') ? n >= 4 : n >= 7;
+    const aprobadoCuat   = n >= 7;
+
     if (periodo === 'DIC' || periodo === 'FEB') {
-      input.style.color = n >= 4 ? '#4CAF50' : '#FF5252';
+      sel.style.color = n >= 4 ? '#4CAF50' : '#FF5252';
     } else {
-      input.style.color = n >= 7 ? '#4CAF50' : n >= 5 ? '#FFC107' : '#FF5252';
+      sel.style.color = n >= 7 ? '#4CAF50' : n >= 5 ? '#FFC107' : '#FF5252';
     }
+
+    // Actualizar columna Estado (solo cuatrimestrales)
+    if (estadoEl && periodo !== 'DIC' && periodo !== 'FEB') {
+      if (n >= 7) {
+        estadoEl.textContent = '✅ Aprobado';
+        estadoEl.style.color = '#4CAF50';
+      } else {
+        estadoEl.textContent = '⚠️ Intensifica';
+        estadoEl.style.color = '#FF9800';
+      }
+    }
+  } else {
+    sel.style.color = '';
+    if (estadoEl) { estadoEl.textContent = '—'; estadoEl.style.color = 'rgba(0,0,0,.4)'; }
   }
 }
 
