@@ -809,6 +809,39 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           </div>
         </div>
       </div>
+      <!-- INFORME POR PERÍODO -->
+      <div class="panel" style="margin-top:20px" id="panel-informe-periodo">
+        <div class="panel-header">
+          <h3>📊 Informe por Período</h3>
+          <button class="btn btn-sm btn-outline" onclick="toggleInformePeriodo()">Ver ▼</button>
+        </div>
+        <div id="informe-periodo-body" style="display:none">
+          <div class="panel-body">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+              <select id="inf-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                <option value="">— Seleccioná curso —</option>
+                <option value="1A">1°A</option><option value="1B">1°B</option>
+                <option value="2A">2°A</option><option value="2B">2°B</option>
+                <option value="3A">3°A</option><option value="3B">3°B</option>
+                <option value="4A">4°A</option><option value="4B">4°B</option>
+                <option value="5A">5°A</option><option value="5B">5°B</option>
+                <option value="6A">6°A</option><option value="6B">6°B</option>
+              </select>
+              <select id="inf-periodo" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                <option value="1BIM">1° Bimestre</option>
+                <option value="1CUAT">1° Cuatrimestre</option>
+                <option value="3BIM">3° Bimestre</option>
+                <option value="2CUAT">2° Cuatrimestre</option>
+                <option value="DIC">Diciembre</option>
+                <option value="FEB">Febrero</option>
+              </select>
+              <button class="btn btn-primary btn-sm" onclick="generarInformePeriodo()">📋 Generar Informe</button>
+              <button class="btn btn-sm btn-outline" onclick="imprimirInforme()" id="btn-imprimir-informe" style="display:none">🖨️ Imprimir</button>
+            </div>
+            <div id="informe-resultado"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- MIS ARCHIVOS -->
@@ -2493,6 +2526,143 @@ function expandirTEA(val) {
   if (val === 'TEP') return '<span title="Trayecto Educativo en Proceso" style="color:#FFC107;font-weight:700">TEP</span><br><span style="font-size:10px;color:#FFC107">Trayecto en Proceso</span>';
   if (val === 'TED') return '<span title="Trayecto Educativo Discontinuo" style="color:#FF5252;font-weight:700">TED</span><br><span style="font-size:10px;color:#FF5252">Trayecto Discontinuo</span>';
   return val || '—';
+}
+
+function toggleInformePeriodo() {
+  const body = document.getElementById('informe-periodo-body');
+  const btn  = body.previousElementSibling.querySelector('button');
+  if (!body) return;
+  const abierto = body.style.display !== 'none';
+  body.style.display = abierto ? 'none' : 'block';
+  if (btn) btn.textContent = abierto ? 'Ver ▼' : 'Ocultar ▲';
+}
+
+function generarInformePeriodo() {
+  const curso   = document.getElementById('inf-curso').value;
+  const periodo = document.getElementById('inf-periodo').value;
+  const resultado = document.getElementById('informe-resultado');
+  const btnImpr   = document.getElementById('btn-imprimir-informe');
+
+  if (!curso) { showToast('Seleccioná un curso', '⚠️'); return; }
+
+  resultado.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando informe...</div>';
+  btnImpr.style.display = 'none';
+
+  // Traer alumnos del curso y sus notas del período
+  callWebApp({ accion: 'obtenerNotasPorCursoPeriodo', curso, periodo,
+    materia: currentMateria || '', docente: currentUser }).then(res => {
+    if (!res || !res.ok) {
+      resultado.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No se pudo obtener el informe.</div>';
+      return;
+    }
+
+    const alumnos  = res.alumnos || [];
+    const esBim    = (periodo === '1BIM' || periodo === '3BIM');
+    const esDicFeb = (periodo === 'DIC'  || periodo === 'FEB');
+    const umbral   = esDicFeb ? 4 : 7;
+    const periodoLabel = { '1BIM':'1° Bimestre','1CUAT':'1° Cuatrimestre','3BIM':'3° Bimestre','2CUAT':'2° Cuatrimestre','DIC':'Diciembre','FEB':'Febrero' }[periodo] || periodo;
+
+    // Clasificar
+    let aprobados = 0, intensifican = 0, sinNota = 0;
+    const filas = alumnos.map(a => {
+      const nota = a.nota || '';
+      let estado = '', estadoColor = '', estadoTexto = '';
+      if (!nota) {
+        sinNota++;
+        estadoColor = 'rgba(0,0,0,.3)'; estadoTexto = 'Sin nota';
+      } else if (esBim) {
+        if (nota === 'TEA')      { aprobados++; estadoColor='#4CAF50'; estadoTexto='Trayecto Alcanzado'; }
+        else if (nota === 'TEP') { intensifican++; estadoColor='#FFC107'; estadoTexto='Trayecto en Proceso'; }
+        else if (nota === 'TED') { intensifican++; estadoColor='#FF5252'; estadoTexto='Trayecto Discontinuo'; }
+        else                     { sinNota++; estadoColor='rgba(0,0,0,.3)'; estadoTexto='Sin nota'; }
+      } else {
+        const n = parseFloat(nota);
+        if (!isNaN(n)) {
+          if (n >= umbral) { aprobados++; estadoColor='#4CAF50'; estadoTexto='✅ Aprobado'; }
+          else             { intensifican++; estadoColor='#FF9800'; estadoTexto='⚠️ Intensifica'; }
+        } else { sinNota++; estadoColor='rgba(0,0,0,.3)'; estadoTexto='Sin nota'; }
+      }
+      return `<tr>
+        <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(0,0,0,.05)">${a.nombre}</td>
+        <td style="text-align:center;padding:8px;font-size:13px;font-weight:700;border-bottom:1px solid rgba(0,0,0,.05);color:${nota?'#1a1a1a':'rgba(0,0,0,.3)'}">${nota||'—'}</td>
+        <td style="text-align:center;padding:8px;font-size:12px;font-weight:600;border-bottom:1px solid rgba(0,0,0,.05);color:${estadoColor}">${estadoTexto}</td>
+      </tr>`;
+    });
+
+    const total = alumnos.length;
+    const pctAp = total > 0 ? Math.round(aprobados/total*100) : 0;
+    const pctIn = total > 0 ? Math.round(intensifican/total*100) : 0;
+    const pctSn = total > 0 ? Math.round(sinNota/total*100) : 0;
+    const matLabel = currentMateria || 'Materia';
+
+    resultado.innerHTML = `
+      <div id="contenido-informe-imprimible">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-size:14px;font-weight:600;color:#1a1a1a">${matLabel} — ${curso} — ${periodoLabel}</div>
+          <div style="font-size:12px;color:rgba(0,0,0,.4)">${new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <!-- Resumen -->
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:100px;padding:12px;background:#E8F5E9;border-radius:10px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#4CAF50">${aprobados}</div>
+            <div style="font-size:11px;color:#2E7D32">${esBim?'TEA':'Aprobados'} (${pctAp}%)</div>
+          </div>
+          <div style="flex:1;min-width:100px;padding:12px;background:#FFF3E0;border-radius:10px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#FF9800">${intensifican}</div>
+            <div style="font-size:11px;color:#E65100">${esBim?'TEP/TED':'Intensifican'} (${pctIn}%)</div>
+          </div>
+          <div style="flex:1;min-width:100px;padding:12px;background:#ECEFF1;border-radius:10px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:rgba(0,0,0,.4)">${sinNota}</div>
+            <div style="font-size:11px;color:rgba(0,0,0,.4)">Sin nota (${pctSn}%)</div>
+          </div>
+          <div style="flex:1;min-width:100px;padding:12px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#C0001A">${total}</div>
+            <div style="font-size:11px;color:rgba(0,0,0,.4)">Total alumnos</div>
+          </div>
+        </div>
+        <!-- Tabla detalle -->
+        <table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e8d5c4">
+          <thead>
+            <tr style="background:#C0001A">
+              <th style="text-align:left;padding:10px 12px;color:#fff;font-size:12px">Alumno</th>
+              <th style="text-align:center;padding:10px;color:#fff;font-size:12px">Nota</th>
+              <th style="text-align:center;padding:10px;color:#fff;font-size:12px">Estado</th>
+            </tr>
+          </thead>
+          <tbody>${filas.join('')}</tbody>
+        </table>
+        ${esBim ? `<div style="margin-top:12px;padding:10px 14px;background:#fdf8f3;border-left:3px solid #C0001A;border-radius:0 8px 8px 0;font-size:11px;color:rgba(0,0,0,.5)">
+          <strong style="color:#C0001A">TEA</strong> Alcanzado &nbsp;|&nbsp;
+          <strong style="color:#FFC107">TEP</strong> en Proceso &nbsp;|&nbsp;
+          <strong style="color:#FF5252">TED</strong> Discontinuo
+        </div>` : ''}
+      </div>`;
+    btnImpr.style.display = 'inline-flex';
+  });
+}
+
+function imprimirInforme() {
+  const contenido = document.getElementById('contenido-informe-imprimible');
+  if (!contenido) return;
+  const ventana = window.open('', '_blank');
+  ventana.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8"><title>Informe de Calificaciones</title>
+    <style>
+      body { font-family: sans-serif; padding: 24px; color: #1a1a1a; }
+      table { width:100%; border-collapse:collapse; }
+      th, td { padding: 8px 12px; border: 1px solid #ddd; font-size: 12px; }
+      th { background: #C0001A; color: #fff; }
+      .resumen { display:flex; gap:12px; margin-bottom:16px; }
+      .card { flex:1; padding:12px; border:1px solid #ddd; border-radius:8px; text-align:center; }
+      .num { font-size:22px; font-weight:700; }
+      .lbl { font-size:11px; color:#666; }
+      .leyenda { margin-top:12px; font-size:11px; color:#666; border-left:3px solid #C0001A; padding:8px 12px; }
+      @media print { body { padding: 0; } }
+    </style>
+  </head><body>${contenido.innerHTML}</body></html>`);
+  ventana.document.close();
+  ventana.focus();
+  setTimeout(() => ventana.print(), 500);
 }
 
 function cargarMisNotas() {
