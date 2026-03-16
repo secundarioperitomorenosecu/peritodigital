@@ -1153,7 +1153,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 // Al estar hosteado dentro de AppScript, usamos google.script.run
 // que no tiene problemas de CORS
 
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyuvfk1rpz5N0pZbq0S5SYtmjsuFiqpW9KvKMfCH-FZu0fqUCB0fe0Twnv66N5_1hd9gA/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwsLI6nxId5RA5FNBQCtRus6ahEXj9WhrtwQB-G76RvLu2P_rKoRvxuEP90MYoL3_65Pw/exec';
 
 // Bind login button y Enter en password — sin onclick en HTML
 document.addEventListener('DOMContentLoaded', function() {
@@ -1206,6 +1206,7 @@ let currentUser = '';
 let currentRole = '';
 let currentNombre = '';
 let currentMateria = '';
+let currentMaterias = [];
 let currentCursos = [];
 const STUDENTS=[]; // Los alumnos se cargan desde Google Sheets
 
@@ -1332,7 +1333,11 @@ function doLogin(name, role, usuario, res){
   currentUser    = usuario || name;
   currentRole    = role;
   currentNombre  = name;
-  if(res && res.materias && res.materias !== 'TODAS') currentMateria = res.materias;
+  if(res && res.materias && res.materias !== 'TODAS') {
+    const mats = res.materias.split(',').map(m => m.trim()).filter(Boolean);
+    currentMateria = mats.length === 1 ? mats[0] : mats.join(',');
+    currentMaterias = mats;
+  }
   if(res && res.cursos)   currentCursos = res.cursos === 'TODOS' ? [] : res.cursos.split(',').map(s=>s.trim()).filter(Boolean);
   if(role === 'alumno' && res && res.curso) currentCursoAlumno = res.curso;
   // Iniciar notificaciones push después del login
@@ -1446,8 +1451,11 @@ function cargarMural() {
   feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando publicaciones...</div>';
   // Ocultar filtros de curso para alumnos y tutores
   const filtros = document.getElementById('mural-filtros-cursos');
-  if (filtros) filtros.style.display = (currentRole === 'alumno' || currentRole === 'tutor') ? 'none' : 'flex';
-  const cursoFiltro = (currentRole === 'alumno' || currentRole === 'tutor') ? currentCursoAlumno : 'todos';
+  const isAlumnoOTutor = currentRole === 'alumno' || currentRole === 'tutor';
+  const isDocente = currentRole === 'Docente' || currentRole === 'docente';
+  if (filtros) filtros.style.display = isAlumnoOTutor ? 'none' : 'flex';
+  let cursoFiltro = 'todos';
+  if (isAlumnoOTutor) cursoFiltro = currentCursoAlumno;
   callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true }).then(res => {
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
       feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3);font-size:13px">📋 No hay publicaciones aún.<br><span style="font-size:11px">Los docentes pueden publicar desde este mural.</span></div>';
@@ -2067,14 +2075,62 @@ function generarReporte() {
   });
 }
 
-function setupMuralCursos() {
-  // Filter course chips in mural publish form for non-admin
+
+function buildMateriaField(inputId, style) {
+  const el = document.getElementById(inputId);
+  if (!el || !currentMaterias.length) return;
   const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
-  const cursoSel = document.getElementById('post-curso');
-  if (!cursoSel || isAdmin || currentCursos.length === 0) return;
-  const TODOS = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
-  cursoSel.innerHTML = '<option value="todos">Todos mis cursos</option>' +
-    currentCursos.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (isAdmin) return;
+  if (currentMaterias.length === 1) {
+    el.value = currentMaterias[0];
+    el.readOnly = true;
+    el.style.background = '#fdf8f3';
+    el.style.fontWeight = '500';
+    el.title = 'Tu materia asignada';
+  } else {
+    // Reemplazar input por select
+    const sel = document.createElement('select');
+    sel.id = inputId;
+    sel.style.cssText = el.style.cssText || style || '';
+    sel.innerHTML = '<option value="">— Seleccioná materia —</option>' +
+      currentMaterias.map(m => `<option value="${m}">${m}</option>`).join('');
+    el.parentNode.replaceChild(sel, el);
+  }
+}
+function setupMuralCursos() {
+  const isAdmin   = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isDocente = currentRole === 'Docente' || currentRole === 'docente';
+  const cursoSel  = document.getElementById('post-curso');
+
+  // Limitar cursos del formulario para docentes y preceptores
+  if (cursoSel && !isAdmin && currentCursos.length > 0) {
+    cursoSel.innerHTML = '<option value="todos">Todos mis cursos</option>' +
+      currentCursos.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+
+  // Agregar campo materia al formulario si es docente con materia asignada
+  const formBody = document.getElementById('form-nuevo-post');
+  if (!formBody || !isDocente || !currentMateria) return;
+  // Solo agregar si no existe ya
+  if (document.getElementById('post-materia-display')) return;
+  const materiaDiv = document.createElement('div');
+  materiaDiv.className = 'form-group';
+  materiaDiv.style.marginBottom = '12px';
+  if (currentMaterias.length === 1) {
+    materiaDiv.innerHTML = `<label>Materia</label>
+      <div id="post-materia-display" style="padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-size:13px;font-weight:500">
+        ${currentMaterias[0]}
+      </div>`;
+  } else {
+    materiaDiv.innerHTML = `<label>Materia</label>
+      <select id="post-materia-display" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+        <option value="">— Seleccioná materia —</option>
+        ${currentMaterias.map(m => `<option value="${m}">${m}</option>`).join('')}
+      </select>`;
+  }
+  // Insertar antes del campo descripción
+  const descGroup = document.getElementById('post-cuerpo')?.closest('.form-group');
+  if (descGroup) formBody.insertBefore(materiaDiv, descGroup);
 }
 
 function setupSubir() {
@@ -2089,10 +2145,8 @@ function setupSubir() {
   cursoSel.innerHTML = '<option value="">— Seleccioná —</option>' +
     opciones.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  // Pre-llenar materia si es docente
-  if (materiaSel && currentMateria && !isAdmin) {
-    materiaSel.value = currentMateria;
-  }
+  // Materia: campo fijo si tiene una, selector si tiene varias
+  buildMateriaField('up-materia');
 }
 
 function setupCalificaciones() {
@@ -2109,10 +2163,8 @@ function setupCalificaciones() {
   cursoSel.innerHTML = '<option value="">— Seleccioná un curso —</option>' +
     opciones.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  // Pre-llenar materia si es docente
-  if (materiaSel && currentMateria && !isAdmin) {
-    materiaSel.value = currentMateria;
-  }
+  // Materia: campo fijo si tiene una, selector si tiene varias
+  buildMateriaField('cal-materia');
 }
 
 function setupAsistencia() {
@@ -2496,7 +2548,10 @@ function publicarEnMural() {
   if (!titulo) { showToast('Escribí un título para la publicación','⚠️'); return; }
   if (necesitaFecha && !fecha) { showToast('Este tipo requiere una fecha','⚠️'); return; }
   showToast('Publicando...', '⏳');
-  callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso, fechaEvento: fecha,
+  // Materia: leer del selector si tiene varias, o de currentMateria si tiene una
+  const materiaEl = document.getElementById('post-materia-display');
+  const materia = materiaEl ? (materiaEl.value || materiaEl.textContent.trim()) : (currentMateria || '');
+  callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso, materia, fechaEvento: fecha,
     autor_usuario: currentUser, autor_nombre: currentNombre, rol_autor: currentRole
   }).then(res => {
     if (res && res.ok) {
