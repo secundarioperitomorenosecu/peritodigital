@@ -1826,9 +1826,12 @@ function setTardyTime(i, hora) {
 
 function updateCounts(){
   const vals=Object.values(attendanceState);
-  document.getElementById('cnt-p').textContent='P: '+vals.filter(v=>v==='presente').length;
-  document.getElementById('cnt-a').textContent='A: '+vals.filter(v=>v==='ausente').length;
-  document.getElementById('cnt-t').textContent='T: '+vals.filter(v=>v==='tarde').length;
+  const presentes = vals.filter(v=>v==='presente').length;
+  const tardes    = vals.filter(v=>v==='tarde').length;
+  const ausentes  = vals.filter(v=>v==='ausente').length;
+  document.getElementById('cnt-p').textContent='P: '+(presentes + tardes);
+  document.getElementById('cnt-a').textContent='A: '+ausentes;
+  document.getElementById('cnt-t').textContent='T: '+tardes;
 }
 
 function guardarAttendance() {
@@ -2438,7 +2441,7 @@ function cargarResumenAlumno() {
     contenido.innerHTML = `
       <h3 style="margin-bottom:16px;font-size:16px">${nombre} — ${curso}</h3>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-        <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes}</div><div class="stat-label">Presentes</div></div>
+        <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes + tardes}</div><div class="stat-label">Presentes</div></div>
         <div class="stat-card" style="--color:#F44336;flex:1;min-width:100px"><div class="stat-icon">❌</div><div class="stat-value">${ausentes}</div><div class="stat-label">Ausentes</div></div>
         <div class="stat-card" style="--color:#FF9800;flex:1;min-width:100px"><div class="stat-icon">🕐</div><div class="stat-value">${tardes}</div><div class="stat-label">Tardanzas</div></div>
         <div class="stat-card" style="--color:${pctColor};flex:1;min-width:100px"><div class="stat-icon">📊</div><div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Asistencia</div></div>
@@ -2470,7 +2473,7 @@ function cargarResumenAlumno() {
         </tr></thead>
         <tbody>${registros.map(r=>{
           const col={P:'#E8F5E9',A:'#FFEBEE',T:'#FFF8E1'}[r.estado];
-          const txt={P:'Presente',A:'Ausente',T:'Tarde'}[r.estado];
+          const txt={P:'Presente',A:'Ausente',T:'Presente (llegó tarde)'}[r.estado];
           return `<tr>
             <td style="padding:7px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${r.fecha}</td>
             <td style="text-align:center;padding:7px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="background:${col};color:#111;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">${txt}</span></td>
@@ -2494,7 +2497,7 @@ function cargarMiAsistencia() {
     const presentes = registros.filter(r => r.estado === 'P').length;
     const ausentes  = registros.filter(r => r.estado === 'A').length;
     const tardes    = registros.filter(r => r.estado === 'T').length;
-    document.getElementById('cnt-presentes').textContent = presentes;
+    document.getElementById('cnt-presentes').textContent = presentes + tardes;
     document.getElementById('cnt-ausentes').textContent  = ausentes;
     document.getElementById('cnt-tardes').textContent    = tardes;
     const tabla = document.getElementById('mi-asistencia-tabla');
@@ -2503,7 +2506,7 @@ function cargarMiAsistencia() {
       return;
     }
     const colores = { P: '#E8F5E9', A: '#FFEBEE', T: '#FFF8E1' };
-    const textos  = { P: 'Presente', A: 'Ausente', T: 'Tarde' };
+    const textos  = { P: 'Presente', A: 'Ausente', T: 'Presente (llegó tarde)' };
     tabla.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr>
         <th style="text-align:left;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Fecha</th>
