@@ -1186,7 +1186,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 // Al estar hosteado dentro de AppScript, usamos google.script.run
 // que no tiene problemas de CORS
 
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxM3zPCQrxWnEkTmH84UihNdXXitEl1HmQvKiqB2Hw4gJPsyF8kca0Ug8tGTw0RT_hMNA/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwz_0JXWyUxrSgi5m_SFfQTOkEPHAsgahXtRNPs5F37dN22YTctRLj6Tes_QoFwQtDaLg/exec';
 
 // Bind login button y Enter en password — sin onclick en HTML
 document.addEventListener('DOMContentLoaded', function() {
@@ -1245,6 +1245,14 @@ const STUDENTS=[]; // Los alumnos se cargan desde Google Sheets
 
 function updateDate(){const d=new Date();document.getElementById('top-date').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
 updateDate();
+// Helper: fecha local YYYY-MM-DD sin desfase de zona horaria
+function fechaHoy() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
 
 function loginStaff(){
   const usuario = (document.getElementById('staff-user').value || '').trim();
@@ -1930,7 +1938,7 @@ function cargarAlumnosCalificaciones() {
   const curso = document.getElementById('cal-curso').value;
   if (!curso) return;
   alumnosActuales = [];
-  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: new Date().toISOString().split('T')[0] }).then(res => {
+  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: fechaHoy() }).then(res => {
     if (res.ok && res.alumnos) { alumnosActuales = res.alumnos; }
     buildGrades();
   });
@@ -2403,7 +2411,7 @@ function cargarAlumnosDeCurso() {
     }
   }
 
-  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: new Date().toISOString().split('T')[0] }).then(res => {
+  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: fechaHoy() }).then(res => {
     if (!res.ok || !res.alumnos) return;
     res.alumnos.forEach(a => {
       const opt = document.createElement('option');
@@ -3361,7 +3369,7 @@ function cargarAlumnosEvolucion() {
   document.getElementById('evolucion-contenido').innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Seleccioná un alumno.</div>';
   if (!curso) return;
   const cursoNorm = curso.replace('°','').replace(' ','');
-  callWebApp({ accion: 'obtenerAsistencia', curso: cursoNorm, fecha: new Date().toISOString().split('T')[0] }).then(res => {
+  callWebApp({ accion: 'obtenerAsistencia', curso: cursoNorm, fecha: fechaHoy() }).then(res => {
     if (!res.ok || !res.alumnos) return;
     res.alumnos.forEach(a => {
       const opt = document.createElement('option');
