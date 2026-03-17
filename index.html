@@ -1186,7 +1186,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 // Al estar hosteado dentro de AppScript, usamos google.script.run
 // que no tiene problemas de CORS
 
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwsLI6nxId5RA5FNBQCtRus6ahEXj9WhrtwQB-G76RvLu2P_rKoRvxuEP90MYoL3_65Pw/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxM3zPCQrxWnEkTmH84UihNdXXitEl1HmQvKiqB2Hw4gJPsyF8kca0Ug8tGTw0RT_hMNA/exec';
 
 // Bind login button y Enter en password — sin onclick en HTML
 document.addEventListener('DOMContentLoaded', function() {
@@ -2346,7 +2346,7 @@ function cargarResumenCurso() {
           const color = pct >= 85 ? '#4CAF50' : pct >= 70 ? '#FF9800' : '#F44336';
           return `<tr>
             <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${a.nombre}</td>
-            <td style="text-align:center;padding:8px;font-size:13px;color:#4CAF50;border-bottom:1px solid rgba(255,255,255,.05)">${a.presentes}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#4CAF50;border-bottom:1px solid rgba(255,255,255,.05)">${a.presentes + a.tardes}</td>
             <td style="text-align:center;padding:8px;font-size:13px;color:#F44336;border-bottom:1px solid rgba(255,255,255,.05)">${a.ausentes}</td>
             <td style="text-align:center;padding:8px;font-size:13px;color:#FF9800;border-bottom:1px solid rgba(255,255,255,.05)">${a.tardes}</td>
             <td style="text-align:center;padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">
@@ -3386,12 +3386,12 @@ function cargarEvolucion() {
     if (Object.keys(asist).length > 0) {
       html += '<div style="margin-bottom:24px"><h4 style="margin:0 0 12px;color:#C0001A;font-size:14px">📅 Asistencia por Año/Curso</h4><div style="display:grid;gap:8px">';
       Object.entries(asist).forEach(([curso, d]) => {
-        const pct = d.total > 0 ? Math.round(d.presentes / d.total * 100) : 0;
+        const pct = d.total > 0 ? Math.round((d.presentes + d.tardanzas) / d.total * 100) : 0;
         const color = pct >= 75 ? '#4CAF50' : pct >= 60 ? '#FF9800' : '#F44336';
         html += `<div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600;font-size:13px">Curso ${curso}</div>
           <div style="display:flex;gap:16px;font-size:12px;color:#666">
-            <span>✅ ${d.presentes} P</span>
+            <span>✅ ${d.presentes + d.tardanzas} P</span>
             <span>❌ ${d.ausentes} A</span>
             <span>⏰ ${d.tardanzas} T</span>
             <span style="font-weight:700;color:${color}">${pct}%</span>
