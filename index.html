@@ -904,6 +904,51 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Cargando reporte...</div>
         </div>
       </div>
+
+      <!-- INFORME CALIFICACIONES -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>📝 Informe de Calificaciones por Materia</h3>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+            <select id="inf-cal-curso" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid #e8d5c4;border-radius:9px;background:#fdf8f3;font-family:inherit;font-size:13px">
+              <option value="">— Todos los cursos —</option>
+              <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+              <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+              <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+            </select>
+            <select id="inf-cal-periodo" style="flex:1;min-width:160px;padding:9px 12px;border:1px solid #e8d5c4;border-radius:9px;background:#fdf8f3;font-family:inherit;font-size:13px">
+              <option value="bim1">1° Bimestre</option>
+              <option value="cuat1">1° Cuatrimestre</option>
+              <option value="bim3">3° Bimestre</option>
+              <option value="cuat2">2° Cuatrimestre</option>
+              <option value="final">Estado Final</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="generarInformeCalificaciones()">Generar</button>
+          </div>
+          <div id="inf-cal-contenido"></div>
+        </div>
+      </div>
+
+      <!-- INFORME INASISTENCIAS -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>📋 Ranking de Inasistencias</h3>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+            <select id="inf-inas-curso" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid #e8d5c4;border-radius:9px;background:#fdf8f3;font-family:inherit;font-size:13px">
+              <option value="">— Todos los cursos —</option>
+              <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+              <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+              <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="generarInformeInasistencias()">Generar</button>
+          </div>
+          <div id="inf-inas-contenido"></div>
+        </div>
+      </div>
     </div>
 
     <!-- USUARIOS -->
@@ -1186,7 +1231,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 // Al estar hosteado dentro de AppScript, usamos google.script.run
 // que no tiene problemas de CORS
 
-const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwp5m846SkkjstiuHE831sa5LTiiWr7b9M8NwqO9VT-lac-Y2GJORmPAztqBAsshj6uGw/exec';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwfroSnD6pDT8Ec2oW2Q2CpEt96KoyBnpZU8Y1bLPd3yemzAPydLjsN7kuuPqr0jTnrXw/exec';
 
 // Bind login button y Enter en password — sin onclick en HTML
 document.addEventListener('DOMContentLoaded', function() {
@@ -2148,6 +2193,121 @@ function generarReporte() {
         <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">⬇️</div><div class="stat-value">${res.descargas||0}</div><div class="stat-label">Descargas</div></div>
         <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value">${res.inactivos||0}</div><div class="stat-label">Docentes inactivos</div></div>
       </div>`;
+  });
+}
+
+function generarInformeCalificaciones() {
+  const curso   = document.getElementById('inf-cal-curso').value;
+  const periodo = document.getElementById('inf-cal-periodo').value;
+  const cont    = document.getElementById('inf-cal-contenido');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Generando...</div>';
+  callWebApp({ accion: 'informeCalificaciones', curso, periodo }).then(res => {
+    if (!res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + (res.error||'desconocido') + '</div>'; return; }
+    const mat = res.materias || {};
+    const keys = Object.keys(mat).sort();
+    const esCuat = res.esCuat;
+    const periodoLabel = { bim1:'1° Bimestre', cuat1:'1° Cuatrimestre', bim3:'3° Bimestre', cuat2:'2° Cuatrimestre', final:'Estado Final' }[periodo] || periodo;
+
+    if (keys.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">Sin calificaciones cargadas para este filtro.</div>'; return; }
+
+    // Tabla por materia
+    let html = `<h4 style="margin:0 0 12px;font-size:13px;color:rgba(0,0,0,.5);text-transform:uppercase;letter-spacing:1px">Período: ${periodoLabel}</h4>`;
+    html += `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#fdf8f3">
+        <th style="padding:8px 12px;text-align:left;border-bottom:1px solid #e8d5c4">Materia</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #e8d5c4;color:#4CAF50">${esCuat?'Aprob.':'TEA'}</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #e8d5c4;color:#FF9800">${esCuat?'Intens.':'TEP'}</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #e8d5c4;color:#F44336">${esCuat?'—':'TED'}</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #e8d5c4;color:rgba(0,0,0,.4)">Sin nota</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #e8d5c4">Total</th>
+        <th style="padding:8px;text-align:center;border-bottom:1px solid #e8d5c4">% Aprobados</th>
+      </tr></thead><tbody>`;
+    keys.forEach(m => {
+      const d = mat[m];
+      const aprobN = esCuat ? d.aprobado : d.tea;
+      const intensN = esCuat ? d.intensifica : d.tep;
+      const tedN = esCuat ? 0 : d.ted;
+      const pct = d.total > 0 ? Math.round((aprobN / d.total) * 100) : 0;
+      const col = pct >= 70 ? '#4CAF50' : pct >= 50 ? '#FF9800' : '#F44336';
+      html += `<tr style="border-bottom:1px solid #f0e9e0">
+        <td style="padding:8px 12px;font-weight:500">${m}</td>
+        <td style="padding:8px;text-align:center;color:#4CAF50;font-weight:700">${aprobN}</td>
+        <td style="padding:8px;text-align:center;color:#FF9800;font-weight:700">${intensN}</td>
+        <td style="padding:8px;text-align:center;color:#F44336;font-weight:700">${esCuat?'—':tedN}</td>
+        <td style="padding:8px;text-align:center;color:rgba(0,0,0,.4)">${d.sinNota}</td>
+        <td style="padding:8px;text-align:center">${d.total}</td>
+        <td style="padding:8px;text-align:center"><span style="font-weight:700;color:${col}">${pct}%</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+
+    // Alumnos en riesgo (solo cuatrimestral)
+    if (esCuat && res.alumnosRiesgo && res.alumnosRiesgo.length > 0) {
+      html += `<h4 style="margin:20px 0 10px;font-size:13px;color:#C0001A">⚠️ Alumnos con menos de 7 en 3 o más materias (${res.alumnosRiesgo.length})</h4>`;
+      html += `<div style="display:grid;gap:8px">`;
+      res.alumnosRiesgo.forEach(a => {
+        html += `<div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:10px;padding:10px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:600;font-size:13px">${a.nombre}</div>
+              <div style="font-size:11px;color:#666;margin-top:2px">Curso: ${a.curso}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:20px;font-weight:700;color:#E65100">${a.bajas}</div>
+              <div style="font-size:10px;color:#888">materias bajas</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;font-size:11px;color:#555">${a.materiasBajas.join(' • ')}</div>
+        </div>`;
+      });
+      html += '</div>';
+    } else if (esCuat) {
+      html += '<div style="margin-top:14px;padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;color:#2E7D32;text-align:center">✅ Ningún alumno con menos de 7 en 3 o más materias.</div>';
+    }
+
+    cont.innerHTML = html;
+  });
+}
+
+function generarInformeInasistencias() {
+  const curso = document.getElementById('inf-inas-curso').value;
+  const cont  = document.getElementById('inf-inas-contenido');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Generando...</div>';
+  callWebApp({ accion: 'informeInasistencias', curso }).then(res => {
+    if (!res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + (res.error||'desconocido') + '</div>'; return; }
+    const ranking = res.ranking || [];
+    if (ranking.length === 0) {
+      cont.innerHTML = '<div style="text-align:center;padding:20px;background:#E8F5E9;border-radius:10px;color:#2E7D32;font-size:13px">✅ Ningún alumno con 10 o más inasistencias.</div>';
+      return;
+    }
+    const grupos = { critico: ranking.filter(a=>a.nivel==='critico'), alto: ranking.filter(a=>a.nivel==='alto'), medio: ranking.filter(a=>a.nivel==='medio') };
+    const cfg = {
+      critico: { label: '🚨 CRÍTICO — 28 o más inasistencias', bg: '#FFEBEE', border: '#F44336', color: '#B71C1C' },
+      alto:    { label: '⚠️ ALTO — entre 20 y 27 inasistencias',  bg: '#FFF8E1', border: '#FF9800', color: '#E65100' },
+      medio:   { label: '📋 MEDIO — entre 10 y 19 inasistencias', bg: '#E3F2FD', border: '#2196F3', color: '#1565C0' }
+    };
+    let html = `<div style="margin-bottom:10px;font-size:12px;color:rgba(0,0,0,.4)">${ranking.length} alumno${ranking.length>1?'s':''} con 10 o más inasistencias</div>`;
+    ['critico','alto','medio'].forEach(nivel => {
+      if (grupos[nivel].length === 0) return;
+      const c = cfg[nivel];
+      html += `<div style="margin-bottom:18px">
+        <div style="font-weight:700;color:${c.color};margin-bottom:8px;font-size:13px">${c.label} — ${grupos[nivel].length} alumno${grupos[nivel].length>1?'s':''}</div>
+        <div style="display:grid;gap:6px">`;
+      grupos[nivel].forEach(a => {
+        html += `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:600;font-size:13px">${a.nombre}</div>
+            <div style="font-size:11px;color:#666;margin-top:2px">Curso: ${a.curso} &nbsp;|&nbsp; Ausentes: ${a.ausentes} &nbsp;|&nbsp; Tardanzas: ${a.tardanzas}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:22px;font-weight:700;color:${c.color}">${a.inasistencias % 1 === 0 ? a.inasistencias : a.inasistencias.toFixed(2)}</div>
+            <div style="font-size:10px;color:#888">inasistencias</div>
+          </div>
+        </div>`;
+      });
+      html += '</div></div>';
+    });
+    cont.innerHTML = html;
   });
 }
 
