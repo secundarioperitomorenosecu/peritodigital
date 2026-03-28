@@ -201,6 +201,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .student-card.presente{border-color:rgba(76,175,80,.4);background:rgba(76,175,80,.07)}
 .student-card.ausente{border-color:rgba(192,0,26,.4);background:rgba(192,0,26,.07)}
 .student-card.tarde{border-color:rgba(255,193,7,.4);background:rgba(255,193,7,.07)}
+.student-card.retiro{border-color:rgba(33,33,33,.5);background:rgba(33,33,33,.08)}
 .student-avatar-sm{width:42px;height:42px;border-radius:50%;margin:0 auto 9px;background:linear-gradient(135deg,#e8d5c4,#f0e9e0);color:#888;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
 .student-name{font-size:11px;font-weight:600;color:#1a1a1a;margin-bottom:7px}
 .attendance-btns{display:flex;gap:3px;justify-content:center}
@@ -211,6 +212,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .att-btn.a:hover{background:rgba(192,0,26,.4)}
 .att-btn.t{background:rgba(255,193,7,.2);color:#FFD54F}
 .att-btn.t:hover{background:rgba(255,193,7,.4)}
+.att-btn.r{background:rgba(33,33,33,.15);color:#555}
+.att-btn.r:hover{background:rgba(33,33,33,.35);color:#fff}
+.att-btn.r.active{background:#212121;color:#fff}
 .grade-input{width:55px;padding:5px;text-align:center;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:7px;color:#1a1a1a;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600}
 .grade-input:focus{outline:none;border-color:var(--rojo)}
 .upload-zone{border:2px dashed #e8d5c4;border-radius:15px;padding:36px;text-align:center;cursor:pointer;transition:all .3s}
@@ -1708,8 +1712,9 @@ function cargarDashboard() {
       const registros = res.registros || [];
       const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'J' || r.estado === 'AM').length;
       const tardes    = registros.filter(r => r.estado === 'T').length;
+      const retiros   = registros.filter(r => r.estado === 'R').length;
       const total     = registros.length;
-      const inasist   = ausentes + (tardes * 0.25);
+      const inasist   = ausentes + (tardes * 0.25) + (retiros * 0.5);
       const pct       = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
       // Color semáforo en inasistencias
       const cardInasist = document.getElementById('dash-inasistencias')?.closest('.stat-card');
@@ -1826,16 +1831,18 @@ function buildAttendance(){
     const parts=s.split(',');
     const ini=(parts[1]?parts[1].trim()[0]:'?')+(parts[0]?parts[0][0]:'?');
     const isTarde = attendanceState[i] === 'tarde';
+    const isRetiro = attendanceState[i] === 'retiro';
     const horaVal = tardyTimes[i] || '';
     const modoLectura = window._attModoLectura;
-    const estadoLabel = attendanceState[i]==='presente' ? 'P' : attendanceState[i]==='ausente' ? 'A' : 'T';
-    const estadoColor = attendanceState[i]==='presente' ? '#4CAF50' : attendanceState[i]==='ausente' ? '#F44336' : '#FF9800';
+    const estadoLabel = attendanceState[i]==='presente' ? 'P' : attendanceState[i]==='ausente' ? 'A' : attendanceState[i]==='retiro' ? 'R' : 'T';
+    const estadoColor = attendanceState[i]==='presente' ? '#4CAF50' : attendanceState[i]==='ausente' ? '#F44336' : attendanceState[i]==='retiro' ? '#212121' : '#FF9800';
     c.innerHTML = modoLectura ? `
       <div class="student-avatar-sm">${ini}</div>
       <div class="student-name">${s}</div>
       <div class="attendance-btns">
         <span style="padding:4px 10px;border-radius:5px;font-size:11px;font-weight:700;background:${estadoColor}22;color:${estadoColor}">${estadoLabel}</span>
         ${isTarde && horaVal ? `<span style="font-size:10px;color:#FF9800">🕐 ${horaVal}</span>` : ''}
+        ${isRetiro && horaVal ? `<span style="font-size:10px;color:#888">🚪 ${horaVal}</span>` : ''}
       </div>
     ` : `
       <div class="student-avatar-sm">${ini}</div>
@@ -1844,6 +1851,7 @@ function buildAttendance(){
         <button class="att-btn p ${attendanceState[i]==='presente'?'active':''}" onclick="setAtt(${i},'presente')">P</button>
         <button class="att-btn a ${attendanceState[i]==='ausente'?'active':''}" onclick="setAtt(${i},'ausente')">A</button>
         <button class="att-btn t ${isTarde?'active':''}" onclick="setAtt(${i},'tarde')">T</button>
+        <button class="att-btn r ${isRetiro?'active':''}" onclick="setAtt(${i},'retiro')" style="background:${isRetiro?'#212121':''};color:${isRetiro?'#fff':''}">R</button>
       </div>
       <div class="tarde-hora-wrap" id="tarde-wrap-${i}" style="display:${isTarde?'flex':'none'};align-items:center;gap:6px;margin-top:6px">
         <span style="font-size:10px;color:#FFD54F;white-space:nowrap">🕐 Hora:</span>
@@ -1882,9 +1890,13 @@ function updateCounts(){
   const presentes = vals.filter(v=>v==='presente').length;
   const tardes    = vals.filter(v=>v==='tarde').length;
   const ausentes  = vals.filter(v=>v==='ausente').length;
+  const retiros   = vals.filter(v=>v==='retiro').length;
   document.getElementById('cnt-p').textContent='P: '+(presentes + tardes);
   document.getElementById('cnt-a').textContent='A: '+ausentes;
   document.getElementById('cnt-t').textContent='T: '+tardes;
+  if (document.getElementById('cnt-r')) {
+    document.getElementById('cnt-r').textContent='R: '+retiros;
+  }
 }
 
 function guardarAttendance() {
@@ -1900,15 +1912,17 @@ function guardarAttendance() {
     ? alumnosActuales.map((a, i) => ({
         legajo: a.legajo,
         nombre: a.nombre,
-        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : 'T',
+        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : attendanceState[i] === 'retiro' ? 'R' : 'T',
         horaLlegada: tardyTimes[i] || '',
+        horaRetiro: attendanceState[i] === 'retiro' ? (tardyTimes[i] || '') : '',
         observacion: ''
       }))
     : STUDENTS.map((nombre, i) => ({
         legajo: String(i+1).padStart(3,'0'),
         nombre: nombre,
-        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : 'T',
+        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : attendanceState[i] === 'retiro' ? 'R' : 'T',
         horaLlegada: tardyTimes[i] || '',
+        horaRetiro: attendanceState[i] === 'retiro' ? (tardyTimes[i] || '') : '',
         observacion: ''
       }));
 
@@ -2600,8 +2614,9 @@ function cargarResumenAlumno() {
     const presentes = registros.filter(r=>r.estado==='P').length;
     const ausentes  = registros.filter(r=>r.estado==='A').length;
     const tardes    = registros.filter(r=>r.estado==='T').length;
-    const total     = presentes + ausentes + tardes;
-    const pct       = total > 0 ? Math.round((presentes+tardes)/total*100) : 0;
+    const retiros   = registros.filter(r=>r.estado==='R').length;
+    const total     = presentes + ausentes + tardes + retiros;
+    const pct       = total > 0 ? Math.round((presentes+tardes+retiros)/total*100) : 0;
     const pctColor  = pct>=85?'#4CAF50':pct>=70?'#FF9800':'#F44336';
     const materias  = resNot.materias || [];
     const periodos  = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
@@ -2612,6 +2627,7 @@ function cargarResumenAlumno() {
         <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes + tardes}</div><div class="stat-label">Presentes</div></div>
         <div class="stat-card" style="--color:#F44336;flex:1;min-width:100px"><div class="stat-icon">❌</div><div class="stat-value">${ausentes}</div><div class="stat-label">Ausentes</div></div>
         <div class="stat-card" style="--color:#FF9800;flex:1;min-width:100px"><div class="stat-icon">🕐</div><div class="stat-value">${tardes}</div><div class="stat-label">Tardanzas</div></div>
+        <div class="stat-card" style="--color:#424242;flex:1;min-width:100px"><div class="stat-icon">🚪</div><div class="stat-value">${retiros}</div><div class="stat-label">Retiros</div></div>
         <div class="stat-card" style="--color:${pctColor};flex:1;min-width:100px"><div class="stat-icon">📊</div><div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Asistencia</div></div>
       </div>
       ${materias.length > 0 ? `
@@ -2640,11 +2656,12 @@ function cargarResumenAlumno() {
           <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora</th>
         </tr></thead>
         <tbody>${registros.map(r=>{
-          const col={P:'#E8F5E9',A:'#FFEBEE',T:'#FFF8E1'}[r.estado];
-          const txt={P:'Presente',A:'Ausente',T:'Presente (llegó tarde)'}[r.estado];
+          const col={P:'#E8F5E9',A:'#FFEBEE',T:'#FFF8E1',R:'#212121'}[r.estado] || '#f5f5f5';
+          const txt={P:'Presente',A:'Ausente',T:'Presente (llegó tarde)',R:'Retiro anticipado (½ falta)'}[r.estado] || r.estado;
+          const textColor = r.estado === 'R' ? '#fff' : '#111';
           return `<tr>
             <td style="padding:7px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${r.fecha}</td>
-            <td style="text-align:center;padding:7px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="background:${col};color:#111;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">${txt}</span></td>
+            <td style="text-align:center;padding:7px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="background:${col};color:${textColor};padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700">${txt}</span></td>
             <td style="text-align:center;padding:7px;font-size:12px;color:rgba(0,0,0,.4);border-bottom:1px solid rgba(255,255,255,.05)">${r.horaLlegada||'—'}</td>
           </tr>`;
         }).join('')}</tbody>
