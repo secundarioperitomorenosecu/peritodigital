@@ -1531,7 +1531,7 @@ function showSection(id,el){
   if(id === 'asistencia') setupAsistencia();
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
-  if(id === 'banos') inicializarBanos();
+  if(id === 'banos') { window.scrollTo(0,0); inicializarBanos(); }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
   if(id === 'mis-notas') cargarMisNotas();
@@ -3845,13 +3845,10 @@ function seleccionarCursoBanos(curso, chipEl) {
   _banosCurso = curso;
   document.querySelectorAll('#banos-curso-selector .curso-chip').forEach(c => c.classList.remove('active'));
   if (chipEl) chipEl.classList.add('active');
-  google.script.run
-    .withSuccessHandler(res => {
-      if (res.ok) _banosAlumnos = res.alumnos;
-      else showToast('Error cargando alumnos: ' + res.error, '❌');
-    })
-    .withFailureHandler(err => showToast('Error: ' + err.message, '❌'))
-    .obtenerAlumnosCursoParaBanos(curso);
+  callWebApp({ accion: 'obtenerAlumnosCursoParaBanos', curso: curso }).then(res => {
+    if (res.ok) _banosAlumnos = res.alumnos;
+    else showToast('Error cargando alumnos: ' + res.error, '❌');
+  });
   document.getElementById('banos-filtro-curso').value = curso;
   cargarHistorialBanos();
 }
@@ -3895,15 +3892,20 @@ function renderAlumnosBano(lista) {
 
 function confirmarSalidaBano(legajo, nombre) {
   cerrarModalBano();
-  google.script.run
-    .withSuccessHandler(res => {
-      if (res.ok) {
-        mostrarFlashBano(res.hora, nombre, 'Baño ' + _banosInodoroSel + ' · ' + _banosCurso);
-        cargarHistorialBanos();
-      } else showToast('Error: ' + res.error, '❌');
-    })
-    .withFailureHandler(err => showToast('Error: ' + err.message, '❌'))
-    .registrarSalidaBano(_banosCurso, legajo, nombre, _banosInodoroSel, currentUser, currentName);
+  callWebApp({
+    accion: 'registrarSalidaBano',
+    curso: _banosCurso,
+    legajo: legajo,
+    nombreAlumno: nombre,
+    inodoro: _banosInodoroSel,
+    preceptorUsuario: currentUser,
+    preceptorNombre: currentNombre
+  }).then(res => {
+    if (res.ok) {
+      mostrarFlashBano(res.hora, nombre, 'Baño ' + _banosInodoroSel + ' · ' + _banosCurso);
+      cargarHistorialBanos();
+    } else showToast('Error: ' + res.error, '❌');
+  });
 }
 
 function mostrarFlashBano(hora, nombre, detalle) {
@@ -3925,15 +3927,12 @@ function cargarHistorialBanos() {
     const p = inputFecha.split('-');
     fechaServidor = p[2]+'/'+p[1]+'/'+p[0];
   }
-  google.script.run
-    .withSuccessHandler(res => {
-      if (!res.ok) { lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Error: '+res.error+'</div>'; return; }
-      _banosRegistros = res.registros;
-      renderHistorialBanos(res.registros, res.fecha);
-      actualizarContadoresBanos(res.registros);
-    })
-    .withFailureHandler(() => { lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Error de conexión</div>'; })
-    .obtenerRegistrosBanos(fechaServidor, cursoFiltro);
+  callWebApp({ accion: 'obtenerRegistrosBanos', fecha: fechaServidor, curso: cursoFiltro }).then(res => {
+    if (!res.ok) { lista.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px">Error: '+(res.error||'')+'</div>'; return; }
+    _banosRegistros = res.registros;
+    renderHistorialBanos(res.registros, res.fecha);
+    actualizarContadoresBanos(res.registros);
+  });
 }
 
 function renderHistorialBanos(registros, fecha) {
