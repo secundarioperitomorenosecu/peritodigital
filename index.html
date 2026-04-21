@@ -1531,7 +1531,13 @@ function showSection(id,el){
   if(id === 'asistencia') setupAsistencia();
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
-  if(id === 'banos') { window.scrollTo(0,0); inicializarBanos(); }
+  if(id === 'banos') {
+    window.scrollTo(0,0);
+    document.querySelector('.topbar-actions .btn')?.style.setProperty('display','none');
+    inicializarBanos();
+  } else {
+    document.querySelector('.topbar-actions .btn')?.style.removeProperty('display');
+  }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
   if(id === 'mis-notas') cargarMisNotas();
@@ -3695,6 +3701,7 @@ function cargarEvolucion() {
     .bano-confirm-flash{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:#fff;border:2px solid #C0001A;border-radius:20px;padding:28px 36px;text-align:center;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.25);transition:all .25s cubic-bezier(.16,1,.3,1)}
     .bano-confirm-flash.show{display:block;transform:translate(-50%,-50%) scale(1)}
     .bano-flash-hora{font-size:42px;font-weight:800;color:#C0001A;font-family:'Outfit',sans-serif;line-height:1}
+    #sec-banos .panel-body{padding:12px 14px}
     @media(max-width:600px){.banos-inodoros{grid-template-columns:repeat(2,1fr)}.inodoro-emoji{font-size:28px}.banos-filtros{flex-direction:column;align-items:stretch}}
   </style>
 
@@ -3784,7 +3791,7 @@ let _banosRegistros = [];
 
 function inicializarBanos() {
   // currentCursos: [] = admin/director (todos), array con valores = preceptor (sus cursos)
-  const TODOS = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C'];
+  const TODOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
   const cursos = (Array.isArray(currentCursos) && currentCursos.length === 0) ? TODOS
     : (Array.isArray(currentCursos) && currentCursos.length > 0) ? currentCursos : TODOS;
 
