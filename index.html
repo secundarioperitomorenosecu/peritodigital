@@ -493,7 +493,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   </nav>
 
   <main class="main-content">
-    <div class="topbar">
+    <div class="topbar" id="main-topbar">
       <div class="topbar-title">
         <h1 id="page-title">Dashboard</h1>
         <p id="page-sub">Resumen general del portal</p>
@@ -1532,12 +1532,14 @@ function showSection(id,el){
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
   const btnSubir = document.getElementById('btn-subir-topbar');
+  const topbar = document.getElementById('main-topbar');
   if(id === 'banos') {
-    window.scrollTo(0,0);
     if(btnSubir) btnSubir.style.display = 'none';
+    if(topbar) topbar.style.display = 'none';
     inicializarBanos();
   } else {
     if(btnSubir) btnSubir.style.display = '';
+    if(topbar) topbar.style.display = '';
   }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
