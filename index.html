@@ -1533,13 +1533,16 @@ function showSection(id,el){
   if(id === 'eoe') cargarLegajosEOE();
   const btnSubir = document.getElementById('btn-subir-topbar');
   const topbar = document.getElementById('main-topbar');
+  const mainContent = document.querySelector('.main-content');
   if(id === 'banos') {
     if(btnSubir) btnSubir.style.display = 'none';
     if(topbar) topbar.style.display = 'none';
+    if(mainContent) mainContent.style.padding = '12px';
     inicializarBanos();
   } else {
     if(btnSubir) btnSubir.style.display = '';
     if(topbar) topbar.style.display = '';
+    if(mainContent) mainContent.style.padding = '';
   }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
