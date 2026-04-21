@@ -3702,7 +3702,6 @@ function cargarEvolucion() {
     <div class="panel-header"><h3>🚽 Control de Baños</h3></div>
     <div class="panel-body">
       <div id="banos-curso-selector" class="curso-selector" style="margin-bottom:0;display:none"></div>
-      <p style="font-size:12px;color:#aaa;margin-bottom:12px">Tocá un inodoro para registrar la salida de un alumno. La hora se toma automáticamente.</p>
       <div class="banos-inodoros">
         <button class="inodoro-btn" onclick="abrirModalBano(1)">
           <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 1</span>
@@ -3782,10 +3781,12 @@ let _banosCurso = '';
 let _banosRegistros = [];
 
 function inicializarBanos() {
-  const cursosStr = currentCursos || '';
-  const cursos = cursosStr === 'TODOS'
-    ? ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C']
-    : cursosStr.split(',').map(c => c.trim()).filter(Boolean);
+  // currentCursos es [] cuando el rol es admin/director (viene de res.cursos === 'TODOS')
+  // y es un array de cursos cuando es preceptor
+  const TODOS_LOS_CURSOS = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C'];
+  const cursos = (Array.isArray(currentCursos) && currentCursos.length === 0)
+    ? TODOS_LOS_CURSOS
+    : (Array.isArray(currentCursos) ? currentCursos : TODOS_LOS_CURSOS);
 
   const sel = document.getElementById('banos-curso-selector');
   sel.innerHTML = '';
