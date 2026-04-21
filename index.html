@@ -3786,13 +3786,33 @@ function inicializarBanos() {
 
   const sel = document.getElementById('banos-curso-selector');
   sel.innerHTML = '';
-  cursos.forEach((c, i) => {
-    const chip = document.createElement('div');
-    chip.className = 'curso-chip' + (i === 0 ? ' active' : '');
-    chip.textContent = c;
-    chip.onclick = () => seleccionarCursoBanos(c, chip);
-    sel.appendChild(chip);
-  });
+
+  if (cursos.length > 6) {
+    // Admin/Director: select desplegable
+    const label = document.createElement('label');
+    label.style.cssText = 'font-size:12px;color:#aaa;margin-bottom:6px;display:block';
+    label.textContent = 'Seleccioná el curso';
+    const dropdown = document.createElement('select');
+    dropdown.id = 'banos-curso-dropdown';
+    dropdown.style.cssText = 'width:100%;max-width:240px;padding:9px 12px;border:1px solid #e8d5c4;border-radius:9px;font-family:Outfit,sans-serif;font-size:14px;font-weight:600;background:#fdf8f3;color:#1a1a1a;cursor:pointer';
+    cursos.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = 'Curso ' + c;
+      dropdown.appendChild(opt);
+    });
+    dropdown.onchange = () => seleccionarCursoBanos(dropdown.value, null);
+    sel.appendChild(label);
+    sel.appendChild(dropdown);
+  } else {
+    // Preceptor: chips
+    cursos.forEach((c, i) => {
+      const chip = document.createElement('div');
+      chip.className = 'curso-chip' + (i === 0 ? ' active' : '');
+      chip.textContent = c;
+      chip.onclick = () => seleccionarCursoBanos(c, chip);
+      sel.appendChild(chip);
+    });
+  }
 
   const selFiltro = document.getElementById('banos-filtro-curso');
   selFiltro.innerHTML = '<option value="">Todos los cursos</option>';
@@ -3808,7 +3828,7 @@ function inicializarBanos() {
     String(hoy.getMonth()+1).padStart(2,'0') + '-' +
     String(hoy.getDate()).padStart(2,'0');
 
-  if (cursos.length > 0) seleccionarCursoBanos(cursos[0], sel.children[0]);
+  if (cursos.length > 0) seleccionarCursoBanos(cursos[0], null);
 }
 
 function seleccionarCursoBanos(curso, chipEl) {
