@@ -3672,7 +3672,7 @@ function cargarEvolucion() {
 <!-- ── SECCIÓN BAÑOS ──────────────────────────────────────────────── -->
 <div id="sec-banos" class="section">
   <style>
-    .banos-inodoros{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .banos-inodoros{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
     .inodoro-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 8px;border-radius:14px;border:2px solid #e8d5c4;background:#fdf8f3;cursor:pointer;transition:all .22s;font-family:'Outfit',sans-serif;position:relative}
     .inodoro-btn:hover{border-color:#C0001A;background:rgba(192,0,26,.06);transform:translateY(-2px);box-shadow:0 4px 14px rgba(192,0,26,.15)}
     .inodoro-btn:active{transform:scale(.96)}
@@ -3699,9 +3699,11 @@ function cargarEvolucion() {
   </style>
 
   <div class="panel" style="margin-bottom:16px">
-    <div class="panel-header"><h3>🚽 Control de Baños</h3></div>
+    <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">🚽 Control de Baños</h3>
+      <div id="banos-curso-selector" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
     <div class="panel-body">
-      <div id="banos-curso-selector" class="curso-selector" style="margin-bottom:0;display:none"></div>
       <div class="banos-inodoros">
         <button class="inodoro-btn" onclick="abrirModalBano(1)">
           <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 1</span>
@@ -3781,45 +3783,40 @@ let _banosCurso = '';
 let _banosRegistros = [];
 
 function inicializarBanos() {
-  // currentCursos es [] cuando el rol es admin/director (viene de res.cursos === 'TODOS')
-  // y es un array de cursos cuando es preceptor
-  const TODOS_LOS_CURSOS = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C'];
-  const cursos = (Array.isArray(currentCursos) && currentCursos.length === 0)
-    ? TODOS_LOS_CURSOS
-    : (Array.isArray(currentCursos) ? currentCursos : TODOS_LOS_CURSOS);
+  // currentCursos: [] = admin/director (todos), array con valores = preceptor (sus cursos)
+  const TODOS = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C'];
+  const cursos = (Array.isArray(currentCursos) && currentCursos.length === 0) ? TODOS
+    : (Array.isArray(currentCursos) && currentCursos.length > 0) ? currentCursos : TODOS;
 
   const sel = document.getElementById('banos-curso-selector');
   sel.innerHTML = '';
 
-  if (cursos.length > 6) {
-    // Admin/Director: select desplegable compacto
-    sel.style.display = 'flex';
-    sel.style.marginBottom = '12px';
-    sel.style.alignItems = 'center';
-    sel.style.gap = '10px';
+  if (cursos.length > 4) {
+    // Dropdown compacto en el header
     const label = document.createElement('span');
-    label.style.cssText = 'font-size:12px;color:#aaa;white-space:nowrap';
+    label.style.cssText = 'font-size:12px;color:#aaa';
     label.textContent = 'Curso:';
     const dropdown = document.createElement('select');
-    dropdown.id = 'banos-curso-dropdown';
-    dropdown.style.cssText = 'padding:8px 12px;border:1px solid #e8d5c4;border-radius:9px;font-family:Outfit,sans-serif;font-size:14px;font-weight:600;background:#fdf8f3;color:#1a1a1a;cursor:pointer';
+    dropdown.style.cssText = 'padding:6px 10px;border:1px solid #e8d5c4;border-radius:8px;font-family:Outfit,sans-serif;font-size:13px;font-weight:600;background:#fdf8f3;color:#1a1a1a;cursor:pointer';
     cursos.forEach(c => {
       const opt = document.createElement('option');
       opt.value = c; opt.textContent = c;
       dropdown.appendChild(opt);
     });
-    dropdown.onchange = () => seleccionarCursoBanos(dropdown.value, null);
+    dropdown.onchange = () => seleccionarCursoBanos(dropdown.value);
     sel.appendChild(label);
     sel.appendChild(dropdown);
   } else {
-    // Preceptor: chips
-    sel.style.display = 'flex';
-    sel.style.marginBottom = '12px';
+    // Chips para preceptor con pocos cursos
     cursos.forEach((c, i) => {
       const chip = document.createElement('div');
       chip.className = 'curso-chip' + (i === 0 ? ' active' : '');
       chip.textContent = c;
-      chip.onclick = () => seleccionarCursoBanos(c, chip);
+      chip.onclick = () => {
+        sel.querySelectorAll('.curso-chip').forEach(x => x.classList.remove('active'));
+        chip.classList.add('active');
+        seleccionarCursoBanos(c);
+      };
       sel.appendChild(chip);
     });
   }
@@ -3838,13 +3835,11 @@ function inicializarBanos() {
     String(hoy.getMonth()+1).padStart(2,'0') + '-' +
     String(hoy.getDate()).padStart(2,'0');
 
-  if (cursos.length > 0) seleccionarCursoBanos(cursos[0], null);
+  seleccionarCursoBanos(cursos[0]);
 }
 
-function seleccionarCursoBanos(curso, chipEl) {
+function seleccionarCursoBanos(curso) {
   _banosCurso = curso;
-  document.querySelectorAll('#banos-curso-selector .curso-chip').forEach(c => c.classList.remove('active'));
-  if (chipEl) chipEl.classList.add('active');
   callWebApp({ accion: 'obtenerAlumnosCursoParaBanos', curso: curso }).then(res => {
     if (res.ok) _banosAlumnos = res.alumnos;
     else showToast('Error cargando alumnos: ' + res.error, '❌');
