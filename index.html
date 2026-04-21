@@ -500,7 +500,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
       <div class="topbar-actions">
         <div class="topbar-date" id="top-date"></div>
-        <button class="btn btn-primary-sm btn-sm" onclick="showSection('subir',null)">+ Subir Material</button>
+        <button id="btn-subir-topbar" class="btn btn-primary-sm btn-sm" onclick="showSection('subir',null)">+ Subir Material</button>
       </div>
     </div>
 
@@ -1531,12 +1531,13 @@ function showSection(id,el){
   if(id === 'asistencia') setupAsistencia();
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
+  const btnSubir = document.getElementById('btn-subir-topbar');
   if(id === 'banos') {
     window.scrollTo(0,0);
-    document.querySelector('.topbar-actions .btn')?.style.setProperty('display','none');
+    if(btnSubir) btnSubir.style.display = 'none';
     inicializarBanos();
   } else {
-    document.querySelector('.topbar-actions .btn')?.style.removeProperty('display');
+    if(btnSubir) btnSubir.style.display = '';
   }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
