@@ -1229,6 +1229,82 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   </div>
 </div>
 
+<div id="sec-banos" class="section">
+  <style>
+    .banos-inodoros{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .inodoro-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 8px;border-radius:14px;border:2px solid #e8d5c4;background:#fdf8f3;cursor:pointer;transition:all .22s;font-family:'Outfit',sans-serif;position:relative}
+    .inodoro-btn:hover{border-color:#C0001A;background:rgba(192,0,26,.06);transform:translateY(-2px);box-shadow:0 4px 14px rgba(192,0,26,.15)}
+    .inodoro-btn:active{transform:scale(.96)}
+    .inodoro-emoji{font-size:36px;line-height:1}
+    .inodoro-label{font-size:12px;font-weight:700;color:#1a1a1a;letter-spacing:.5px}
+    .inodoro-count{position:absolute;top:8px;right:10px;font-size:10px;font-weight:700;color:#C0001A;background:rgba(192,0,26,.12);border-radius:20px;padding:1px 7px}
+    .banos-alumno-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid #e8d5c4;background:#fdf8f3;cursor:pointer;transition:all .18s;margin-bottom:6px}
+    .banos-alumno-item:hover{background:rgba(192,0,26,.07);border-color:rgba(192,0,26,.35)}
+    .banos-alumno-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#e8d5c4,#f0e9e0);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#888;flex-shrink:0}
+    .banos-alumno-nombre{font-size:13px;font-weight:600;color:#1a1a1a;flex:1}
+    .banos-alumno-legajo{font-size:10px;color:#aaa}
+    .bano-registro{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid #e8d5c4;background:#ffffff;margin-bottom:6px;animation:fadeIn .25s ease}
+    .bano-reg-hora{font-size:18px;font-weight:700;color:#C0001A;min-width:58px;font-family:'Outfit',sans-serif}
+    .bano-reg-info{flex:1}
+    .bano-reg-nombre{font-size:13px;font-weight:600;color:#1a1a1a}
+    .bano-reg-meta{font-size:11px;color:#aaa;margin-top:2px}
+    .bano-reg-inodoro{font-size:20px}
+    .banos-filtros{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .banos-filtros input[type="date"],.banos-filtros select{padding:8px 12px;border:1px solid #e8d5c4;border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;background:#fdf8f3;color:#1a1a1a;cursor:pointer}
+    .bano-confirm-flash{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:#fff;border:2px solid #C0001A;border-radius:20px;padding:28px 36px;text-align:center;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.25);transition:all .25s cubic-bezier(.16,1,.3,1)}
+    .bano-confirm-flash.show{display:block;transform:translate(-50%,-50%) scale(1)}
+    .bano-flash-hora{font-size:42px;font-weight:800;color:#C0001A;font-family:'Outfit',sans-serif;line-height:1}
+    #sec-banos .panel-body{padding:12px 14px}
+    @media(max-width:600px){.banos-inodoros{grid-template-columns:repeat(2,1fr)}.inodoro-emoji{font-size:28px}.banos-filtros{flex-direction:column;align-items:stretch}}
+  </style>
+
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">🚽 Control de Baños</h3>
+      <div id="banos-curso-selector" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+    <div class="panel-body">
+      <div class="banos-inodoros">
+        <button class="inodoro-btn" onclick="abrirModalBano(1)">
+          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 1</span>
+          <span class="inodoro-count" id="count-bano-1">0</span>
+        </button>
+        <button class="inodoro-btn" onclick="abrirModalBano(2)">
+          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 2</span>
+          <span class="inodoro-count" id="count-bano-2">0</span>
+        </button>
+        <button class="inodoro-btn" onclick="abrirModalBano(3)">
+          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 3</span>
+          <span class="inodoro-count" id="count-bano-3">0</span>
+        </button>
+        <button class="inodoro-btn" onclick="abrirModalBano(4)">
+          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 4</span>
+          <span class="inodoro-count" id="count-bano-4">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <h3>📋 Registro del Día</h3>
+      <button class="btn btn-primary-sm btn-sm" onclick="exportarPDFBanos()">📄 Exportar PDF</button>
+    </div>
+    <div class="panel-body">
+      <div class="banos-filtros">
+        <input type="date" id="banos-filtro-fecha" onchange="cargarHistorialBanos()">
+        <select id="banos-filtro-curso" onchange="cargarHistorialBanos()">
+          <option value="">Todos los cursos</option>
+        </select>
+        <span id="banos-total-registros" style="font-size:12px;color:#aaa;margin-left:auto"></span>
+      </div>
+      <div id="banos-historial-lista">
+        <div style="text-align:center;color:#aaa;padding:30px;font-size:13px">Cargando registros...</div>
+      </div>
+    </div>
+  </div>
+
+<!-- sec-banos se incluye aquí dentro del #app -->
 </div><!-- fin #app -->
 
 <div class="bottom-nav" id="bottom-nav">
@@ -3681,80 +3757,6 @@ function cargarEvolucion() {
   </div>
 </div>
 
-<!-- ── SECCIÓN BAÑOS ──────────────────────────────────────────────── -->
-<div id="sec-banos" class="section">
-  <style>
-    .banos-inodoros{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-    .inodoro-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 8px;border-radius:14px;border:2px solid #e8d5c4;background:#fdf8f3;cursor:pointer;transition:all .22s;font-family:'Outfit',sans-serif;position:relative}
-    .inodoro-btn:hover{border-color:#C0001A;background:rgba(192,0,26,.06);transform:translateY(-2px);box-shadow:0 4px 14px rgba(192,0,26,.15)}
-    .inodoro-btn:active{transform:scale(.96)}
-    .inodoro-emoji{font-size:36px;line-height:1}
-    .inodoro-label{font-size:12px;font-weight:700;color:#1a1a1a;letter-spacing:.5px}
-    .inodoro-count{position:absolute;top:8px;right:10px;font-size:10px;font-weight:700;color:#C0001A;background:rgba(192,0,26,.12);border-radius:20px;padding:1px 7px}
-    .banos-alumno-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid #e8d5c4;background:#fdf8f3;cursor:pointer;transition:all .18s;margin-bottom:6px}
-    .banos-alumno-item:hover{background:rgba(192,0,26,.07);border-color:rgba(192,0,26,.35)}
-    .banos-alumno-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#e8d5c4,#f0e9e0);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#888;flex-shrink:0}
-    .banos-alumno-nombre{font-size:13px;font-weight:600;color:#1a1a1a;flex:1}
-    .banos-alumno-legajo{font-size:10px;color:#aaa}
-    .bano-registro{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;border:1px solid #e8d5c4;background:#ffffff;margin-bottom:6px;animation:fadeIn .25s ease}
-    .bano-reg-hora{font-size:18px;font-weight:700;color:#C0001A;min-width:58px;font-family:'Outfit',sans-serif}
-    .bano-reg-info{flex:1}
-    .bano-reg-nombre{font-size:13px;font-weight:600;color:#1a1a1a}
-    .bano-reg-meta{font-size:11px;color:#aaa;margin-top:2px}
-    .bano-reg-inodoro{font-size:20px}
-    .banos-filtros{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
-    .banos-filtros input[type="date"],.banos-filtros select{padding:8px 12px;border:1px solid #e8d5c4;border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;background:#fdf8f3;color:#1a1a1a;cursor:pointer}
-    .bano-confirm-flash{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);background:#fff;border:2px solid #C0001A;border-radius:20px;padding:28px 36px;text-align:center;z-index:9999;box-shadow:0 20px 60px rgba(0,0,0,.25);transition:all .25s cubic-bezier(.16,1,.3,1)}
-    .bano-confirm-flash.show{display:block;transform:translate(-50%,-50%) scale(1)}
-    .bano-flash-hora{font-size:42px;font-weight:800;color:#C0001A;font-family:'Outfit',sans-serif;line-height:1}
-    #sec-banos .panel-body{padding:10px 14px 8px}
-    @media(max-width:600px){.banos-inodoros{grid-template-columns:repeat(2,1fr)}.inodoro-emoji{font-size:28px}.banos-filtros{flex-direction:column;align-items:stretch}}
-  </style>
-
-  <div class="panel" style="margin-bottom:16px">
-    <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <h3 style="margin:0">🚽 Control de Baños</h3>
-      <div id="banos-curso-selector" style="display:flex;align-items:center;gap:8px"></div>
-    </div>
-    <div class="panel-body">
-      <div class="banos-inodoros">
-        <button class="inodoro-btn" onclick="abrirModalBano(1)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 1</span>
-          <span class="inodoro-count" id="count-bano-1">0</span>
-        </button>
-        <button class="inodoro-btn" onclick="abrirModalBano(2)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 2</span>
-          <span class="inodoro-count" id="count-bano-2">0</span>
-        </button>
-        <button class="inodoro-btn" onclick="abrirModalBano(3)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 3</span>
-          <span class="inodoro-count" id="count-bano-3">0</span>
-        </button>
-        <button class="inodoro-btn" onclick="abrirModalBano(4)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 4</span>
-          <span class="inodoro-count" id="count-bano-4">0</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-      <h3>📋 Registro del Día</h3>
-      <button class="btn btn-primary-sm btn-sm" onclick="exportarPDFBanos()">📄 Exportar PDF</button>
-    </div>
-    <div class="panel-body">
-      <div class="banos-filtros">
-        <input type="date" id="banos-filtro-fecha" onchange="cargarHistorialBanos()">
-        <select id="banos-filtro-curso" onchange="cargarHistorialBanos()">
-          <option value="">Todos los cursos</option>
-        </select>
-        <span id="banos-total-registros" style="font-size:12px;color:#aaa;margin-left:auto"></span>
-      </div>
-      <div id="banos-historial-lista" style="min-height:0"></div>
-    </div>
-  </div>
-</div>
 
 <!-- Modal selección de alumno -->
 <div id="modal-bano-alumno" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;align-items:center;justify-content:center;backdrop-filter:blur(4px)">
