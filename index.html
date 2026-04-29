@@ -1343,22 +1343,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function callWebApp(params) {
-  return new Promise((resolve) => {
-    const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
-    const script = document.createElement('script');
-    window[cbName] = function(data) {
-      delete window[cbName];
-      document.body.removeChild(script);
-      resolve(data);
-    };
-    script.onerror = function() {
-      delete window[cbName];
-      document.body.removeChild(script);
-      resolve({ ok: false, error: 'Error de conexión' });
-    };
-    script.src = BACKEND_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
-    document.body.appendChild(script);
-  });
+  // Usar fetch con redirect:follow para compatibilidad con Safari/iPhone
+  const url = BACKEND_URL + '?data=' + encodeURIComponent(JSON.stringify(params));
+  return fetch(url, { redirect: 'follow' })
+    .then(res => res.json())
+    .catch(() => {
+      // Fallback a JSONP para navegadores que no soporten fetch con CORS
+      return new Promise((resolve) => {
+        const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+        const script = document.createElement('script');
+        window[cbName] = function(data) {
+          delete window[cbName];
+          document.body.removeChild(script);
+          resolve(data);
+        };
+        script.onerror = function() {
+          delete window[cbName];
+          document.body.removeChild(script);
+          resolve({ ok: false, error: 'Error de conexión' });
+        };
+        script.src = BACKEND_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
+        document.body.appendChild(script);
+      });
+    });
 }
 // ─────────────────────────────────────────────────────────────────────
 
