@@ -2198,7 +2198,12 @@ function cargarArchivos() {
   const cont = document.getElementById('archivos-lista');
   if (!cont) return;
   cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Cargando archivos...</div>';
-  callWebApp({ accion: 'obtenerArchivos', usuario: currentUser, rol: currentRole }).then(res => {
+  const params = { accion: 'obtenerArchivos', usuario: currentUser, rol: currentRole };
+  if (currentRole === 'alumno') {
+    params.email = currentUser;
+    params.curso = currentCursoAlumno;
+  }
+  callWebApp(params).then(res => {
     if (!res.ok || !res.archivos || res.archivos.length === 0) {
       cont.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3)">📁 No hay archivos subidos aún.</div>';
       return;
