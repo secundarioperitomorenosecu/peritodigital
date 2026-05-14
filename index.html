@@ -1468,6 +1468,7 @@ function buildBottomNav(role) {
     items.push({ id: 'mi-asistencia', icon: '✅', label: 'Asistencia' });
     items.push({ id: 'mis-notas',     icon: '📝', label: 'Mis Notas' });
     items.push({ id: 'mural',         icon: '📋', label: 'Mural' });
+    items.push({ id: 'archivos',      icon: '📁', label: 'Mis Archivos' });
   } else {
     items.push({ id: 'asistencia',     icon: '✅', label: 'Asistencia' });
     items.push({ id: 'calificaciones', icon: '📝', label: 'Notas' });
@@ -1560,7 +1561,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
   ['nav-asistencia','nav-calificaciones'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
-  document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) ? 'flex' : 'none';
+  document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) && !isStudent ? 'flex' : 'none';
   const panelPost = document.getElementById('panel-nuevo-post');
   if (panelPost) panelPost.style.display = (isAdmin || isDocente || isPreceptor) ? 'block' : 'none';
   document.getElementById('nav-archivos').style.display = isEOE ? 'none' : 'flex';
@@ -1617,13 +1618,14 @@ function showSection(id,el){
   const btnSubir = document.getElementById('btn-subir-topbar');
   const topbar = document.getElementById('main-topbar');
   const mainContent = document.querySelector('.main-content');
+  const canUpload = (currentRole === 'admin' || currentRole === 'docente' || currentRole === 'preceptor' || currentRole === 'director' || currentRole === 'vicedirector' || currentRole === 'secretary' || currentRole === 'legal');
   if(id === 'banos') {
     if(btnSubir) btnSubir.style.display = 'none';
     if(topbar) topbar.style.display = 'none';
     if(mainContent) mainContent.style.padding = '12px';
     inicializarBanos();
   } else {
-    if(btnSubir) btnSubir.style.display = '';
+    if(btnSubir) btnSubir.style.display = canUpload ? '' : 'none';
     if(topbar) topbar.style.display = '';
     if(mainContent) mainContent.style.padding = '';
   }
@@ -3912,6 +3914,22 @@ function renderAlumnosBano(lista) {
 
 function confirmarSalidaBano(legajo, nombre) {
   cerrarModalBano();
+
+  // Si hay un registro del último minuto, avisar que puede haber alguien adentro
+  if (_banosRegistros && _banosRegistros.length) {
+    const ahora = new Date();
+    const reciente = _banosRegistros.find(r => {
+      if (!r.hora) return false;
+      const partes = r.hora.split(':');
+      const regDate = new Date();
+      regDate.setHours(parseInt(partes[0]), parseInt(partes[1]), parseInt(partes[2] || 0), 0);
+      return (ahora - regDate) <= 60000;
+    });
+    if (reciente) {
+      showToast('⚠️ ' + reciente.nombre + ' fue al baño a las ' + reciente.hora.substring(0,5) + ' — puede que todavía esté adentro', '🚽');
+    }
+  }
+
   callWebApp({
     accion: 'registrarSalidaBano',
     curso: _banosCurso,
