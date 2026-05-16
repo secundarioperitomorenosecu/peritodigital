@@ -442,7 +442,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
     <div class="login-form" style="display:block">
       <div class="form-group"><label>Usuario</label><input type="text" id="staff-user" placeholder="usuario" autocomplete="username"/></div>
-      <div class="form-group"><label>Contraseña</label><input type="password" id="staff-pass" placeholder="••••••••" autocomplete="current-password"/></div>
+      <div class="form-group"><label>Contraseña</label><div style="position:relative"><input type="password" id="staff-pass" placeholder="••••••••" autocomplete="current-password" style="width:100%;padding-right:42px;box-sizing:border-box"/><button type="button" onclick="const i=document.getElementById('staff-pass');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;padding:0;line-height:1">👁️</button></div></div>
       <button class="btn-primary" id="btn-login">Ingresar al Portal →</button>
     </div>
   </div>
@@ -3926,7 +3926,18 @@ function confirmarSalidaBano(legajo, nombre) {
       return (ahora - regDate) <= 60000;
     });
     if (reciente) {
-      showToast('⚠️ ' + reciente.nombre + ' fue al baño a las ' + reciente.hora.substring(0,5) + ' — puede que todavía esté adentro', '🚽');
+      // Mostrar banner de advertencia dentro de la pantalla de baños
+      let banner = document.getElementById('bano-aviso-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'bano-aviso-banner';
+        banner.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad00;border-radius:14px;padding:14px 22px;z-index:9999;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90%;font-family:Outfit,sans-serif;animation:fadeIn .3s ease';
+        document.body.appendChild(banner);
+      }
+      banner.innerHTML = '🚽 <strong>¡Atención!</strong> ' + reciente.nombre + ' fue al baño a las <strong>' + reciente.hora.substring(0,5) + '</strong> — puede que todavía esté adentro.';
+      banner.style.display = 'block';
+      clearTimeout(window._banoBannerTimer);
+      window._banoBannerTimer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
     }
   }
 
