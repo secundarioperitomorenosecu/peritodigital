@@ -485,6 +485,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
+      <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
     </div>
     <div class="sidebar-footer">
@@ -1237,6 +1238,49 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
   </div>
 </div><!-- fin sec-banos -->
+<!-- SEGUIMIENTO FALTAS -->
+<div id="sec-seguimiento-faltas" class="section" style="display:none">
+  <div style="padding:16px 16px 0">
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">Seguimiento de faltas</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">Citaciones y concurrencia de familias por hito de inasistencias</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <select id="seg-curso" onchange="cargarSeguimiento()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"></select>
+      <input id="seg-buscar" type="text" placeholder="Buscar alumno..." oninput="renderSeguimiento()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:180px">
+      <button onclick="guardarSeguimiento()" style="padding:7px 16px;background:#C0001A;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">Guardar cambios</button>
+      <button onclick="verInformeSeguimiento()" style="padding:7px 16px;background:var(--color-background-info);color:var(--color-text-info);border:0.5px solid var(--color-border-info);border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">Ver informe</button>
+    </div>
+    <div id="seg-auto-badge" style="display:none;margin-bottom:10px;font-size:12px;padding:6px 12px;background:var(--color-background-success);color:var(--color-text-success);border-radius:var(--border-radius-md);display:inline-block">✅ Las faltas de este curso se calculan automáticamente desde los registros de asistencia</div>
+  </div>
+  <div style="padding:0 16px 16px;overflow-x:auto">
+    <table id="seg-tabla" style="width:100%;border-collapse:collapse;font-size:13px;min-width:860px">
+      <thead>
+        <tr style="background:var(--color-background-secondary)">
+          <th style="padding:9px 10px;text-align:left;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary)">Alumno</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary)">Faltas</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#854F0B;border-bottom:0.5px solid var(--color-border-tertiary);background:#FAEEDA">⚑ 10 faltas</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#854F0B;border-bottom:0.5px solid var(--color-border-tertiary);background:#FAEEDA">Cit. fecha</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#854F0B;border-bottom:0.5px solid var(--color-border-tertiary);background:#FAEEDA">Concurrió</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#993C1D;border-bottom:0.5px solid var(--color-border-tertiary);background:#FAECE7">⚑ 20 faltas</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#993C1D;border-bottom:0.5px solid var(--color-border-tertiary);background:#FAECE7">Cit. fecha</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#993C1D;border-bottom:0.5px solid var(--color-border-tertiary);background:#FAECE7">Concurrió</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#A32D2D;border-bottom:0.5px solid var(--color-border-tertiary);background:#FCEBEB">⚑ 28 faltas</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#A32D2D;border-bottom:0.5px solid var(--color-border-tertiary);background:#FCEBEB">Cit. fecha</th>
+          <th style="padding:9px 8px;text-align:center;font-weight:500;color:#A32D2D;border-bottom:0.5px solid var(--color-border-tertiary);background:#FCEBEB">Concurrió</th>
+        </tr>
+      </thead>
+      <tbody id="seg-tbody"></tbody>
+    </table>
+    <div id="seg-empty" style="display:none;text-align:center;padding:40px;color:var(--color-text-tertiary);font-size:14px">Sin alumnos registrados</div>
+  </div>
+  <!-- Panel informe -->
+  <div id="seg-informe" style="display:none;margin:0 16px 16px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden">
+    <div style="padding:12px 16px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:500;font-size:14px">📊 Informe de inasistencias</span>
+      <button onclick="document.getElementById('seg-informe').style.display='none'" style="padding:4px 10px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-family:inherit">Cerrar</button>
+    </div>
+    <div id="seg-informe-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0"></div>
+  </div>
+</div>
 
   </main>
 </div><!-- fin #app -->
@@ -1481,6 +1525,8 @@ function buildBottomNav(role) {
       items.push({ id: 'resumen-curso', icon: '🏫', label: 'Resumen' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'banos', icon: '🚽', label: 'Baños' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'seguimiento-faltas', icon: '📋', label: 'Faltas' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
     if (isAdmin) {
@@ -1574,6 +1620,8 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
   document.getElementById('nav-banos').style.display     = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navSeg = document.getElementById('nav-seguimiento-faltas');
+  if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -1615,6 +1663,7 @@ function showSection(id,el){
   if(id === 'asistencia') setupAsistencia();
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
+  if(id === 'seguimiento-faltas') inicializarSeguimiento();
   const btnSubir = document.getElementById('btn-subir-topbar');
   const topbar = document.getElementById('main-topbar');
   const mainContent = document.querySelector('.main-content');
@@ -3808,6 +3857,120 @@ let _banosAlumnos = [];
 let _banosInodoroSel = null;
 let _banosCurso = '';
 let _banosRegistros = [];
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//  MÓDULO – SEGUIMIENTO DE FALTAS Y CITACIONES
+// ═══════════════════════════════════════════════════════════════════════
+
+let _segDatos = [];
+let _segEsAuto = false;
+
+function inicializarSeguimiento() {
+  const sel = document.getElementById('seg-curso');
+  if (!sel) return;
+  // Armar lista de cursos disponibles
+  const cursos = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C','6A','6B','6C'];
+  sel.innerHTML = cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+  cargarSeguimiento();
+}
+
+function cargarSeguimiento() {
+  const curso = document.getElementById('seg-curso').value;
+  if (!curso) return;
+  document.getElementById('seg-tbody').innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--color-text-tertiary)">⏳ Cargando...</td></tr>';
+  callWebApp({ accion: 'obtenerSeguimientoFaltas', curso }).then(res => {
+    if (!res.ok) { showToast('Error al cargar seguimiento', '❌'); return; }
+    _segDatos = res.alumnos || [];
+    _segEsAuto = res.esAuto || false;
+    const badge = document.getElementById('seg-auto-badge');
+    if (badge) badge.style.display = _segEsAuto ? 'inline-block' : 'none';
+    renderSeguimiento();
+  });
+}
+
+function renderSeguimiento() {
+  const q = (document.getElementById('seg-buscar').value || '').toLowerCase();
+  const tbody = document.getElementById('seg-tbody');
+  const empty = document.getElementById('seg-empty');
+  const filtrados = _segDatos.filter(a => a.nombre.toLowerCase().includes(q));
+
+  if (!filtrados.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = filtrados.map((a, i) => {
+    const idx = _segDatos.indexOf(a);
+    const hito10 = a.faltas >= 10;
+    const hito20 = a.faltas >= 20;
+    const hito28 = a.faltas >= 28;
+    const faltaCell = _segEsAuto
+      ? `<td style="text-align:center;padding:8px;font-weight:500;color:${a.faltas>=28?'#A32D2D':a.faltas>=20?'#993C1D':a.faltas>=10?'#854F0B':'var(--color-text-primary)'}">${a.faltas}</td>`
+      : `<td style="text-align:center;padding:8px"><input type="number" min="0" value="${a.faltas||0}" onchange="_segDatos[${idx}].faltas=parseInt(this.value)||0;_segDatos[${idx}].faltasManual=parseInt(this.value)||0;renderSeguimiento()" style="width:55px;text-align:center;padding:4px 6px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:inherit"></td>`;
+
+    function citCol(hito, key, concKey, bg, color) {
+      if (!hito) return `<td style="background:${bg};padding:8px"></td><td style="background:${bg};padding:8px"></td><td style="background:${bg};padding:8px"></td>`;
+      return `
+        <td style="background:${bg};padding:6px 8px;text-align:center"><input type="checkbox" checked style="accent-color:#C0001A" onchange="_segDatos[${idx}]['${key.replace('cit','')==='10'?'hito10':'hito10'}']"></td>
+        <td style="background:${bg};padding:6px 8px"><input type="date" value="${a[key]||''}" onchange="_segDatos[${idx}]['${key}']=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"></td>
+        <td style="background:${bg};padding:6px 8px;text-align:center"><input type="checkbox" ${a[concKey]?'checked':''} style="accent-color:#C0001A" onchange="_segDatos[${idx}]['${concKey}']=this.checked"></td>`;
+    }
+
+    const bg10='#FAEEDA33', bg20='#FAECE733', bg28='#FCEBEB33';
+    return `<tr style="border-bottom:0.5px solid var(--color-border-tertiary)">
+      <td style="padding:8px 10px;font-weight:500;font-size:13px">${a.nombre}</td>
+      ${faltaCell}
+      <td style="${hito10?'background:'+bg10:''}padding:6px 8px;text-align:center"><input type="checkbox" ${hito10?'checked':''} disabled style="accent-color:#854F0B"></td>
+      <td style="${hito10?'background:'+bg10:''}padding:6px 8px"><input type="date" value="${a.cit10||''}" ${!hito10?'disabled':''} onchange="_segDatos[${idx}].cit10=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${hito10?1:0.3}"></td>
+      <td style="${hito10?'background:'+bg10:''}padding:6px 8px;text-align:center"><input type="checkbox" ${a.conc10?'checked':''} ${!hito10?'disabled':''} onchange="_segDatos[${idx}].conc10=this.checked" style="accent-color:#854F0B;opacity:${hito10?1:0.3}"></td>
+      <td style="${hito20?'background:'+bg20:''}padding:6px 8px;text-align:center"><input type="checkbox" ${hito20?'checked':''} disabled style="accent-color:#993C1D"></td>
+      <td style="${hito20?'background:'+bg20:''}padding:6px 8px"><input type="date" value="${a.cit20||''}" ${!hito20?'disabled':''} onchange="_segDatos[${idx}].cit20=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${hito20?1:0.3}"></td>
+      <td style="${hito20?'background:'+bg20:''}padding:6px 8px;text-align:center"><input type="checkbox" ${a.conc20?'checked':''} ${!hito20?'disabled':''} onchange="_segDatos[${idx}].conc20=this.checked" style="accent-color:#993C1D;opacity:${hito20?1:0.3}"></td>
+      <td style="${hito28?'background:'+bg28:''}padding:6px 8px;text-align:center"><input type="checkbox" ${hito28?'checked':''} disabled style="accent-color:#A32D2D"></td>
+      <td style="${hito28?'background:'+bg28:''}padding:6px 8px"><input type="date" value="${a.cit28||''}" ${!hito28?'disabled':''} onchange="_segDatos[${idx}].cit28=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${hito28?1:0.3}"></td>
+      <td style="${hito28?'background:'+bg28:''}padding:6px 8px;text-align:center"><input type="checkbox" ${a.conc28?'checked':''} ${!hito28?'disabled':''} onchange="_segDatos[${idx}].conc28=this.checked" style="accent-color:#A32D2D;opacity:${hito28?1:0.3}"></td>
+    </tr>`;
+  }).join('');
+}
+
+function guardarSeguimiento() {
+  const curso = document.getElementById('seg-curso').value;
+  callWebApp({ accion: 'guardarSeguimientoFaltas', curso, datos: _segDatos }).then(res => {
+    if (res.ok) showToast('Seguimiento guardado correctamente', '✅');
+    else showToast('Error al guardar: ' + res.error, '❌');
+  });
+}
+
+function verInformeSeguimiento() {
+  const panel = document.getElementById('seg-informe');
+  const body = document.getElementById('seg-informe-body');
+  if (!panel || !body) return;
+
+  const hitos = [
+    { key: 'faltas', min: 10, label: '⚑ 10 faltas', bg: '#FAEEDA', color: '#854F0B', cit: 'cit10', conc: 'conc10' },
+    { key: 'faltas', min: 20, label: '⚑ 20 faltas', bg: '#FAECE7', color: '#993C1D', cit: 'cit20', conc: 'conc20' },
+    { key: 'faltas', min: 28, label: '⚑ 28 faltas', bg: '#FCEBEB', color: '#A32D2D', cit: 'cit28', conc: 'conc28' }
+  ];
+
+  body.innerHTML = hitos.map(h => {
+    const lista = _segDatos.filter(a => a.faltas >= h.min);
+    const items = lista.length === 0
+      ? '<div style="padding:10px 16px;font-size:12px;color:var(--color-text-tertiary)">Sin alumnos</div>'
+      : lista.map(a => `<div style="padding:8px 16px;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px">
+          <div style="font-weight:500;color:var(--color-text-primary)">${a.nombre}</div>
+          <div style="color:var(--color-text-secondary);margin-top:2px">${a.faltas} faltas · Cit: ${a[h.cit]||'—'} · Concurrió: ${a[h.conc]?'Sí':'No'}</div>
+        </div>`).join('');
+    return `<div style="border-right:0.5px solid var(--color-border-tertiary)">
+      <div style="padding:10px 16px;background:${h.bg};font-size:12px;font-weight:500;color:${h.color};border-bottom:0.5px solid var(--color-border-tertiary)">${h.label} <span style="font-weight:400">(${lista.length} alumno${lista.length!==1?'s':''})</span></div>
+      ${items}
+    </div>`;
+  }).join('');
+
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
 
 function inicializarBanos() {
   // currentCursos: [] = admin/director (todos), array con valores = preceptor (sus cursos)
