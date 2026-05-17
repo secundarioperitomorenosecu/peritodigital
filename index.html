@@ -3870,7 +3870,7 @@ function inicializarSeguimiento() {
   const sel = document.getElementById('seg-curso');
   if (!sel) return;
   // Armar lista de cursos disponibles
-  const cursos = ['1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','5A','5B','5C','6A','6B','6C'];
+  const cursos = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
   sel.innerHTML = cursos.map(c => `<option value="${c}">${c}</option>`).join('');
   cargarSeguimiento();
 }
