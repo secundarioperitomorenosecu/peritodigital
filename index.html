@@ -3902,36 +3902,57 @@ function renderSeguimiento() {
   }
   empty.style.display = 'none';
 
-  tbody.innerHTML = filtrados.map((a, i) => {
+  tbody.innerHTML = filtrados.map((a) => {
     const idx = _segDatos.indexOf(a);
     const hito10 = a.faltas >= 10;
     const hito20 = a.faltas >= 20;
     const hito28 = a.faltas >= 28;
+
+    // Columna faltas: número editable (manual) o solo lectura con color (automático)
+    const colorFaltas = a.faltas>=28?'#A32D2D':a.faltas>=20?'#993C1D':a.faltas>=10?'#854F0B':'var(--color-text-primary)';
     const faltaCell = _segEsAuto
-      ? `<td style="text-align:center;padding:8px;font-weight:500;color:${a.faltas>=28?'#A32D2D':a.faltas>=20?'#993C1D':a.faltas>=10?'#854F0B':'var(--color-text-primary)'}">${a.faltas}</td>`
-      : `<td style="text-align:center;padding:8px"><input type="number" min="0" value="${a.faltas||0}" onchange="_segDatos[${idx}].faltas=parseInt(this.value)||0;_segDatos[${idx}].faltasManual=parseInt(this.value)||0;renderSeguimiento()" style="width:55px;text-align:center;padding:4px 6px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:inherit"></td>`;
+      ? `<td style="text-align:center;padding:8px;font-weight:600;color:${colorFaltas}">${a.faltas}</td>`
+      : `<td style="text-align:center;padding:8px">
+           <input type="number" min="0" value="${a.faltas||0}"
+             onchange="var v=parseInt(this.value)||0;_segDatos[${idx}].faltas=v;_segDatos[${idx}].faltasManual=v;renderSeguimiento()"
+             style="width:55px;text-align:center;padding:4px 6px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:${colorFaltas};font-weight:600;font-size:13px;font-family:inherit">
+         </td>`;
 
-    function citCol(hito, key, concKey, bg, color) {
-      if (!hito) return `<td style="background:${bg};padding:8px"></td><td style="background:${bg};padding:8px"></td><td style="background:${bg};padding:8px"></td>`;
-      return `
-        <td style="background:${bg};padding:6px 8px;text-align:center"><input type="checkbox" checked style="accent-color:#C0001A" onchange="_segDatos[${idx}]['${key.replace('cit','')==='10'?'hito10':'hito10'}']"></td>
-        <td style="background:${bg};padding:6px 8px"><input type="date" value="${a[key]||''}" onchange="_segDatos[${idx}]['${key}']=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"></td>
-        <td style="background:${bg};padding:6px 8px;text-align:center"><input type="checkbox" ${a[concKey]?'checked':''} style="accent-color:#C0001A" onchange="_segDatos[${idx}]['${concKey}']=this.checked"></td>`;
-    }
+    // Columna hito: solo ícono visual, sin checkbox interactivo
+    const hitoCell = (alcanzado, bg, color) =>
+      `<td style="text-align:center;padding:6px 8px;${alcanzado?'background:'+bg:''}">
+         <span style="font-size:16px">${alcanzado ? '<span style=color:'+color+'>✔</span>' : ''}</span>
+       </td>`;
 
-    const bg10='#FAEEDA33', bg20='#FAECE733', bg28='#FCEBEB33';
+    // Columna fecha citación
+    const fechaCell = (alcanzado, key, bg) =>
+      `<td style="padding:6px 8px;${alcanzado?'background:'+bg:''}">
+         <input type="date" value="${a[key]||''}" ${!alcanzado?'disabled':''}
+           onchange="_segDatos[${idx}]['${key}']=this.value"
+           style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${alcanzado?1:0.25}">
+       </td>`;
+
+    // Columna concurrió
+    const concCell = (alcanzado, concKey, bg, accent) =>
+      `<td style="text-align:center;padding:6px 8px;${alcanzado?'background:'+bg:''}">
+         <input type="checkbox" ${a[concKey]?'checked':''} ${!alcanzado?'disabled':''}
+           onchange="_segDatos[${idx}]['${concKey}']=this.checked"
+           style="accent-color:${accent};opacity:${alcanzado?1:0.25};width:16px;height:16px;cursor:${alcanzado?'pointer':'not-allowed'}">
+       </td>`;
+
+    const bg10='#FAEEDA55', bg20='#FAECE755', bg28='#FCEBEB55';
     return `<tr style="border-bottom:0.5px solid var(--color-border-tertiary)">
       <td style="padding:8px 10px;font-weight:500;font-size:13px">${a.nombre}</td>
       ${faltaCell}
-      <td style="${hito10?'background:'+bg10:''}padding:6px 8px;text-align:center"><input type="checkbox" ${hito10?'checked':''} disabled style="accent-color:#854F0B"></td>
-      <td style="${hito10?'background:'+bg10:''}padding:6px 8px"><input type="date" value="${a.cit10||''}" ${!hito10?'disabled':''} onchange="_segDatos[${idx}].cit10=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${hito10?1:0.3}"></td>
-      <td style="${hito10?'background:'+bg10:''}padding:6px 8px;text-align:center"><input type="checkbox" ${a.conc10?'checked':''} ${!hito10?'disabled':''} onchange="_segDatos[${idx}].conc10=this.checked" style="accent-color:#854F0B;opacity:${hito10?1:0.3}"></td>
-      <td style="${hito20?'background:'+bg20:''}padding:6px 8px;text-align:center"><input type="checkbox" ${hito20?'checked':''} disabled style="accent-color:#993C1D"></td>
-      <td style="${hito20?'background:'+bg20:''}padding:6px 8px"><input type="date" value="${a.cit20||''}" ${!hito20?'disabled':''} onchange="_segDatos[${idx}].cit20=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${hito20?1:0.3}"></td>
-      <td style="${hito20?'background:'+bg20:''}padding:6px 8px;text-align:center"><input type="checkbox" ${a.conc20?'checked':''} ${!hito20?'disabled':''} onchange="_segDatos[${idx}].conc20=this.checked" style="accent-color:#993C1D;opacity:${hito20?1:0.3}"></td>
-      <td style="${hito28?'background:'+bg28:''}padding:6px 8px;text-align:center"><input type="checkbox" ${hito28?'checked':''} disabled style="accent-color:#A32D2D"></td>
-      <td style="${hito28?'background:'+bg28:''}padding:6px 8px"><input type="date" value="${a.cit28||''}" ${!hito28?'disabled':''} onchange="_segDatos[${idx}].cit28=this.value" style="font-size:12px;padding:3px 5px;width:108px;border-radius:6px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);opacity:${hito28?1:0.3}"></td>
-      <td style="${hito28?'background:'+bg28:''}padding:6px 8px;text-align:center"><input type="checkbox" ${a.conc28?'checked':''} ${!hito28?'disabled':''} onchange="_segDatos[${idx}].conc28=this.checked" style="accent-color:#A32D2D;opacity:${hito28?1:0.3}"></td>
+      ${hitoCell(hito10, bg10, '#854F0B')}
+      ${fechaCell(hito10, 'cit10', bg10)}
+      ${concCell(hito10, 'conc10', bg10, '#854F0B')}
+      ${hitoCell(hito20, bg20, '#993C1D')}
+      ${fechaCell(hito20, 'cit20', bg20)}
+      ${concCell(hito20, 'conc20', bg20, '#993C1D')}
+      ${hitoCell(hito28, bg28, '#A32D2D')}
+      ${fechaCell(hito28, 'cit28', bg28)}
+      ${concCell(hito28, 'conc28', bg28, '#A32D2D')}
     </tr>`;
   }).join('');
 }
