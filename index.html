@@ -1435,6 +1435,38 @@ function fechaHoy() {
   return `${y}-${m}-${dd}`;
 }
 
+// Helper: normaliza cualquier valor de hora al formato HH:MM en zona horaria de Argentina.
+// Acepta strings "HH:MM", "HH:MM:SS", objetos Date, o ISO strings que llegan desde el servidor en UTC.
+function parsearHoraArgentina(valor) {
+  if (!valor) return '--:--';
+  const s = String(valor);
+  // Si ya es un string de hora HH:MM o HH:MM:SS → usarlo directo (viene bien del backend)
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) return s.substring(0, 5);
+  // Si es Date serializado (ISO, timestamp numérico, etc.) → convertir a hora AR
+  const d = new Date(valor);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+  // Fallback: devolver los primeros 5 caracteres tal cual
+  return s.substring(0, 5);
+}
+
+// Helper: extrae las partes HH/MM/SS de un valor de hora (compatible con parsearHoraArgentina)
+function partesHoraArgentina(valor) {
+  const horaStr = parsearHoraArgentina(valor); // siempre devuelve "HH:MM"
+  const [hh, mm] = horaStr.split(':');
+  // Intentar obtener segundos si el original los tiene
+  const s = String(valor);
+  let ss = 0;
+  if (/^\d{1,2}:\d{2}:\d{2}$/.test(s)) ss = parseInt(s.split(':')[2]) || 0;
+  return [parseInt(hh) || 0, parseInt(mm) || 0, ss];
+}
+
 function loginStaff(){
   const usuario = (document.getElementById('staff-user').value || '').trim();
   const pass = (document.getElementById('staff-pass').value || '').trim();
@@ -4104,9 +4136,9 @@ function confirmarSalidaBano(legajo, nombre) {
     const ahora = new Date();
     const reciente = _banosRegistros.find(r => {
       if (!r.hora) return false;
-      const partes = r.hora.split(':');
+      const [hh, mm, ss] = partesHoraArgentina(r.hora);
       const regDate = new Date();
-      regDate.setHours(parseInt(partes[0]), parseInt(partes[1]), parseInt(partes[2] || 0), 0);
+      regDate.setHours(hh, mm, ss, 0);
       return (ahora - regDate) <= 60000;
     });
     if (reciente) {
@@ -4118,7 +4150,7 @@ function confirmarSalidaBano(legajo, nombre) {
         banner.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad00;border-radius:14px;padding:14px 22px;z-index:9999;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90%;font-family:Outfit,sans-serif;animation:fadeIn .3s ease';
         document.body.appendChild(banner);
       }
-      banner.innerHTML = '🚽 <strong>¡Atención!</strong> ' + reciente.nombre + ' fue al baño a las <strong>' + reciente.hora.substring(0,5) + '</strong> — puede que todavía esté adentro.';
+      banner.innerHTML = '🚽 <strong>¡Atención!</strong> ' + reciente.nombre + ' fue al baño a las <strong>' + parsearHoraArgentina(reciente.hora) + '</strong> — puede que todavía esté adentro.';
       banner.style.display = 'block';
       clearTimeout(window._banoBannerTimer);
       window._banoBannerTimer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
@@ -4142,7 +4174,7 @@ function confirmarSalidaBano(legajo, nombre) {
 }
 
 function mostrarFlashBano(hora, nombre, detalle) {
-  document.getElementById('bano-flash-hora').textContent = hora.substring(0,5);
+  document.getElementById('bano-flash-hora').textContent = parsearHoraArgentina(hora);
   document.getElementById('bano-flash-nombre').textContent = nombre;
   document.getElementById('bano-flash-detalle').textContent = detalle;
   const f = document.getElementById('bano-flash');
@@ -4178,7 +4210,7 @@ function renderHistorialBanos(registros, fecha) {
   }
   lista.innerHTML = registros.map(r => `
     <div class="bano-registro">
-      <div class="bano-reg-hora">${r.hora.substring(0,5)}</div>
+      <div class="bano-reg-hora">${parsearHoraArgentina(r.hora)}</div>
       <div class="bano-reg-info">
         <div class="bano-reg-nombre">${r.nombre}</div>
         <div class="bano-reg-meta">Curso ${r.curso} · Leg. ${r.legajo} · ${r.preceptor}</div>
@@ -4219,8 +4251,8 @@ function exportarPDFBanos() {
   Object.entries(porCurso).sort().forEach(([curso, regs]) => {
     html += `<h2>Curso ${curso} &nbsp;(${regs.length} salida${regs.length!==1?'s':''})</h2>
     <table><thead><tr><th>Hora</th><th>Alumno</th><th>Legajo</th><th>Baño</th><th>Preceptor/a</th></tr></thead><tbody>`;
-    regs.slice().sort((a,b)=>a.hora.localeCompare(b.hora)).forEach(r => {
-      html += `<tr><td class="hora">${r.hora.substring(0,5)}</td><td>${r.nombre}</td><td>${r.legajo}</td><td>Baño ${r.inodoro}</td><td>${r.preceptor}</td></tr>`;
+    regs.slice().sort((a,b)=>parsearHoraArgentina(a.hora).localeCompare(parsearHoraArgentina(b.hora))).forEach(r => {
+      html += `<tr><td class="hora">${parsearHoraArgentina(r.hora)}</td><td>${r.nombre}</td><td>${r.legajo}</td><td>Baño ${r.inodoro}</td><td>${r.preceptor}</td></tr>`;
     });
     html += '</tbody></table>';
   });
