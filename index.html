@@ -489,6 +489,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
+      <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#C0001A;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
     </div>
     <div class="sidebar-footer">
@@ -1928,6 +1929,102 @@ function dnlFeedback(msg, ok) {
 }
 </script>
 
+
+<div id="sec-mensajes" class="section">
+  <div style="display:flex;height:calc(100vh - 120px);min-height:500px;overflow:hidden">
+
+    <!-- Columna izquierda: canales + conversaciones -->
+    <div id="msg-sidebar" style="width:260px;min-width:200px;border-right:0.5px solid var(--color-border-secondary);display:flex;flex-direction:column;background:var(--color-background-secondary);flex-shrink:0">
+
+      <!-- Canales grupales -->
+      <div style="padding:12px 14px 6px;font-size:10px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px">Canales</div>
+      <div id="msg-canales" style="flex-shrink:0"></div>
+
+      <!-- Mensajes privados -->
+      <div style="padding:12px 14px 6px;font-size:10px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center">
+        <span>Privados</span>
+        <button onclick="abrirNuevoPrivado()" title="Nuevo mensaje privado"
+          style="background:none;border:none;cursor:pointer;color:#C0001A;font-size:16px;padding:0;line-height:1">+</button>
+      </div>
+      <div id="msg-privados" style="flex:1;overflow-y:auto"></div>
+    </div>
+
+    <!-- Columna derecha: chat activo -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+
+      <!-- Header del chat -->
+      <div id="msg-chat-header" style="padding:12px 16px;border-bottom:0.5px solid var(--color-border-secondary);display:flex;align-items:center;gap:10px;background:var(--color-background-primary);flex-shrink:0">
+        <div id="msg-chat-icon" style="font-size:20px">💬</div>
+        <div>
+          <div id="msg-chat-title" style="font-weight:600;font-size:14px;color:var(--color-text-primary)">Seleccioná una conversación</div>
+          <div id="msg-chat-sub" style="font-size:11px;color:var(--color-text-tertiary)"></div>
+        </div>
+      </div>
+
+      <!-- Mensajes -->
+      <div id="msg-chat-body" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;color:var(--color-text-tertiary);font-size:13px;margin:auto">
+          Seleccioná un canal o conversación para empezar.
+        </div>
+      </div>
+
+      <!-- Input mensaje -->
+      <div id="msg-input-wrap" style="padding:12px 16px;border-top:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);display:none">
+        <!-- Link adjunto (opcional) -->
+        <div id="msg-link-wrap" style="display:none;margin-bottom:8px;display:flex;gap:8px;align-items:center">
+          <input type="text" id="msg-link-input" placeholder="🔗 Pegá un link de Drive, OneDrive, etc. (opcional)"
+            style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <button onclick="document.getElementById('msg-link-wrap').style.display='none';document.getElementById('msg-link-input').value=''"
+            style="background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:16px">✕</button>
+        </div>
+        <!-- Texto + botones -->
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <div style="flex:1;position:relative">
+            <textarea id="msg-texto" placeholder="Escribí tu mensaje…" rows="1"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensaje();}"
+              style="width:100%;padding:10px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:none;box-sizing:border-box;line-height:1.4"></textarea>
+          </div>
+          <!-- Emoji picker trigger -->
+          <div style="position:relative">
+            <button id="btn-emoji" onclick="toggleEmojiPicker()"
+              style="padding:9px 10px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;font-size:16px;line-height:1">😊</button>
+            <div id="emoji-picker" style="display:none;position:absolute;bottom:44px;right:0;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:12px;padding:8px;width:220px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.15)">
+              <div style="display:flex;flex-wrap:wrap;gap:4px">
+                <script>
+                ['😊','😂','👍','❤️','👏','🙏','✅','⚠️','📌','📎','📄','📅','🏫','✏️','📚','💡','🔔','📢','👋','😅','🤔','💪','🎉','😔','🙄','😤','👀','🤝','📞','💬'].forEach(e => {
+                  document.write('<button onclick="insertEmoji(\''+e+'\')" style="background:none;border:none;cursor:pointer;font-size:18px;padding:3px;border-radius:6px;line-height:1" onmouseover="this.style.background=\'var(--color-background-secondary)\'" onmouseout="this.style.background=\'none\'">'+e+'</button>');
+                });
+                </script>
+              </div>
+            </div>
+          </div>
+          <!-- Adjuntar link -->
+          <button onclick="document.getElementById('msg-link-wrap').style.display='flex'"
+            style="padding:9px 10px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;font-size:16px;line-height:1" title="Adjuntar link">🔗</button>
+          <!-- Enviar -->
+          <button onclick="enviarMensaje()" id="btn-enviar-msg"
+            style="padding:9px 16px;border-radius:10px;border:none;background:#C0001A;color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;line-height:1">Enviar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal nuevo privado -->
+  <div id="modal-nuevo-privado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center">
+    <div style="background:var(--color-background-primary);border-radius:16px;padding:24px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <h3 style="margin:0 0 16px;font-size:16px;color:var(--color-text-primary)">Nuevo mensaje privado</h3>
+      <label style="font-size:11px;font-weight:600;color:var(--color-text-secondary);display:block;margin-bottom:6px">Para</label>
+      <input type="text" id="buscar-usuario-privado" placeholder="Buscar por nombre…" oninput="filtrarUsuariosPrivado()"
+        style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;margin-bottom:8px"/>
+      <div id="lista-usuarios-privado" style="max-height:220px;overflow-y:auto;border:0.5px solid var(--color-border-secondary);border-radius:10px"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px">
+        <button onclick="cerrarNuevoPrivado()" style="padding:8px 18px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:none;color:var(--color-text-primary);cursor:pointer;font-family:inherit;font-size:13px">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   </main>
 </div><!-- fin #app -->
 
@@ -2059,7 +2156,7 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes'};
 const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias'};
 let attendanceState={};
 let currentUser = '';
@@ -2218,6 +2315,8 @@ function buildBottomNav(role) {
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
+    if (isAdmin || isPreceptor || currentRole)
+      items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
     if (isAdmin) {
@@ -2319,6 +2418,9 @@ function doLogin(name, role, usuario, res){
   if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navDnl = document.getElementById('nav-dias-no-lectivos');
   if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navMsg = document.getElementById('nav-mensajes');
+  if (navMsg) navMsg.style.display = 'flex'; // visible para todos los roles
+  setTimeout(actualizarBadgeMensajes, 1500);
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -2385,6 +2487,7 @@ function showSection(id,el){
   if(id === 'ausencias-docentes') inicializarAusenciasDocentes();
   if(id === 'informe-materias') inicializarInformeMaterias();
   if(id === 'dias-no-lectivos') inicializarDiasNoLectivos();
+  if(id === 'mensajes') inicializarMensajes();
   if(id === 'archivos') cargarArchivos();
   if(id === 'reportes') generarReporte();
   if(id === 'usuarios') cargarUsuarios();
@@ -5104,3 +5207,267 @@ function exportarPDFBanos() {
 
 </body>
 </html>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+//  MÓDULO MENSAJERÍA
+// ═══════════════════════════════════════════════════════════════════
+
+let _msgConvActual = null;  // { tipo: 'canal'|'privado', id, nombre, icono }
+let _msgUsuarios   = [];    // lista de usuarios activos del sistema
+let _msgPollTimer  = null;
+
+const MSG_CANALES = [
+  { id: 'canal_directivos', nombre: 'Directivos',  icono: '🏫', roles: ['director','vicedirector','secretario','secretario/a'] },
+  { id: 'canal_preceptores',nombre: 'Preceptores', icono: '📋', roles: ['preceptor'] },
+  { id: 'canal_docentes',   nombre: 'Docentes',    icono: '📚', roles: ['docente','profesor'] },
+  { id: 'canal_general',    nombre: 'General',     icono: '📢', roles: [] }, // todos
+];
+
+function inicializarMensajes() {
+  renderCanales();
+  cargarUsuariosMensajeria();
+  cargarConversacionesPrivadas();
+  actualizarBadgeMensajes();
+  // Polling cada 30 seg mientras el tab está abierto
+  if (_msgPollTimer) clearInterval(_msgPollTimer);
+  _msgPollTimer = setInterval(() => {
+    if (_msgConvActual) cargarMensajesActual(false);
+    actualizarBadgeMensajes();
+  }, 30000);
+}
+
+function rolEnCanal(canal) {
+  if (!canal.roles.length) return true; // canal general: todos
+  const r = (currentRole||'').toLowerCase();
+  return canal.roles.some(ro => r.includes(ro));
+}
+
+function renderCanales() {
+  const cont = document.getElementById('msg-canales');
+  cont.innerHTML = MSG_CANALES.map(c => {
+    if (!rolEnCanal(c)) return '';
+    return `<div class="msg-conv-item" id="convitem-${c.id}" onclick="abrirConvCanal('${c.id}')"
+      style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-radius:0;transition:background .15s"
+      onmouseover="this.style.background='var(--color-background-tertiary,#f0f0f0)'" onmouseout="if(_msgConvActual?.id!=='${c.id}')this.style.background=''">
+      <span style="font-size:16px">${c.icono}</span>
+      <span style="font-size:13px;color:var(--color-text-primary);font-weight:500">${c.nombre}</span>
+      <span id="badge-${c.id}" style="display:none;background:#C0001A;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:auto">•</span>
+    </div>`;
+  }).join('');
+}
+
+function cargarUsuariosMensajeria() {
+  callWebApp({ accion: 'obtenerUsuariosMensajeria' }).then(res => {
+    if (res?.ok) {
+      _msgUsuarios = (res.usuarios || []).filter(u => u.id !== currentUser);
+      cargarConversacionesPrivadas();
+    }
+  });
+}
+
+function cargarConversacionesPrivadas() {
+  callWebApp({ accion: 'obtenerConversacionesPrivadas', usuario: currentUser }).then(res => {
+    const cont = document.getElementById('msg-privados');
+    if (!res?.ok || !res.conversaciones?.length) {
+      cont.innerHTML = '<div style="padding:8px 14px;font-size:12px;color:var(--color-text-tertiary)">Sin conversaciones aún</div>';
+      return;
+    }
+    cont.innerHTML = res.conversaciones.map(c => {
+      const otro = c.otro_nombre || c.otro;
+      const initials = otro.split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+      return `<div class="msg-conv-item" id="convitem-priv-${c.conv_id}" onclick="abrirConvPrivada('${c.conv_id}','${otro.replace(/'/g,"\\'")}','${c.otro}')"
+        style="display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:background .15s"
+        onmouseover="this.style.background='var(--color-background-tertiary,#f0f0f0)'" onmouseout="if(_msgConvActual?.id!=='${c.conv_id}')this.style.background=''">
+        <div style="width:30px;height:30px;border-radius:50%;background:#1a2744;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initials}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${otro}</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.ultimo_msg||''}</div>
+        </div>
+        <span id="badge-priv-${c.conv_id}" style="display:${c.no_leidos>0?'flex':'none'};background:#C0001A;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;min-width:16px;justify-content:center">${c.no_leidos||''}</span>
+      </div>`;
+    }).join('');
+  });
+}
+
+function abrirConvCanal(canalId) {
+  const canal = MSG_CANALES.find(c => c.id === canalId);
+  if (!canal) return;
+  _msgConvActual = { tipo: 'canal', id: canalId, nombre: canal.nombre, icono: canal.icono };
+  document.getElementById('msg-chat-title').textContent = canal.nombre;
+  document.getElementById('msg-chat-sub').textContent = 'Canal grupal';
+  document.getElementById('msg-chat-icon').textContent = canal.icono;
+  document.getElementById('msg-input-wrap').style.display = 'block';
+  resaltarConvActiva('convitem-' + canalId);
+  cargarMensajesActual(true);
+  document.getElementById('badge-' + canalId).style.display = 'none';
+}
+
+function abrirConvPrivada(convId, nombreOtro, usuarioOtro) {
+  const initials = nombreOtro.split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+  _msgConvActual = { tipo: 'privado', id: convId, nombre: nombreOtro, usuario: usuarioOtro, icono: initials };
+  document.getElementById('msg-chat-title').textContent = nombreOtro;
+  document.getElementById('msg-chat-sub').textContent = 'Mensaje privado';
+  document.getElementById('msg-chat-icon').textContent = '👤';
+  document.getElementById('msg-input-wrap').style.display = 'block';
+  resaltarConvActiva('convitem-priv-' + convId);
+  cargarMensajesActual(true);
+  const badge = document.getElementById('badge-priv-' + convId);
+  if (badge) badge.style.display = 'none';
+}
+
+function resaltarConvActiva(itemId) {
+  document.querySelectorAll('.msg-conv-item').forEach(el => el.style.background = '');
+  const el = document.getElementById(itemId);
+  if (el) el.style.background = 'var(--color-background-tertiary,#f0f0f0)';
+}
+
+function cargarMensajesActual(scrollBottom) {
+  if (!_msgConvActual) return;
+  callWebApp({
+    accion: 'obtenerMensajes',
+    tipo:   _msgConvActual.tipo,
+    conv_id: _msgConvActual.id,
+    usuario: currentUser
+  }).then(res => {
+    if (!res?.ok) return;
+    renderMensajes(res.mensajes || [], scrollBottom);
+    // Marcar como leídos
+    callWebApp({ accion: 'marcarLeidos', conv_id: _msgConvActual.id, usuario: currentUser });
+    actualizarBadgeMensajes();
+  });
+}
+
+function renderMensajes(mensajes, scrollBottom) {
+  const body = document.getElementById('msg-chat-body');
+  if (!mensajes.length) {
+    body.innerHTML = '<div style="text-align:center;color:var(--color-text-tertiary);font-size:13px;margin:auto">Sin mensajes aún. ¡Sé el primero en escribir!</div>';
+    return;
+  }
+
+  let lastFecha = '';
+  body.innerHTML = mensajes.map(m => {
+    const esMio = m.autor === currentUser;
+    const fechaMsg = (m.timestamp||'').substring(0,10);
+    let separador = '';
+    if (fechaMsg !== lastFecha && fechaMsg) {
+      lastFecha = fechaMsg;
+      const d = new Date(fechaMsg + 'T12:00:00');
+      separador = `<div style="text-align:center;margin:8px 0"><span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 10px;border-radius:10px">${d.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'long'})}</span></div>`;
+    }
+
+    const hora = m.timestamp ? new Date(m.timestamp).toLocaleTimeString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit'}) : '';
+    const linkHTML = m.link ? `<a href="${m.link}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;background:rgba(255,255,255,.15);border-radius:8px;color:inherit;text-decoration:none;font-size:11px"><span>🔗</span><span style="text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">${m.link_nombre||m.link}</span></a>` : '';
+
+    return `${separador}
+    <div style="display:flex;flex-direction:column;align-items:${esMio?'flex-end':'flex-start'};gap:2px">
+      ${!esMio ? `<span style="font-size:10px;color:var(--color-text-tertiary);margin-left:4px">${m.autor_nombre||m.autor}</span>` : ''}
+      <div style="max-width:70%;padding:9px 13px;border-radius:${esMio?'14px 14px 4px 14px':'14px 14px 14px 4px'};background:${esMio?'#C0001A':'var(--color-background-secondary)'};color:${esMio?'#fff':'var(--color-text-primary)'};font-size:13px;line-height:1.5;word-break:break-word">
+        ${m.texto}${linkHTML}
+      </div>
+      <span style="font-size:10px;color:var(--color-text-tertiary);margin:0 4px">${hora}</span>
+    </div>`;
+  }).join('');
+
+  if (scrollBottom) body.scrollTop = body.scrollHeight;
+}
+
+function enviarMensaje() {
+  const texto = (document.getElementById('msg-texto').value || '').trim();
+  const link  = (document.getElementById('msg-link-input')?.value || '').trim();
+  if (!texto && !link) return;
+  if (!_msgConvActual) return;
+
+  const btn = document.getElementById('btn-enviar-msg');
+  btn.disabled = true;
+
+  callWebApp({
+    accion:    'enviarMensaje',
+    tipo:      _msgConvActual.tipo,
+    conv_id:   _msgConvActual.id,
+    destinatario: _msgConvActual.usuario || '',
+    autor:     currentUser,
+    autorNombre: currentNombre,
+    texto,
+    link,
+    link_nombre: link ? (link.split('/').pop().split('?')[0] || link) : ''
+  }).then(res => {
+    btn.disabled = false;
+    if (res?.ok) {
+      document.getElementById('msg-texto').value = '';
+      document.getElementById('msg-texto').style.height = 'auto';
+      document.getElementById('msg-link-input').value = '';
+      document.getElementById('msg-link-wrap').style.display = 'none';
+      cargarMensajesActual(true);
+    } else {
+      showToast('Error al enviar: ' + (res?.error||''), '❌');
+    }
+  }).catch(() => { btn.disabled = false; showToast('Error de conexión','❌'); });
+}
+
+function toggleEmojiPicker() {
+  const p = document.getElementById('emoji-picker');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+function insertEmoji(e) {
+  const ta = document.getElementById('msg-texto');
+  const pos = ta.selectionStart;
+  ta.value = ta.value.substring(0,pos) + e + ta.value.substring(ta.selectionEnd);
+  ta.selectionStart = ta.selectionEnd = pos + e.length;
+  ta.focus();
+  document.getElementById('emoji-picker').style.display = 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#btn-emoji') && !e.target.closest('#emoji-picker'))
+    document.getElementById('emoji-picker') && (document.getElementById('emoji-picker').style.display = 'none');
+});
+
+// ── Nuevo privado ────────────────────────────────────────────────────
+function abrirNuevoPrivado() {
+  document.getElementById('buscar-usuario-privado').value = '';
+  filtrarUsuariosPrivado();
+  document.getElementById('modal-nuevo-privado').style.display = 'flex';
+}
+function cerrarNuevoPrivado() {
+  document.getElementById('modal-nuevo-privado').style.display = 'none';
+}
+function filtrarUsuariosPrivado() {
+  const q = document.getElementById('buscar-usuario-privado').value.toLowerCase();
+  const lista = document.getElementById('lista-usuarios-privado');
+  const filtrados = _msgUsuarios.filter(u => u.nombre.toLowerCase().includes(q) || u.rol.toLowerCase().includes(q));
+  if (!filtrados.length) {
+    lista.innerHTML = '<div style="padding:12px;font-size:13px;color:var(--color-text-tertiary);text-align:center">Sin resultados</div>';
+    return;
+  }
+  lista.innerHTML = filtrados.map(u => {
+    const initials = u.nombre.split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+    return `<div onclick="iniciarPrivado('${u.id}','${u.nombre.replace(/'/g,"\\'")}')"
+      style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .15s"
+      onmouseover="this.style.background='var(--color-background-secondary)'" onmouseout="this.style.background=''">
+      <div style="width:32px;height:32px;border-radius:50%;background:#1a2744;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initials}</div>
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">${u.nombre}</div>
+        <div style="font-size:11px;color:var(--color-text-tertiary)">${u.rol}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function iniciarPrivado(usuarioId, nombreOtro) {
+  cerrarNuevoPrivado();
+  // conv_id = combinación ordenada de los dos usuarios
+  const ids = [currentUser, usuarioId].sort();
+  const convId = 'priv_' + ids[0] + '_' + ids[1];
+  abrirConvPrivada(convId, nombreOtro, usuarioId);
+  cargarConversacionesPrivadas();
+}
+
+// ── Badge global ─────────────────────────────────────────────────────
+function actualizarBadgeMensajes() {
+  callWebApp({ accion: 'contarNoLeidos', usuario: currentUser }).then(res => {
+    const badge = document.getElementById('badge-mensajes');
+    if (!badge) return;
+    const total = res?.total || 0;
+    if (total > 0) { badge.textContent = total; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+  });
+}
+</script>
