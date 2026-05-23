@@ -1099,16 +1099,18 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:16px">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
               <div class="form-group">
-                <label>Alumno (Apellido, Nombre)</label>
-                <input type="text" id="eoe-alumno" placeholder="García, María" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;box-sizing:border-box"/>
-              </div>
-              <div class="form-group">
                 <label>Curso</label>
-                <select id="eoe-curso" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                <select id="eoe-curso" onchange="cargarAlumnosEOEForm()" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
                   <option value="">— Seleccioná —</option>
                   <option value="1A">1°A</option><option value="1B">1°B</option><option value="2A">2°A</option><option value="2B">2°B</option>
                   <option value="3A">3°A</option><option value="3B">3°B</option><option value="4A">4°A</option><option value="4B">4°B</option>
                   <option value="5A">5°A</option><option value="5B">5°B</option><option value="6A">6°A</option><option value="6B">6°B</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Alumno</label>
+                <select id="eoe-alumno-sel" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                  <option value="">— Primero seleccioná el curso —</option>
                 </select>
               </div>
             </div>
@@ -2462,19 +2464,34 @@ function toggleNuevoLegajoEOE() {
   if (w) w.style.display = w.style.display === 'none' ? 'block' : 'none';
 }
 
+function cargarAlumnosEOEForm() {
+  const curso = document.getElementById('eoe-curso').value;
+  const sel   = document.getElementById('eoe-alumno-sel');
+  if (!curso) { sel.innerHTML = '<option value="">— Primero seleccioná el curso —</option>'; return; }
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    if (!res?.ok || !res.alumnos?.length) {
+      sel.innerHTML = '<option value="">Sin alumnos para este curso</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">— Seleccioná alumno —</option>' +
+      res.alumnos.map(a => `<option value="${a.nombre}">${a.nombre}</option>`).join('');
+  }).catch(() => { sel.innerHTML = '<option value="">Error al cargar</option>'; });
+}
+
 function guardarLegajoEOE() {
-  const alumno = (document.getElementById('eoe-alumno')?.value || '').trim();
+  const alumno = document.getElementById('eoe-alumno-sel')?.value || '';
   const curso  = document.getElementById('eoe-curso')?.value || '';
   const tipo   = document.getElementById('eoe-tipo')?.value || 'otro';
   const desc   = (document.getElementById('eoe-descripcion')?.value || '').trim();
-  if (!alumno) { showToast('Ingresá el nombre del alumno','⚠️'); return; }
   if (!curso)  { showToast('Seleccioná el curso','⚠️'); return; }
+  if (!alumno) { showToast('Seleccioná el alumno','⚠️'); return; }
   if (!desc)   { showToast('Escribí la descripción','⚠️'); return; }
   showToast('Guardando...','⏳');
   callWebApp({ accion:'crearLegajoEOE', alumno, curso, tipo, descripcion: desc, autor: currentUser, autorNombre: currentNombre }).then(res => {
     if (res?.ok) {
       showToast('Legajo guardado ✓','✅');
-      document.getElementById('eoe-alumno').value = '';
+      document.getElementById('eoe-alumno-sel').value = '';
       document.getElementById('eoe-descripcion').value = '';
       toggleNuevoLegajoEOE();
       cargarLegajosEOE();
@@ -2509,22 +2526,176 @@ function cargarLegajosEOE() {
     }
     const TIPO_LABEL = { convivencia:'🤝 Convivencia', academica:'📚 Académica', familiar:'👨‍👩‍👧 Familiar', salud:'🏥 Salud', conducta:'⚠️ Conducta', otro:'📌 Otro' };
     const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
-    lista.innerHTML = res.legajos.map(l => `
-      <div class="panel" style="margin-bottom:12px;border-left:4px solid #C0001A">
-        <div class="panel-body">
-          <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
-            <div style="flex:1;min-width:200px">
-              <div style="font-weight:700;font-size:14px;color:#1a1a1a">${l.alumno}</div>
-              <div style="font-size:12px;color:#888;margin-top:2px">${l.curso} · ${new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR')}${l.anio ? ' · <strong>'+l.anio+'</strong>' : ''}</div>
-            </div>
-            <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'}">${TIPO_LABEL[l.tipo]||l.tipo}</span>
+    const TIPO_BORDER = { convivencia:'#90caf9', academica:'#ffcc80', familiar:'#ce93d8', salud:'#a5d6a7', conducta:'#ef9a9a', otro:'#e0e0e0' };
+
+    // Agrupar por alumno (clave: alumno+curso)
+    const porAlumno = {};
+    res.legajos.forEach(l => {
+      const key = (l.alumno + '|' + l.curso).toUpperCase();
+      if (!porAlumno[key]) porAlumno[key] = { alumno: l.alumno, curso: l.curso, legajos: [] };
+      porAlumno[key].legajos.push(l);
+    });
+
+    // Ordenar legajos de cada alumno por fecha ascendente
+    Object.values(porAlumno).forEach(g => {
+      g.legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+    });
+
+    // Ordenar alumnos alfabéticamente
+    const grupos = Object.values(porAlumno).sort((a,b) => a.alumno.localeCompare(b.alumno));
+
+    lista.innerHTML = grupos.map(g => {
+      const n = g.legajos.length;
+      const legajosHTML = g.legajos.map((l, idx) => `
+        <div style="position:relative;padding:12px 12px 12px 18px;background:#fff;border-radius:8px;border:1px solid #e8d5c4;margin-bottom:8px">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${TIPO_BORDER[l.tipo]||'#e0e0e0'};border-radius:4px 0 0 4px"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span style="font-size:11px;font-weight:700;color:#888">#${idx+1}</span>
+            <span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'};color:#555">${TIPO_LABEL[l.tipo]||l.tipo}</span>
+            <span style="font-size:11px;color:#aaa;margin-left:auto">${l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</span>
           </div>
-          <div style="margin-top:10px;font-size:13px;color:#333;line-height:1.6;background:#fdf8f3;padding:10px;border-radius:8px">${l.descripcion}</div>
-          <div style="margin-top:8px;font-size:11px;color:#aaa">Registrado por: ${l.autorNombre||l.autor}</div>
+          <div style="font-size:13px;color:#333;line-height:1.6;white-space:pre-wrap">${l.descripcion}</div>
+          <div style="margin-top:6px;font-size:10px;color:#bbb">Registrado por: ${l.autorNombre||l.autor||'—'}</div>
+        </div>`).join('');
+
+      // Serializar legajos para el botón PDF (escape seguro)
+      const legajosJson = encodeURIComponent(JSON.stringify(g.legajos));
+
+      return `
+      <div class="panel" style="margin-bottom:16px;border-left:4px solid #C0001A">
+        <div class="panel-body">
+          <!-- Cabecera del alumno -->
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:15px;color:#1a1a1a">${g.alumno}</div>
+              <div style="font-size:12px;color:#888;margin-top:2px">${g.curso} · <strong>${n} registro${n!==1?'s':''}</strong></div>
+            </div>
+            <button onclick="exportarHistorialEOE(decodeURIComponent('${legajosJson}'), '${g.alumno}', '${g.curso}')"
+              style="padding:6px 14px;font-size:12px;border-radius:8px;border:1px solid #C0001A;background:#fff;color:#C0001A;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">
+              📋 Exportar historial completo
+            </button>
+          </div>
+          <!-- Legajos del alumno -->
+          <div>${legajosHTML}</div>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   });
 }
+function exportarHistorialEOE(legajosStr, alumno, curso) {
+  let legajos;
+  try { legajos = JSON.parse(legajosStr); } catch(e) { showToast('Error al generar PDF','❌'); return; }
+  legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+
+  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', otro:'Otro' };
+  const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
+  const TIPO_BORDER = { convivencia:'#90caf9', academica:'#ffcc80', familiar:'#ce93d8', salud:'#a5d6a7', conducta:'#ef9a9a', otro:'#e0e0e0' };
+
+  const anio = legajos[0]?.anio || new Date().getFullYear();
+
+  const registrosHTML = legajos.map((l, i) => {
+    const fechaStr = l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+    return `
+    <div style="margin-bottom:18px;padding:14px 14px 14px 18px;border:1px solid #e0e0e0;border-radius:8px;position:relative;page-break-inside:avoid">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:${TIPO_BORDER[l.tipo]||'#e0e0e0'};border-radius:4px 0 0 4px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <div>
+          <span style="font-size:10px;font-weight:700;color:#888">REGISTRO #${i+1}</span>
+          <span style="margin-left:10px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'}">${TIPO_LABEL[l.tipo]||l.tipo}</span>
+        </div>
+        <span style="font-size:11px;color:#888">${fechaStr}</span>
+      </div>
+      <div style="font-size:12px;line-height:1.7;color:#222;white-space:pre-wrap">${l.descripcion}</div>
+      <div style="margin-top:8px;font-size:10px;color:#bbb">Registrado por: ${l.autorNombre||l.autor||'—'}</div>
+    </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;padding:28px;color:#1a1a1a;font-size:12px}
+    .header{border-bottom:3px solid #C0001A;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-start}
+    .logo{font-size:18px;font-weight:700;color:#1a2744}
+    .logo-sub{font-size:10px;color:#888;margin-top:3px}
+    .badge{background:#C0001A;color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700}
+    .alumno-box{background:#fdf8f3;border:1px solid #e8d5c4;border-radius:8px;padding:14px 18px;margin-bottom:20px;display:flex;gap:24px;flex-wrap:wrap}
+    .alumno-field label{font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+    .alumno-field .val{font-size:14px;font-weight:700;color:#1a1a1a}
+    .section-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #eee}
+    .footer{margin-top:24px;padding-top:10px;border-top:1px solid #eee;font-size:9px;color:#bbb;text-align:center}
+    @media print{body{padding:15px}@page{margin:1.5cm}}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo">Perito Moreno — Colegio Secundario</div>
+      <div class="logo-sub">Equipo de Orientación Escolar · Historial de Situaciones · Ciclo ${anio}</div>
+    </div>
+    <div class="badge">CONFIDENCIAL</div>
+  </div>
+  <div class="alumno-box">
+    <div class="alumno-field"><label>Alumno/a</label><div class="val">${alumno}</div></div>
+    <div class="alumno-field"><label>Curso</label><div class="val">${curso}</div></div>
+    <div class="alumno-field"><label>Total de registros</label><div class="val">${legajos.length} situación${legajos.length!==1?'es':''}</div></div>
+    <div class="alumno-field"><label>Período</label><div class="val">${legajos[0]?.fecha ? new Date(legajos[0].fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : '—'} – ${legajos[legajos.length-1]?.fecha ? new Date(legajos[legajos.length-1].fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</div></div>
+  </div>
+  <div class="section-title">Cronología de intervenciones</div>
+  ${registrosHTML}
+  <div class="footer">
+    Documento generado el ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})} · 
+    Portal Perito Digital · Uso exclusivo institucional · No distribuir sin autorización
+  </div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+function exportarPDFLegajoEOE(l) {
+  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', otro:'Otro' };
+  const fechaStr = l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;padding:30px;color:#1a1a1a;font-size:12px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #C0001A;padding-bottom:14px;margin-bottom:20px}
+    .logo-text{font-size:20px;font-weight:700;color:#1a2744}
+    .logo-sub{font-size:11px;color:#888;margin-top:2px}
+    .badge{background:#C0001A;color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
+    .field{margin-bottom:14px}
+    .field label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+    .field .value{font-size:13px;color:#1a1a1a;padding:8px 12px;background:#fdf8f3;border-radius:6px;border:1px solid #e8d5c4}
+    .desc{font-size:13px;line-height:1.7;padding:12px;background:#fdf8f3;border-radius:6px;border:1px solid #e8d5c4;white-space:pre-wrap}
+    .footer{margin-top:30px;padding-top:12px;border-top:1px solid #eee;font-size:10px;color:#aaa;text-align:center}
+    @media print{body{padding:15px}}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo-text">Perito Moreno — Colegio Secundario</div>
+      <div class="logo-sub">Equipo de Orientación Escolar · Legajo de Situación</div>
+    </div>
+    <div class="badge">CONFIDENCIAL</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+    <div class="field"><label>Alumno/a</label><div class="value" style="font-weight:700">${l.alumno}</div></div>
+    <div class="field"><label>Curso</label><div class="value">${l.curso}</div></div>
+    <div class="field"><label>Fecha</label><div class="value">${fechaStr}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+    <div class="field"><label>Tipo de situación</label><div class="value">${TIPO_LABEL[l.tipo]||l.tipo}</div></div>
+    <div class="field"><label>Registrado por</label><div class="value">${l.autorNombre||l.autor||'—'}</div></div>
+  </div>
+  <div class="field"><label>Descripción / Intervenciones</label><div class="desc">${l.descripcion}</div></div>
+  <div class="footer">
+    Documento generado el ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})} · 
+    Portal Perito Digital · Uso exclusivo institucional
+  </div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
 function canDeletePost(p) {
   const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
   const isPreceptor = currentRole === 'preceptor';
