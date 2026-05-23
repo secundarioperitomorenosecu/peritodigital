@@ -1487,7 +1487,7 @@ function audFeedback(msg, ok) {
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;padding:14px;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary)">
       <div>
         <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Curso</label>
-        <select id="inf-curso" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
+        <select id="infmat-curso" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
           <option value="">— Seleccioná —</option>
           <option value="1A">1° A</option><option value="1B">1° B</option>
           <option value="2A">2° A</option><option value="2B">2° B</option>
@@ -1572,7 +1572,7 @@ function infSetRango(tipo) {
 }
 
 function generarInformeMaterias() {
-  const curso  = document.getElementById('inf-curso').value;
+  const curso  = document.getElementById('infmat-curso').value;
   const desde  = document.getElementById('inf-desde').value;
   const hasta  = document.getElementById('inf-hasta').value;
   const cont   = document.getElementById('inf-contenido');
@@ -1689,7 +1689,7 @@ function infRenderTabla(alumnos) {
 function infExportarPDF() {
   if (!_infData || !_infData.alumnos.length) { showToast('Generá el informe primero','⚠️'); return; }
 
-  const curso   = document.getElementById('inf-curso').value;
+  const curso   = document.getElementById('infmat-curso').value;
   const desde   = document.getElementById('inf-desde').value.split('-').reverse().join('/');
   const hasta   = document.getElementById('inf-hasta').value.split('-').reverse().join('/');
   const materias = _infData.alumnos[0]?.materias.map(m => m.materia) || [];
