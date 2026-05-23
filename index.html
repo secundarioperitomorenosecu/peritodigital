@@ -1480,7 +1480,7 @@ function audFeedback(msg, ok) {
   <div style="padding:16px 16px 0">
     <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">📊 Informe de Asistencia por Materia</h2>
     <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:16px">
-      % de asistencia de cada alumno en cada materia. Las clases donde el docente estuvo ausente no se contabilizan.
+      % de asistencia de cada alumno en cada materia. Las clases con docente ausente o días no lectivos no se contabilizan.
     </p>
 
     <!-- Filtros -->
@@ -1517,9 +1517,9 @@ function audFeedback(msg, ok) {
 
     <!-- Leyenda -->
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:11px">
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#e8f5e9;border:1px solid #a5d6a7;display:inline-block"></span>OK (menos del 15% de faltas)</span>
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#fff8e1;border:1px solid #ffe082;display:inline-block"></span>Alerta (15% – 24%)</span>
-      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#ffebee;border:1px solid #ef9a9a;display:inline-block"></span>Riesgo (25% o más)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#e8f5e9;border:1px solid #a5d6a7;display:inline-block"></span>OK (75% o más)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#fff8e1;border:1px solid #ffe082;display:inline-block"></span>Alerta (65% – 74%)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#ffebee;border:1px solid #ef9a9a;display:inline-block"></span>Riesgo (menos del 65%)</span>
     </div>
 
     <!-- Filtro alumno + exportar -->
@@ -1667,7 +1667,7 @@ function infRenderTabla(alumnos) {
       html += `<td style="padding:6px;text-align:center;border-bottom:0.5px solid var(--color-border-tertiary)">
         <div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:6px;padding:5px 4px;display:inline-block;min-width:72px">
           <div style="font-size:14px;font-weight:700;color:${c.color}">${m.porcentaje}%</div>
-          <div style="font-size:9px;color:${c.color};opacity:.8">${m.clases_ausente}/${m.clases_total} clases</div>
+          <div style="font-size:9px;color:${c.color};opacity:.8">${m.clases_total - m.clases_ausente}/${m.clases_total} clases</div>
         </div>
       </td>`;
     });
@@ -1726,7 +1726,7 @@ function infExportarPDF() {
     a.materias.forEach(m => {
       html += `<td style="${tdStyle};text-align:center;background:${colores[m.estado]}">
         <span class="chip" style="color:${colorTxt[m.estado]}">${m.porcentaje}%</span>
-        <div style="font-size:8px;color:${colorTxt[m.estado]}">${m.clases_ausente}/${m.clases_total}</div>
+        <div style="font-size:8px;color:${colorTxt[m.estado]}">${m.clases_total - m.clases_ausente}/${m.clases_total}</div>
       </td>`;
     });
     html += '</tr>';
@@ -1734,9 +1734,9 @@ function infExportarPDF() {
 
   html += `</tbody></table>
   <div style="font-size:9px;color:#888;margin-top:8px">
-    <span style="background:#e8f5e9;padding:2px 6px;border-radius:3px;margin-right:6px">Verde: OK (&lt;15%)</span>
-    <span style="background:#fff8e1;padding:2px 6px;border-radius:3px;margin-right:6px">Amarillo: Alerta (15-24%)</span>
-    <span style="background:#ffebee;padding:2px 6px;border-radius:3px">Rojo: Riesgo (≥25%)</span>
+    <span style="background:#e8f5e9;padding:2px 6px;border-radius:3px;margin-right:6px">Verde: OK (75% o más)</span>
+    <span style="background:#fff8e1;padding:2px 6px;border-radius:3px;margin-right:6px">Amarillo: Alerta (65-74%)</span>
+    <span style="background:#ffebee;padding:2px 6px;border-radius:3px">Rojo: Riesgo (menos del 65%)</span>
     ${_infData.clasesSinDocenteCount > 0 ? '<br/>* ' + _infData.clasesSinDocenteCount + ' clase(s) sin docente no contabilizadas.' : ''}
   </div>
   <script>window.onload=()=>{window.print();}<\/script>
