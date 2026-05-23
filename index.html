@@ -486,6 +486,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
+      <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
+      <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
+      <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
     </div>
     <div class="sidebar-footer">
@@ -1282,6 +1285,647 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   </div>
 </div>
 
+
+<div id="sec-ausencias-docentes" class="section">
+  <div style="padding:16px 16px 0">
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">🚫 Ausencias Docentes</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">
+      Registrá cuando un docente no se presenta. Estas ausencias se descuentan del % de asistencia
+      por materia de los alumnos — sin tocar la asistencia general.
+    </p>
+
+    <!-- Formulario -->
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:#C0001A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Nuevo registro</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Fecha</label>
+          <input type="date" id="aud-fecha" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Curso</label>
+          <select id="aud-curso" onchange="cargarDocentesCursoAud()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
+            <option value="">— Seleccioná —</option>
+            <option value="1A">1° A</option><option value="1B">1° B</option>
+            <option value="2A">2° A</option><option value="2B">2° B</option>
+            <option value="3A">3° A</option><option value="3B">3° B</option>
+            <option value="4A">4° A</option><option value="4B">4° B</option>
+            <option value="5A">5° A</option><option value="5B">5° B</option>
+            <option value="6A">6° A</option><option value="6B">6° B</option>
+          </select>
+        </div>
+        <div id="aud-dm-wrap" style="display:none;min-width:220px">
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Docente / Materia</label>
+          <select id="aud-docente-materia" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+            <option value="">Primero seleccioná el curso</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Motivo</label>
+          <select id="aud-motivo" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
+            <option value="Sin aviso">Sin aviso</option>
+            <option value="Enfermedad">Enfermedad</option>
+            <option value="Licencia médica">Licencia médica</option>
+            <option value="Licencia personal">Licencia personal</option>
+            <option value="Capacitación">Capacitación</option>
+            <option value="Paro/huelga">Paro / Huelga</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <button onclick="registrarAusenciaDocenteApp()" id="btn-registrar-aud"
+          style="padding:7px 18px;background:#C0001A;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
+          Registrar
+        </button>
+      </div>
+      <div id="aud-feedback" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
+    </div>
+
+    <!-- Filtros historial -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--color-text-secondary)">Ver desde</span>
+      <input type="date" id="aud-filtro-desde" onchange="cargarHistorialAud()"
+        style="font-size:13px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"/>
+      <span style="font-size:12px;color:var(--color-text-secondary)">hasta</span>
+      <input type="date" id="aud-filtro-hasta" onchange="cargarHistorialAud()"
+        style="font-size:13px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"/>
+      <select id="aud-filtro-curso" onchange="cargarHistorialAud()"
+        style="font-size:13px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)">
+        <option value="">Todos los cursos</option>
+        <option value="1A">1° A</option><option value="1B">1° B</option>
+        <option value="2A">2° A</option><option value="2B">2° B</option>
+        <option value="3A">3° A</option><option value="3B">3° B</option>
+        <option value="4A">4° A</option><option value="4B">4° B</option>
+        <option value="5A">5° A</option><option value="5B">5° B</option>
+        <option value="6A">6° A</option><option value="6B">6° B</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Lista historial -->
+  <div style="padding:0 16px 16px">
+    <div id="aud-historial-lista">
+      <p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:30px 0">Seleccioná un rango de fechas para ver los registros.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+function inicializarAusenciasDocentes() {
+  // Setear fecha de hoy si está vacía
+  const hoy = fechaHoy();
+  if (!document.getElementById('aud-fecha').value)       document.getElementById('aud-fecha').value = hoy;
+  if (!document.getElementById('aud-filtro-desde').value) document.getElementById('aud-filtro-desde').value = hoy;
+  if (!document.getElementById('aud-filtro-hasta').value) document.getElementById('aud-filtro-hasta').value = hoy;
+  cargarHistorialAud();
+}
+
+function cargarDocentesCursoAud() {
+  const curso = document.getElementById('aud-curso').value;
+  const wrap  = document.getElementById('aud-dm-wrap');
+  const sel   = document.getElementById('aud-docente-materia');
+  if (!curso) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  callWebApp({ accion: 'obtenerDocentesCurso', curso }).then(res => {
+    if (!res.ok || !res.docentes || !res.docentes.length) {
+      sel.innerHTML = '<option value="">Sin datos para este curso</option>';
+      return;
+    }
+    sel.innerHTML = '<option value="">— Seleccioná —</option>' +
+      res.docentes.map(d =>
+        `<option value="${d.docente}|${d.materia}">${d.materia} – ${d.docente}</option>`
+      ).join('');
+  }).catch(() => { sel.innerHTML = '<option value="">Error al cargar</option>'; });
+}
+
+function registrarAusenciaDocenteApp() {
+  const fecha  = document.getElementById('aud-fecha').value;
+  const curso  = document.getElementById('aud-curso').value;
+  const dmVal  = document.getElementById('aud-docente-materia').value;
+  const motivo = document.getElementById('aud-motivo').value;
+  const fb     = document.getElementById('aud-feedback');
+
+  if (!fecha || !curso || !dmVal) {
+    audFeedback('⚠️ Completá fecha, curso y docente/materia.', false);
+    return;
+  }
+  const [docente, materia] = dmVal.split('|');
+  const btn = document.getElementById('btn-registrar-aud');
+  btn.disabled = true; btn.textContent = 'Registrando…';
+
+  const [y,m,d] = fecha.split('-');
+  const fechaBack = d+'/'+m+'/'+y;
+
+  callWebApp({
+    accion: 'registrarAusenciaDocente',
+    datos: JSON.stringify({
+      fecha: fechaBack, docente, curso, materia, motivo,
+      usuarioNombre: currentNombre,
+      usuarioRol:    currentRole
+    })
+  }).then(res => {
+    btn.disabled = false; btn.textContent = 'Registrar';
+    if (res.ok) {
+      audFeedback('✅ Registrado: ' + docente + ' – ' + materia + ' el ' + fechaBack, true);
+      document.getElementById('aud-docente-materia').value = '';
+      cargarHistorialAud();
+    } else {
+      audFeedback('⚠️ ' + (res.error || 'Error al registrar'), false);
+    }
+  }).catch(() => { btn.disabled=false; btn.textContent='Registrar'; audFeedback('⚠️ Error de conexión', false); });
+}
+
+function cargarHistorialAud() {
+  const desde = document.getElementById('aud-filtro-desde').value;
+  const hasta = document.getElementById('aud-filtro-hasta').value;
+  const curso = document.getElementById('aud-filtro-curso').value;
+  const lista = document.getElementById('aud-historial-lista');
+  if (!desde && !hasta) return;
+  lista.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:20px 0">Cargando…</p>';
+  const toBack = v => v ? v.split('-').reverse().join('/') : '';
+  callWebApp({ accion:'obtenerAusenciasDocentes', fechaDesde:toBack(desde), fechaHasta:toBack(hasta), curso:curso||'' })
+    .then(res => {
+      if (!res.ok) { lista.innerHTML = '<p style="color:#C0001A;font-size:13px;padding:20px">Error al cargar.</p>'; return; }
+      if (!res.registros || !res.registros.length) {
+        lista.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:30px 0">Sin registros en ese período.</p>';
+        return;
+      }
+      const regs = res.registros.sort((a,b) => b.fecha.split('/').reverse().join('').localeCompare(a.fecha.split('/').reverse().join('')));
+      lista.innerHTML = regs.map(r => `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
+          <div style="background:#fff0f0;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#C0001A;min-width:72px;text-align:center;line-height:1.4;flex-shrink:0">
+            ${r.fecha}<br><span style="font-size:10px;font-weight:500;color:#888">${r.curso}</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${r.materia}</div>
+            <div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">${r.docente}</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">${r.motivo} · Reg. por ${r.registradoPor}</div>
+          </div>
+        </div>`).join('');
+    }).catch(() => { lista.innerHTML = '<p style="color:#C0001A;font-size:13px;padding:20px">Error de conexión.</p>'; });
+}
+
+function audFeedback(msg, ok) {
+  const fb = document.getElementById('aud-feedback');
+  fb.textContent = msg;
+  fb.style.display = 'block';
+  fb.style.background = ok ? 'var(--color-background-success,#e8f5e9)' : '#fff0f0';
+  fb.style.color = ok ? 'var(--color-text-success,#2e7d32)' : '#C0001A';
+  setTimeout(() => { fb.style.display = 'none'; }, 4000);
+}
+</script>
+
+
+<div id="sec-informe-materias" class="section">
+  <div style="padding:16px 16px 0">
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">📊 Informe de Asistencia por Materia</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:16px">
+      % de asistencia de cada alumno en cada materia. Las clases donde el docente estuvo ausente no se contabilizan.
+    </p>
+
+    <!-- Filtros -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;padding:14px;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary)">
+      <div>
+        <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Curso</label>
+        <select id="inf-curso" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
+          <option value="">— Seleccioná —</option>
+          <option value="1A">1° A</option><option value="1B">1° B</option>
+          <option value="2A">2° A</option><option value="2B">2° B</option>
+          <option value="3A">3° A</option><option value="3B">3° B</option>
+          <option value="4A">4° A</option><option value="4B">4° B</option>
+          <option value="5A">5° A</option><option value="5B">5° B</option>
+          <option value="6A">6° A</option><option value="6B">6° B</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Desde</label>
+        <input type="date" id="inf-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Hasta</label>
+        <input type="date" id="inf-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="infSetRango('anio')"   id="inf-btn-anio"   style="padding:7px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-family:inherit">Todo el año</button>
+        <button onclick="infSetRango('q1')"     id="inf-btn-q1"     style="padding:7px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-family:inherit">1° cuatrimestre</button>
+        <button onclick="infSetRango('q2')"     id="inf-btn-q2"     style="padding:7px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-family:inherit">2° cuatrimestre</button>
+      </div>
+      <button onclick="generarInformeMaterias()" style="padding:7px 18px;background:#C0001A;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+        Generar informe
+      </button>
+    </div>
+
+    <!-- Leyenda -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;font-size:11px">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#e8f5e9;border:1px solid #a5d6a7;display:inline-block"></span>OK (menos del 15% de faltas)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#fff8e1;border:1px solid #ffe082;display:inline-block"></span>Alerta (15% – 24%)</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:#ffebee;border:1px solid #ef9a9a;display:inline-block"></span>Riesgo (25% o más)</span>
+    </div>
+
+    <!-- Filtro alumno + exportar -->
+    <div id="inf-acciones" style="display:none;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <input type="text" id="inf-buscar" placeholder="Buscar alumno…" oninput="infFiltrarAlumnos()"
+        style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:200px"/>
+      <div style="display:flex;gap:8px">
+        <button onclick="infSoloRiesgo()" id="inf-btn-riesgo" style="padding:6px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid #ef9a9a;background:#ffebee;color:#c62828;cursor:pointer;font-family:inherit">Solo en riesgo</button>
+        <button onclick="infExportarPDF()" style="padding:6px 12px;font-size:12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);cursor:pointer;font-family:inherit">📄 Exportar PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenido del informe -->
+  <div id="inf-contenido" style="padding:0 16px 24px">
+    <p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:40px 0">
+      Seleccioná un curso y un período para generar el informe.
+    </p>
+  </div>
+</div>
+
+<script>
+// ── Estado del informe ───────────────────────────────────────────────
+let _infData = null;  // resultado completo del backend
+let _infSoloRiesgo = false;
+
+function inicializarInformeMaterias() {
+  // Fecha por defecto: 01/03 del año actual hasta hoy
+  const hoy = new Date();
+  const anio = hoy.getFullYear();
+  document.getElementById('inf-hasta').value = fechaHoy();
+  document.getElementById('inf-desde').value = `${anio}-03-01`;
+}
+
+function infSetRango(tipo) {
+  const anio = new Date().getFullYear();
+  const rangos = {
+    anio: [`${anio}-03-01`, fechaHoy()],
+    q1:   [`${anio}-03-01`, `${anio}-07-31`],
+    q2:   [`${anio}-08-01`, `${anio}-12-15`],
+  };
+  document.getElementById('inf-desde').value = rangos[tipo][0];
+  document.getElementById('inf-hasta').value = rangos[tipo][1];
+  // Resaltar botón activo
+  ['anio','q1','q2'].forEach(k => {
+    document.getElementById('inf-btn-'+k).style.background = k===tipo ? '#C0001A' : '';
+    document.getElementById('inf-btn-'+k).style.color = k===tipo ? '#fff' : '';
+    document.getElementById('inf-btn-'+k).style.borderColor = k===tipo ? '#C0001A' : '';
+  });
+}
+
+function generarInformeMaterias() {
+  const curso  = document.getElementById('inf-curso').value;
+  const desde  = document.getElementById('inf-desde').value;
+  const hasta  = document.getElementById('inf-hasta').value;
+  const cont   = document.getElementById('inf-contenido');
+
+  if (!curso) { showToast('Seleccioná un curso','⚠️'); return; }
+  if (!desde || !hasta) { showToast('Seleccioná el período','⚠️'); return; }
+
+  const toBack = v => v.split('-').reverse().join('/');
+
+  cont.innerHTML = `
+    <div style="text-align:center;padding:40px 0">
+      <div class="spinner" style="margin:0 auto 12px"></div>
+      <p style="font-size:13px;color:var(--color-text-secondary)">Calculando asistencia por materia…</p>
+    </div>`;
+  document.getElementById('inf-acciones').style.display = 'none';
+  _infData = null; _infSoloRiesgo = false;
+
+  callWebApp({
+    accion: 'informeAusenciasPorMateria',
+    curso,
+    fechaDesde: toBack(desde),
+    fechaHasta: toBack(hasta)
+  }).then(res => {
+    if (!res.ok) {
+      cont.innerHTML = `<p style="color:#C0001A;padding:20px;font-size:13px">⚠️ ${res.error || 'Error al generar el informe'}</p>`;
+      return;
+    }
+    _infData = res;
+    document.getElementById('inf-acciones').style.display = 'flex';
+    document.getElementById('inf-buscar').value = '';
+    infRenderTabla(res.alumnos);
+  }).catch(err => {
+    cont.innerHTML = '<p style="color:#C0001A;padding:20px;font-size:13px">⚠️ Error de conexión</p>';
+  });
+}
+
+function infFiltrarAlumnos() {
+  if (!_infData) return;
+  const q = document.getElementById('inf-buscar').value.toLowerCase();
+  let alumnos = _infData.alumnos.filter(a => a.nombre.toLowerCase().includes(q) || String(a.legajo).includes(q));
+  if (_infSoloRiesgo) alumnos = alumnos.filter(a => a.materias.some(m => m.estado === 'RIESGO'));
+  infRenderTabla(alumnos);
+}
+
+function infSoloRiesgo() {
+  _infSoloRiesgo = !_infSoloRiesgo;
+  const btn = document.getElementById('inf-btn-riesgo');
+  btn.style.background = _infSoloRiesgo ? '#C0001A' : '#ffebee';
+  btn.style.color = _infSoloRiesgo ? '#fff' : '#c62828';
+  btn.style.borderColor = _infSoloRiesgo ? '#C0001A' : '#ef9a9a';
+  btn.textContent = _infSoloRiesgo ? '✓ Solo en riesgo' : 'Solo en riesgo';
+  infFiltrarAlumnos();
+}
+
+function infRenderTabla(alumnos) {
+  const cont = document.getElementById('inf-contenido');
+  if (!alumnos || !alumnos.length) {
+    cont.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:40px 0">Sin resultados.</p>';
+    return;
+  }
+
+  // Obtener lista de materias ordenadas
+  const materias = _infData.alumnos[0]?.materias.map(m => m.materia) || [];
+
+  // Colores por estado
+  const colores = {
+    OK:     { bg:'#e8f5e9', color:'#2e7d32', border:'#a5d6a7' },
+    ALERTA: { bg:'#fff8e1', color:'#f57f17', border:'#ffe082' },
+    RIESGO: { bg:'#ffebee', color:'#c62828', border:'#ef9a9a' },
+  };
+
+  let html = `
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:${200 + materias.length * 110}px">
+      <thead>
+        <tr style="background:var(--color-background-secondary)">
+          <th style="padding:10px 12px;text-align:left;font-weight:600;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-secondary);position:sticky;left:0;background:var(--color-background-secondary);min-width:180px;z-index:1">Alumno</th>
+          ${materias.map(m => `<th style="padding:8px 6px;text-align:center;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-secondary);min-width:100px;font-size:10px;line-height:1.3">${m}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>`;
+
+  alumnos.forEach((a, idx) => {
+    const bg = idx % 2 === 0 ? 'transparent' : 'var(--color-background-secondary)';
+    html += `<tr style="background:${bg}">
+      <td style="padding:9px 12px;font-weight:500;color:var(--color-text-primary);border-bottom:0.5px solid var(--color-border-tertiary);position:sticky;left:0;background:${bg};z-index:1">
+        <div style="font-size:12px">${a.nombre}</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">Leg. ${a.legajo}</div>
+      </td>`;
+    a.materias.forEach(m => {
+      const c = colores[m.estado] || colores.OK;
+      html += `<td style="padding:6px;text-align:center;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:6px;padding:5px 4px;display:inline-block;min-width:72px">
+          <div style="font-size:14px;font-weight:700;color:${c.color}">${m.porcentaje}%</div>
+          <div style="font-size:9px;color:${c.color};opacity:.8">${m.clases_ausente}/${m.clases_total} clases</div>
+        </div>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += `</tbody></table></div>
+    <p style="font-size:11px;color:var(--color-text-tertiary);margin-top:12px;text-align:right">
+      ${alumnos.length} alumno${alumnos.length!==1?'s':''} · 
+      Período: ${document.getElementById('inf-desde').value.split('-').reverse().join('/')} 
+      al ${document.getElementById('inf-hasta').value.split('-').reverse().join('/')}
+      ${_infData.clasesSinDocenteCount > 0 ? ' · ' + _infData.clasesSinDocenteCount + ' clase(s) sin docente descontadas' : ''}
+      ${_infData.diasNoLectivosCount > 0 ? ' · ' + _infData.diasNoLectivosCount + ' día(s) no lectivo(s) excluidos' : ''}
+    </p>`;
+
+  cont.innerHTML = html;
+}
+
+function infExportarPDF() {
+  if (!_infData || !_infData.alumnos.length) { showToast('Generá el informe primero','⚠️'); return; }
+
+  const curso   = document.getElementById('inf-curso').value;
+  const desde   = document.getElementById('inf-desde').value.split('-').reverse().join('/');
+  const hasta   = document.getElementById('inf-hasta').value.split('-').reverse().join('/');
+  const materias = _infData.alumnos[0]?.materias.map(m => m.materia) || [];
+  const colores  = { OK:'#e8f5e9', ALERTA:'#fff8e1', RIESGO:'#ffebee' };
+  const colorTxt = { OK:'#2e7d32', ALERTA:'#f57f17', RIESGO:'#c62828' };
+
+  let q = document.getElementById('inf-buscar').value.toLowerCase();
+  let alumnos = _infData.alumnos.filter(a => !q || a.nombre.toLowerCase().includes(q) || String(a.legajo).includes(q));
+  if (_infSoloRiesgo) alumnos = alumnos.filter(a => a.materias.some(m => m.estado === 'RIESGO'));
+
+  const thStyle = 'padding:6px 4px;background:#1a2744;color:#fff;font-size:9px;text-align:center;border:1px solid #0d1a33';
+  const tdStyle = 'padding:5px 8px;font-size:11px;border:1px solid #e0e0e0';
+
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <style>body{font-family:Arial,sans-serif;margin:20px;font-size:11px}
+  h1{color:#1a2744;font-size:16px;margin-bottom:4px}
+  .sub{color:#666;font-size:11px;margin-bottom:16px}
+  table{border-collapse:collapse;width:100%;margin-bottom:12px}
+  th{${thStyle}} td{${tdStyle}}
+  .chip{border-radius:4px;padding:3px 6px;font-weight:700;font-size:10px;display:inline-block}
+  @media print{body{margin:10px}}</style></head><body>
+  <h1>Informe de Asistencia por Materia — ${curso}</h1>
+  <div class="sub">Período: ${desde} al ${hasta} · Generado: ${new Date().toLocaleDateString('es-AR')}</div>
+  <table>
+    <thead><tr>
+      <th style="${thStyle};text-align:left;min-width:150px">Alumno</th>
+      ${materias.map(m=>`<th style="${thStyle}">${m}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  alumnos.forEach((a,i) => {
+    const bg = i%2===0 ? '#fff' : '#f9f9f9';
+    html += `<tr style="background:${bg}">
+      <td style="${tdStyle};font-weight:600">${a.nombre}<br/><span style="font-size:9px;color:#888">Leg. ${a.legajo}</span></td>`;
+    a.materias.forEach(m => {
+      html += `<td style="${tdStyle};text-align:center;background:${colores[m.estado]}">
+        <span class="chip" style="color:${colorTxt[m.estado]}">${m.porcentaje}%</span>
+        <div style="font-size:8px;color:${colorTxt[m.estado]}">${m.clases_ausente}/${m.clases_total}</div>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += `</tbody></table>
+  <div style="font-size:9px;color:#888;margin-top:8px">
+    <span style="background:#e8f5e9;padding:2px 6px;border-radius:3px;margin-right:6px">Verde: OK (&lt;15%)</span>
+    <span style="background:#fff8e1;padding:2px 6px;border-radius:3px;margin-right:6px">Amarillo: Alerta (15-24%)</span>
+    <span style="background:#ffebee;padding:2px 6px;border-radius:3px">Rojo: Riesgo (≥25%)</span>
+    ${_infData.clasesSinDocenteCount > 0 ? '<br/>* ' + _infData.clasesSinDocenteCount + ' clase(s) sin docente no contabilizadas.' : ''}
+  </div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+</script>
+
+
+<div id="sec-dias-no-lectivos" class="section">
+  <div style="padding:16px 16px 0">
+    <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">📅 Días No Lectivos</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:16px">
+      Feriados, jornadas docentes, recesos y suspensiones. Estos días no se contabilizan
+      como falta para ningún alumno en el informe por materia.
+    </p>
+
+    <!-- Formulario -->
+    <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:#C0001A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Registrar día no lectivo</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Fecha</label>
+          <input type="date" id="dnl-fecha"
+            style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Tipo</label>
+          <select id="dnl-tipo"
+            style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
+            <option value="Feriado Nacional">Feriado Nacional</option>
+            <option value="Jornada Docente">Jornada Docente</option>
+            <option value="Receso Escolar">Receso Escolar</option>
+            <option value="Suspensión por clima/emergencia">Suspensión por clima/emergencia</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:180px">
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px;font-weight:500">Descripción (opcional)</label>
+          <input type="text" id="dnl-desc" placeholder="Ej: Día de la Patria"
+            style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%;box-sizing:border-box"/>
+        </div>
+        <button onclick="registrarDnlApp()" id="btn-registrar-dnl"
+          style="padding:7px 18px;background:#C0001A;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
+          Registrar
+        </button>
+      </div>
+      <div id="dnl-feedback" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
+    </div>
+
+    <!-- Filtros historial -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <span style="font-size:12px;color:var(--color-text-secondary)">Ver año</span>
+      <select id="dnl-filtro-anio" onchange="cargarHistorialDnl()"
+        style="font-size:13px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+        <option value="2027">2027</option>
+      </select>
+      <select id="dnl-filtro-tipo" onchange="cargarHistorialDnl()"
+        style="font-size:13px;padding:5px 8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)">
+        <option value="">Todos los tipos</option>
+        <option value="Feriado Nacional">Feriado Nacional</option>
+        <option value="Jornada Docente">Jornada Docente</option>
+        <option value="Receso Escolar">Receso Escolar</option>
+        <option value="Suspensión por clima/emergencia">Suspensión por clima/emergencia</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <span id="dnl-total-badge" style="font-size:11px;color:var(--color-text-tertiary)"></span>
+    </div>
+  </div>
+
+  <!-- Lista -->
+  <div style="padding:0 16px 24px">
+    <div id="dnl-historial-lista">
+      <p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:30px 0">Cargando…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DNL_TIPO_COLOR = {
+  'Feriado Nacional':               { bg:'#e3f2fd', color:'#1565c0', icon:'🇦🇷' },
+  'Jornada Docente':                { bg:'#f3e5f5', color:'#6a1b9a', icon:'📚' },
+  'Receso Escolar':                 { bg:'#e8f5e9', color:'#2e7d32', icon:'🏖️' },
+  'Suspensión por clima/emergencia':{ bg:'#fff8e1', color:'#f57f17', icon:'⛈️' },
+  'Otro':                           { bg:'#f5f5f5', color:'#424242', icon:'📌' },
+};
+
+function inicializarDiasNoLectivos() {
+  const hoy = new Date();
+  document.getElementById('dnl-fecha').value = fechaHoy();
+  document.getElementById('dnl-filtro-anio').value = String(hoy.getFullYear());
+  cargarHistorialDnl();
+}
+
+function registrarDnlApp() {
+  const fecha = document.getElementById('dnl-fecha').value;
+  const tipo  = document.getElementById('dnl-tipo').value;
+  const desc  = document.getElementById('dnl-desc').value.trim();
+  const fb    = document.getElementById('dnl-feedback');
+
+  if (!fecha) { dnlFeedback('⚠️ Seleccioná una fecha.', false); return; }
+
+  const btn = document.getElementById('btn-registrar-dnl');
+  btn.disabled = true; btn.textContent = 'Registrando…';
+
+  const [y,m,d] = fecha.split('-');
+  const fechaBack = d+'/'+m+'/'+y;
+
+  callWebApp({
+    accion: 'registrarDiaNoLectivo',
+    datos: JSON.stringify({
+      fecha: fechaBack, tipo, descripcion: desc,
+      usuarioNombre: currentNombre,
+      usuarioRol:    currentRole
+    })
+  }).then(res => {
+    btn.disabled = false; btn.textContent = 'Registrar';
+    if (res.ok) {
+      dnlFeedback('✅ ' + tipo + ' registrado: ' + fechaBack, true);
+      document.getElementById('dnl-desc').value = '';
+      cargarHistorialDnl();
+    } else {
+      dnlFeedback('⚠️ ' + (res.error || 'Error al registrar'), false);
+    }
+  }).catch(() => { btn.disabled=false; btn.textContent='Registrar'; dnlFeedback('⚠️ Error de conexión', false); });
+}
+
+function cargarHistorialDnl() {
+  const anio = document.getElementById('dnl-filtro-anio').value;
+  const tipo = document.getElementById('dnl-filtro-tipo').value;
+  const lista = document.getElementById('dnl-historial-lista');
+  lista.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:20px 0">Cargando…</p>';
+
+  callWebApp({ accion: 'obtenerDiasNoLectivos', anio, tipo: tipo||'' })
+    .then(res => {
+      if (!res.ok) { lista.innerHTML = '<p style="color:#C0001A;font-size:13px;padding:20px">Error al cargar.</p>'; return; }
+      const regs = (res.dias || []).sort((a,b) => a.fecha.split('/').reverse().join('').localeCompare(b.fecha.split('/').reverse().join('')));
+      document.getElementById('dnl-total-badge').textContent = regs.length ? regs.length + ' día(s) no lectivo(s)' : '';
+
+      if (!regs.length) {
+        lista.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:30px 0">Sin registros para este período.</p>';
+        return;
+      }
+
+      lista.innerHTML = regs.map(r => {
+        const c = DNL_TIPO_COLOR[r.tipo] || DNL_TIPO_COLOR['Otro'];
+        return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
+          <div style="background:${c.bg};border-radius:8px;padding:6px 10px;min-width:80px;text-align:center;flex-shrink:0">
+            <div style="font-size:16px">${c.icon}</div>
+            <div style="font-size:11px;font-weight:700;color:${c.color};margin-top:2px">${r.fecha}</div>
+          </div>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${r.tipo}</div>
+            ${r.descripcion ? `<div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">${r.descripcion}</div>` : ''}
+            <div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px">Reg. por ${r.registradoPor}</div>
+          </div>
+          <button onclick="eliminarDnl('${r.id}')" title="Eliminar"
+            style="background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:16px;padding:4px;flex-shrink:0"
+            onmouseover="this.style.color='#C0001A'" onmouseout="this.style.color=''">✕</button>
+        </div>`;
+      }).join('');
+    }).catch(() => { lista.innerHTML = '<p style="color:#C0001A;font-size:13px;padding:20px">Error de conexión.</p>'; });
+}
+
+function eliminarDnl(id) {
+  if (!confirm('¿Eliminar este día no lectivo?')) return;
+  callWebApp({ accion: 'eliminarDiaNoLectivo', id })
+    .then(res => {
+      if (res.ok) cargarHistorialDnl();
+      else showToast('Error al eliminar: ' + (res.error||''), '⚠️');
+    });
+}
+
+function dnlFeedback(msg, ok) {
+  const fb = document.getElementById('dnl-feedback');
+  fb.textContent = msg;
+  fb.style.display = 'block';
+  fb.style.background = ok ? 'var(--color-background-success,#e8f5e9)' : '#fff0f0';
+  fb.style.color = ok ? 'var(--color-text-success,#2e7d32)' : '#C0001A';
+  setTimeout(() => { fb.style.display = 'none'; }, 4000);
+}
+</script>
+
   </main>
 </div><!-- fin #app -->
 
@@ -1413,7 +2057,7 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos'};
 const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias'};
 let attendanceState={};
 let currentUser = '';
@@ -1566,6 +2210,12 @@ function buildBottomNav(role) {
       items.push({ id: 'banos', icon: '🚽', label: 'Baños' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'seguimiento-faltas', icon: '📋', label: 'Faltas' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'ausencias-docentes', icon: '🚫', label: 'Aus. Doc.' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
     if (isAdmin) {
@@ -1661,6 +2311,12 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-banos').style.display     = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navSeg = document.getElementById('nav-seguimiento-faltas');
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navAud = document.getElementById('nav-ausencias-docentes');
+  if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navInf = document.getElementById('nav-informe-materias');
+  if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navDnl = document.getElementById('nav-dias-no-lectivos');
+  if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -1724,6 +2380,9 @@ function showSection(id,el){
   if(id === 'resumen-alumno') { document.getElementById('resumen-alumno-contenido').innerHTML='<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Seleccioná un curso y un alumno.</div>'; }
   if(id === 'alertas') cargarAlertas();
   if(id === 'comunicados') cargarComunicados();
+  if(id === 'ausencias-docentes') inicializarAusenciasDocentes();
+  if(id === 'informe-materias') inicializarInformeMaterias();
+  if(id === 'dias-no-lectivos') inicializarDiasNoLectivos();
   if(id === 'archivos') cargarArchivos();
   if(id === 'reportes') generarReporte();
   if(id === 'usuarios') cargarUsuarios();
