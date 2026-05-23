@@ -5228,6 +5228,26 @@ function inicializarMensajes() {
   cargarUsuariosMensajeria();
   cargarConversacionesPrivadas();
   actualizarBadgeMensajes();
+  // Abrir conversación desde link de email (#msg:tipo:conv_id:nombre)
+  const hash = window.location.hash;
+  if (hash.startsWith('#msg:')) {
+    const partes = hash.substring(5).split(':');
+    const tipo   = partes[0]; // 'canal' o 'privado'
+    const convId = partes[1];
+    const nombre = (partes[2]||'').replace(/_/g,' ');
+    setTimeout(() => {
+      if (tipo === 'canal') {
+        abrirConvCanal(convId);
+      } else if (tipo === 'privado' && convId) {
+        // Extraer el usuario del conv_id (priv_userA_userB)
+        const ids = convId.replace('priv_','').split('_');
+        const otroId = ids.find(id => id !== currentUser) || ids[1];
+        abrirConvPrivada(convId, nombre || otroId, otroId);
+      }
+      // Limpiar hash de la URL
+      history.replaceState(null, '', window.location.pathname);
+    }, 1500); // esperar a que cargue la sesión
+  }
   // Polling cada 30 seg mientras el tab está abierto
   if (_msgPollTimer) clearInterval(_msgPollTimer);
   _msgPollTimer = setInterval(() => {
