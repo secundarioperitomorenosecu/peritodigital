@@ -1171,7 +1171,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
   <div id="sec-banos" class="section">
   <style>
-    .banos-inodoros{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .banos-inodoros{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
     .inodoro-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:18px 8px;border-radius:14px;border:2px solid #e8d5c4;background:#fdf8f3;cursor:pointer;transition:all .22s;font-family:'Outfit',sans-serif;position:relative}
     .inodoro-btn:hover{border-color:#C0001A;background:rgba(192,0,26,.06);transform:translateY(-2px);box-shadow:0 4px 14px rgba(192,0,26,.15)}
     .inodoro-btn:active{transform:scale(.96)}
@@ -1205,21 +1205,15 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
     <div class="panel-body">
       <div class="banos-inodoros">
-        <button class="inodoro-btn" onclick="abrirModalBano(1)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 1</span>
-          <span class="inodoro-count" id="count-bano-1">0</span>
+        <button class="inodoro-btn" onclick="abrirModalBano('rosa')" style="border-color:#f8bbd0;background:#fff0f5">
+          <span class="inodoro-emoji">🩷</span>
+          <span class="inodoro-label" style="color:#c2185b">Mujeres</span>
+          <span class="inodoro-count" id="count-bano-rosa" style="color:#c2185b;background:rgba(194,24,91,.12)">0</span>
         </button>
-        <button class="inodoro-btn" onclick="abrirModalBano(2)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 2</span>
-          <span class="inodoro-count" id="count-bano-2">0</span>
-        </button>
-        <button class="inodoro-btn" onclick="abrirModalBano(3)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 3</span>
-          <span class="inodoro-count" id="count-bano-3">0</span>
-        </button>
-        <button class="inodoro-btn" onclick="abrirModalBano(4)">
-          <span class="inodoro-emoji">🚽</span><span class="inodoro-label">Baño 4</span>
-          <span class="inodoro-count" id="count-bano-4">0</span>
+        <button class="inodoro-btn" onclick="abrirModalBano('celeste')" style="border-color:#b3e5fc;background:#f0f9ff">
+          <span class="inodoro-emoji">🩵</span>
+          <span class="inodoro-label" style="color:#0277bd">Varones</span>
+          <span class="inodoro-count" id="count-bano-celeste" style="color:#0277bd;background:rgba(2,119,189,.12)">0</span>
         </button>
       </div>
     </div>
@@ -5074,8 +5068,12 @@ function confirmarSalidaBano(legajo, nombre) {
   // Si hay un registro del último minuto, avisar que puede haber alguien adentro
   if (_banosRegistros && _banosRegistros.length) {
     const ahora = new Date();
+    const banoSel = String(_banosInodoroSel).toLowerCase();
     const reciente = _banosRegistros.find(r => {
       if (!r.hora) return false;
+      // Solo avisar si es el mismo baño (rosa o celeste)
+      const banoReg = String(r.inodoro).toLowerCase();
+      if (banoSel !== banoReg) return false;
       const [hh, mm, ss] = partesHoraArgentina(r.hora);
       const regDate = new Date();
       regDate.setHours(hh, mm, ss, 0);
@@ -5090,7 +5088,8 @@ function confirmarSalidaBano(legajo, nombre) {
         banner.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad00;border-radius:14px;padding:14px 22px;z-index:9999;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90%;font-family:Outfit,sans-serif;animation:fadeIn .3s ease';
         document.body.appendChild(banner);
       }
-      banner.innerHTML = '🚽 <strong>¡Atención!</strong> ' + reciente.nombre + ' fue al baño a las <strong>' + parsearHoraArgentina(reciente.hora) + '</strong> — puede que todavía esté adentro.';
+      const iconoBano = reciente.inodoro === 'rosa' ? '🩷' : '🩵';
+      banner.innerHTML = iconoBano + ' <strong>¡Atención!</strong> ' + reciente.nombre + ' fue al baño a las <strong>' + parsearHoraArgentina(reciente.hora) + '</strong> — puede que todavía esté adentro.';
       banner.style.display = 'block';
       clearTimeout(window._banoBannerTimer);
       window._banoBannerTimer = setTimeout(() => { banner.style.display = 'none'; }, 5000);
@@ -5107,7 +5106,8 @@ function confirmarSalidaBano(legajo, nombre) {
     preceptorNombre: currentNombre
   }).then(res => {
     if (res.ok) {
-      mostrarFlashBano(res.hora, nombre, 'Baño ' + _banosInodoroSel + ' · ' + _banosCurso);
+      const nombreBano = _banosInodoroSel === 'rosa' ? '🩷 Mujeres' : '🩵 Varones';
+      mostrarFlashBano(res.hora, nombre, nombreBano + ' · ' + _banosCurso);
       cargarHistorialBanos();
     } else showToast('Error: ' + res.error, '❌');
   });
@@ -5155,14 +5155,19 @@ function renderHistorialBanos(registros, fecha) {
         <div class="bano-reg-nombre">${r.nombre}</div>
         <div class="bano-reg-meta">Curso ${r.curso} · Leg. ${r.legajo} · ${r.preceptor}</div>
       </div>
-      <div class="bano-reg-inodoro" title="Baño ${r.inodoro}">🚽${r.inodoro}</div>
+      <div class="bano-reg-inodoro" title="Baño ${r.inodoro}">${r.inodoro==='rosa'?'🩷 Mujeres':r.inodoro==='celeste'?'🩵 Varones':'🚽'+r.inodoro}</div>
     </div>`).join('');
 }
 
 function actualizarContadoresBanos(registros) {
   const c = {1:0,2:0,3:0,4:0};
-  registros.forEach(r => { const n=parseInt(r.inodoro); if(n>=1&&n<=4) c[n]++; });
-  for(let i=1;i<=4;i++){const el=document.getElementById('count-bano-'+i);if(el)el.textContent=c[i]||0;}
+  registros.forEach(r => {
+    const bano = String(r.inodoro).toLowerCase();
+    if(bano==='rosa'||bano==='mujeres'||bano==='1'||bano==='2') c['rosa']=(c['rosa']||0)+1;
+    else if(bano==='celeste'||bano==='varones'||bano==='3'||bano==='4') c['celeste']=(c['celeste']||0)+1;
+  });
+  const elR=document.getElementById('count-bano-rosa'); if(elR) elR.textContent=c['rosa']||0;
+  const elC=document.getElementById('count-bano-celeste'); if(elC) elC.textContent=c['celeste']||0;
 }
 
 function exportarPDFBanos() {
@@ -5192,7 +5197,7 @@ function exportarPDFBanos() {
     html += `<h2>Curso ${curso} &nbsp;(${regs.length} salida${regs.length!==1?'s':''})</h2>
     <table><thead><tr><th>Hora</th><th>Alumno</th><th>Legajo</th><th>Baño</th><th>Preceptor/a</th></tr></thead><tbody>`;
     regs.slice().sort((a,b)=>parsearHoraArgentina(a.hora).localeCompare(parsearHoraArgentina(b.hora))).forEach(r => {
-      html += `<tr><td class="hora">${parsearHoraArgentina(r.hora)}</td><td>${r.nombre}</td><td>${r.legajo}</td><td>Baño ${r.inodoro}</td><td>${r.preceptor}</td></tr>`;
+      html += `<tr><td class="hora">${parsearHoraArgentina(r.hora)}</td><td>${r.nombre}</td><td>${r.legajo}</td><td>${r.inodoro==='rosa'?'🩷 Mujeres':r.inodoro==='celeste'?'🩵 Varones':'Baño '+r.inodoro}</td><td>${r.preceptor}</td></tr>`;
     });
     html += '</tbody></table>';
   });
