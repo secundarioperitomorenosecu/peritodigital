@@ -5217,7 +5217,7 @@ let _msgUsuarios   = [];    // lista de usuarios activos del sistema
 let _msgPollTimer  = null;
 
 const MSG_CANALES = [
-  { id: 'canal_directivos', nombre: 'Directivos',  icono: '🏫', roles: ['director','vicedirector','secretario','secretario/a'] },
+  { id: 'canal_directivos', nombre: 'Directivos',  icono: '🏫', roles: ['director','vicedirector','secretario','secretari'] },
   { id: 'canal_preceptores',nombre: 'Preceptores', icono: '📋', roles: ['preceptor'] },
   { id: 'canal_docentes',   nombre: 'Docentes',    icono: '📚', roles: ['docente','profesor'] },
   { id: 'canal_general',    nombre: 'General',     icono: '📢', roles: [] }, // todos
@@ -5286,6 +5286,7 @@ function cargarUsuariosMensajeria() {
 }
 
 function cargarConversacionesPrivadas() {
+  if (!currentUser) { setTimeout(cargarConversacionesPrivadas, 500); return; }
   callWebApp({ accion: 'obtenerConversacionesPrivadas', usuario: currentUser }).then(res => {
     const cont = document.getElementById('msg-privados');
     if (!res?.ok || !res.conversaciones?.length) {
@@ -5367,7 +5368,7 @@ function renderMensajes(mensajes, scrollBottom) {
   let lastFecha = '';
   body.innerHTML = mensajes.map(m => {
     const esMio = m.autor === currentUser;
-    const fechaMsg = (m.timestamp||'').substring(0,10);
+    const fechaMsg = String(m.timestamp||'').replace('T',' ').substring(0,10);
     let separador = '';
     if (fechaMsg !== lastFecha && fechaMsg) {
       lastFecha = fechaMsg;
@@ -5375,15 +5376,15 @@ function renderMensajes(mensajes, scrollBottom) {
       separador = `<div style="text-align:center;margin:8px 0"><span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 10px;border-radius:10px">${d.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'long'})}</span></div>`;
     }
 
-    const hora = m.timestamp ? (() => {
+    const hora = (() => {
       try {
-        // Asegurar que el timestamp se parsee como hora local Argentina
-        const ts = m.timestamp.includes('T') ? m.timestamp.replace('T',' ') : m.timestamp;
-        const d = new Date(ts);
-        if (isNaN(d)) return '';
-        return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+        if (!m.timestamp) return '';
+        // Formato guardado: "yyyy-MM-dd'T'HH:mm:ss" — extraer HH:mm directo
+        const tPart = String(m.timestamp).split('T')[1] || String(m.timestamp).split(' ')[1] || '';
+        if (tPart) return tPart.substring(0,5);
+        return '';
       } catch(e) { return ''; }
-    })() : '';
+    })();
     const linkHTML = m.link ? `<a href="${m.link}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:6px;margin-top:6px;padding:6px 10px;background:rgba(255,255,255,.15);border-radius:8px;color:inherit;text-decoration:none;font-size:11px"><span>🔗</span><span style="text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">${m.link_nombre||m.link}</span></a>` : '';
 
     return `${separador}
