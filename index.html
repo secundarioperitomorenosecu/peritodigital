@@ -2282,7 +2282,7 @@ function elegirHijo(legajo, nombre, curso, e) {
 
 // ── Bottom Nav (móvil) ─────────────────────────────────────────────────────
 function buildBottomNav(role) {
-  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(role);
+  const isAdmin     = ['director','vicedirector','secretary','secretario','legal'].includes(role);
   const isPreceptor = role === 'preceptor';
   const isDocente   = role === 'Docente' || role === 'docente' || role === 'teacher';
   const isEOE       = role === 'eoe';
@@ -2369,7 +2369,7 @@ function doLogin(name, role, usuario, res){
   // Cargar dashboard al entrar
   setTimeout(cargarDashboard, 500);
   document.getElementById('sidebar-name').textContent=name;
-  const rl={teacher:'Docente',Docente:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a',preceptor:'Preceptor/a',eoe:'Eq. Orientación'};
+  const rl={teacher:'Docente',Docente:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',secretario:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a',preceptor:'Preceptor/a',eoe:'Eq. Orientación'};
   // Si es tutor que entró como alumno, mostrar "Padre/Madre" en el rol
   const rolLabel = (res && res.esTutor) ? 'Padre/Madre' : (rl[role] || role);
   document.getElementById('sidebar-role').textContent = rolLabel;
@@ -2385,7 +2385,7 @@ function doLogin(name, role, usuario, res){
   av.innerHTML = ini + '<div id="sidebar-avatar-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;font-size:14px;border-radius:50%">📷</div>';
   // Cargar foto DESPUÉS de poner las iniciales — sobreescribe si hay foto guardada
   cargarFotoPerfilGuardada();
-  const isAdmin    = ['director','vicedirector','secretary','legal'].includes(role);
+  const isAdmin    = ['director','vicedirector','secretary','secretario','legal'].includes(role);
   const isPreceptor= role === 'preceptor';
   const isDocente  = role === 'Docente' || role === 'docente' || role === 'teacher';
   const isEOE      = role === 'eoe';
@@ -2800,7 +2800,7 @@ function exportarPDFLegajoEOE(l) {
 }
 
 function canDeletePost(p) {
-  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin     = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isPreceptor = currentRole === 'preceptor';
   const esAutor     = (p.autor_usuario || p.docente || '') === currentUser;
   return isAdmin || isPreceptor || esAutor;
@@ -2815,7 +2815,7 @@ function eliminarPost(id, autorOriginal) {
 }
 
 function cargarDashboard() {
-  const isAdmin  = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin  = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isAlumno = currentRole === 'alumno' || currentRole === 'tutor';
   const set = (id, val) => {
     const el = document.getElementById(id);
@@ -3461,7 +3461,7 @@ function generarInformeInasistencias() {
 function buildMateriaField(inputId, style) {
   const el = document.getElementById(inputId);
   if (!el || !currentMaterias.length) return;
-  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   if (isAdmin) return;
   if (currentMaterias.length === 1) {
     el.value = currentMaterias[0];
@@ -3480,7 +3480,7 @@ function buildMateriaField(inputId, style) {
   }
 }
 function setupMuralCursos() {
-  const isAdmin   = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin   = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isDocente = currentRole === 'Docente' || currentRole === 'docente';
   const cursoSel  = document.getElementById('post-curso');
 
@@ -3516,7 +3516,7 @@ function setupMuralCursos() {
 }
 
 function setupSubir() {
-  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const cursoSel = document.getElementById('up-curso');
   const materiaSel = document.getElementById('up-materia');
   if (!cursoSel) return;
@@ -3532,7 +3532,7 @@ function setupSubir() {
 }
 
 function setupCalificaciones() {
-  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const cursoSel = document.getElementById('cal-curso');
   const materiaSel = document.getElementById('cal-materia');
   if (!cursoSel) return;
@@ -3550,7 +3550,7 @@ function setupCalificaciones() {
 }
 
 function setupAsistencia() {
-  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin     = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isPreceptor = currentRole === 'preceptor';
   const puedeEditar = isAdmin || isPreceptor;
 
@@ -4050,7 +4050,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
 let comunicadosLeidos = JSON.parse(localStorage.getItem('com_leidos') || '[]');
 
 function inicializarComunicados() {
-  const isAdmin     = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin     = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isPreceptor = currentRole === 'preceptor';
   const isDocente   = currentRole === 'docente' || currentRole === 'teacher';
   const isAlumno    = currentRole === 'alumno';
@@ -4317,7 +4317,7 @@ function renderCalendar() {
   if (!grid) return;
 
   // Cargar eventos del backend
-  const isAdmin = ['director','vicedirector','secretary','legal'].includes(currentRole);
+  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   // Mostrar panel nuevo evento solo a admins
   const panelEv = document.getElementById('panel-nuevo-evento');
   if (panelEv) panelEv.style.display = isAdmin ? 'block' : 'none';
