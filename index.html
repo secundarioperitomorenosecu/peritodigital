@@ -5372,16 +5372,23 @@ function renderMensajes(mensajes, scrollBottom) {
     let separador = '';
     if (fechaMsg !== lastFecha && fechaMsg) {
       lastFecha = fechaMsg;
-      const d = new Date(fechaMsg + 'T12:00:00');
-      separador = `<div style="text-align:center;margin:8px 0"><span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 10px;border-radius:10px">${d.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'long'})}</span></div>`;
+      const dSep = new Date(fechaMsg + 'T12:00:00');
+      const fechaLabel = !isNaN(dSep.getTime()) ? dSep.toLocaleDateString('es-AR',{weekday:'long',day:'2-digit',month:'long'}) : fechaMsg;
+      separador = `<div style="text-align:center;margin:8px 0"><span style="font-size:10px;color:var(--color-text-tertiary);background:var(--color-background-secondary);padding:3px 10px;border-radius:10px">${fechaLabel}</span></div>`;
     }
 
     const hora = (() => {
       try {
         if (!m.timestamp) return '';
-        // Formato guardado: "yyyy-MM-dd'T'HH:mm:ss" — extraer HH:mm directo
-        const tPart = String(m.timestamp).split('T')[1] || String(m.timestamp).split(' ')[1] || '';
-        if (tPart) return tPart.substring(0,5);
+        const ts = String(m.timestamp);
+        // Caso 1: "2026-05-23T23:43:00" o "2026-05-23 23:43:00"
+        const tPart = ts.includes('T') ? ts.split('T')[1] : ts.includes(' ') ? ts.split(' ')[1] : '';
+        if (tPart && tPart.length >= 5) return tPart.substring(0,5);
+        // Caso 2: objeto Date serializado o timestamp ms
+        const d = new Date(m.timestamp);
+        if (!isNaN(d.getTime())) {
+          return d.toLocaleTimeString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',hour:'2-digit',minute:'2-digit',hour12:false});
+        }
         return '';
       } catch(e) { return ''; }
     })();
