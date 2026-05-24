@@ -2315,7 +2315,7 @@ function buildBottomNav(role) {
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
-    if (isAdmin || isPreceptor || currentRole)
+    if (!isAlumno && !isStudent)
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
@@ -2419,7 +2419,7 @@ function doLogin(name, role, usuario, res){
   const navDnl = document.getElementById('nav-dias-no-lectivos');
   if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navMsg = document.getElementById('nav-mensajes');
-  if (navMsg) navMsg.style.display = 'flex'; // visible para todos los roles
+  if (navMsg) navMsg.style.display = (isAlumno || isStudent) ? 'none' : 'flex';
   setTimeout(actualizarBadgeMensajes, 1500);
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
