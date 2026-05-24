@@ -2315,7 +2315,7 @@ function buildBottomNav(role) {
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
-    if (!isAlumno && !isStudent)
+    if (!isAlumno)
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
