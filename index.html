@@ -2419,7 +2419,7 @@ function doLogin(name, role, usuario, res){
   const navDnl = document.getElementById('nav-dias-no-lectivos');
   if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navMsg = document.getElementById('nav-mensajes');
-  if (navMsg) navMsg.style.display = (isAlumno || isStudent) ? 'none' : 'flex';
+  if (navMsg) navMsg.style.display = isStudent ? 'none' : 'flex';
   setTimeout(actualizarBadgeMensajes, 1500);
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
