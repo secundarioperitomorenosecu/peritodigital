@@ -1736,12 +1736,18 @@ function infExportarPDF() {
     <span style="background:#ffebee;padding:2px 6px;border-radius:3px">Rojo: Riesgo (menos del 65%)</span>
     ${_infData.clasesSinDocenteCount > 0 ? '<br/>* ' + _infData.clasesSinDocenteCount + ' clase(s) sin docente no contabilizadas.' : ''}
   </div>
-  <script>window.onload=()=>{window.print();}<\/script>
-  </body></html>`;
+  <\/body></html>`;
 
-  const w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Informe_Asistencia_${curso.replace(/\s+/g,'_')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  showToast('Informe exportado correctamente','✅');
 }
 </script>
 
@@ -2740,12 +2746,18 @@ function exportarHistorialEOE(legajosStr, alumno, curso) {
     Documento generado el ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})} · 
     Portal Perito Digital · Uso exclusivo institucional · No distribuir sin autorización
   </div>
-  <script>window.onload=()=>{window.print();}<\/script>
   </body></html>`;
 
-  const w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Historial_EOE_${alumno.replace(/\s+/g,'_')}_${anio}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  showToast('Historial exportado correctamente','✅');
 }
 
 function exportarPDFLegajoEOE(l) {
@@ -2786,11 +2798,19 @@ function exportarPDFLegajoEOE(l) {
     Documento generado el ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})} · 
     Portal Perito Digital · Uso exclusivo institucional
   </div>
-  <script>window.onload=()=>{window.print();}<\/script>
   </body></html>`;
-  const w = window.open('','_blank');
-  w.document.write(html);
-  w.document.close();
+  const nombreAlumno = (l.alumno||'alumno').replace(/\s+/g,'_');
+  const fechaExport = (l.fecha||new Date().toISOString().slice(0,10)).replace(/-/g,'');
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Legajo_EOE_${nombreAlumno}_${fechaExport}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  showToast('Legajo exportado correctamente','✅');
 }
 
 function canDeletePost(p) {
@@ -3958,8 +3978,7 @@ function generarInformePeriodo() {
 function imprimirInforme() {
   const contenido = document.getElementById('contenido-informe-imprimible');
   if (!contenido) return;
-  const ventana = window.open('', '_blank');
-  ventana.document.write(`<!DOCTYPE html><html><head>
+  const html = `<!DOCTYPE html><html><head>
     <meta charset="UTF-8"><title>Informe de Calificaciones</title>
     <style>
       body { font-family: sans-serif; padding: 24px; color: #1a1a1a; }
@@ -3973,10 +3992,17 @@ function imprimirInforme() {
       .leyenda { margin-top:12px; font-size:11px; color:#666; border-left:3px solid #C0001A; padding:8px 12px; }
       @media print { body { padding: 0; } }
     </style>
-  </head><body>${contenido.innerHTML}</body></html>`);
-  ventana.document.close();
-  ventana.focus();
-  setTimeout(() => ventana.print(), 500);
+  </head><body>${contenido.innerHTML}</body></html>`;
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Informe_Calificaciones.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  showToast('Informe exportado correctamente','✅');
 }
 
 function cargarMisNotas() {
@@ -5203,10 +5229,17 @@ function exportarPDFBanos() {
   });
   html += `<div class="footer">Generado por PM Digital – ${new Date().toLocaleString('es-AR')}</div></body></html>`;
 
-  const v = window.open('','_blank');
-  if(!v){showToast('Permitir ventanas emergentes para exportar PDF','⚠️');return;}
-  v.document.write(html); v.document.close(); v.focus();
-  setTimeout(()=>v.print(),600);
+  const fechaArchivo = (inputFecha||new Date().toISOString().slice(0,10)).replace(/-/g,'');
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Registro_Banos_${fechaArchivo}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  showToast('Registro exportado correctamente','✅');
 }
 </script>
 
