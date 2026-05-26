@@ -1206,12 +1206,12 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     <div class="panel-body">
       <div class="banos-inodoros">
         <button class="inodoro-btn" onclick="abrirModalBano('rosa')" style="border-color:#f8bbd0;background:#fff0f5">
-          <span class="inodoro-emoji">🩷</span>
+          <span class="inodoro-emoji">♀️</span>
           <span class="inodoro-label" style="color:#c2185b">Mujeres</span>
           <span class="inodoro-count" id="count-bano-rosa" style="color:#c2185b;background:rgba(194,24,91,.12)">0</span>
         </button>
         <button class="inodoro-btn" onclick="abrirModalBano('celeste')" style="border-color:#b3e5fc;background:#f0f9ff">
-          <span class="inodoro-emoji">🩵</span>
+          <span class="inodoro-emoji">♂️</span>
           <span class="inodoro-label" style="color:#0277bd">Varones</span>
           <span class="inodoro-count" id="count-bano-celeste" style="color:#0277bd;background:rgba(2,119,189,.12)">0</span>
         </button>
@@ -5088,7 +5088,7 @@ function confirmarSalidaBano(legajo, nombre) {
         banner.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#fff3cd;border:2px solid #f0ad00;border-radius:14px;padding:14px 22px;z-index:9999;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2);max-width:90%;font-family:Outfit,sans-serif;animation:fadeIn .3s ease';
         document.body.appendChild(banner);
       }
-      const iconoBano = reciente.inodoro === 'rosa' ? '🩷' : '🩵';
+      const iconoBano = reciente.inodoro === 'rosa' ? '♀️' : '♂️';
       banner.innerHTML = iconoBano + ' <strong>¡Atención!</strong> ' + reciente.nombre + ' fue al baño a las <strong>' + parsearHoraArgentina(reciente.hora) + '</strong> — puede que todavía esté adentro.';
       banner.style.display = 'block';
       clearTimeout(window._banoBannerTimer);
@@ -5106,7 +5106,7 @@ function confirmarSalidaBano(legajo, nombre) {
     preceptorNombre: currentNombre
   }).then(res => {
     if (res.ok) {
-      const nombreBano = _banosInodoroSel === 'rosa' ? '🩷 Mujeres' : '🩵 Varones';
+      const nombreBano = _banosInodoroSel === 'rosa' ? '♀️ Mujeres' : '♂️ Varones';
       mostrarFlashBano(res.hora, nombre, nombreBano + ' · ' + _banosCurso);
       cargarHistorialBanos();
     } else showToast('Error: ' + res.error, '❌');
@@ -5155,7 +5155,7 @@ function renderHistorialBanos(registros, fecha) {
         <div class="bano-reg-nombre">${r.nombre}</div>
         <div class="bano-reg-meta">Curso ${r.curso} · Leg. ${r.legajo} · ${r.preceptor}</div>
       </div>
-      <div class="bano-reg-inodoro" title="Baño ${r.inodoro}">${r.inodoro==='rosa'?'🩷 Mujeres':r.inodoro==='celeste'?'🩵 Varones':'🚽'+r.inodoro}</div>
+      <div class="bano-reg-inodoro" title="Baño ${r.inodoro}">${r.inodoro==='rosa'?'♀️ Mujeres':r.inodoro==='celeste'?'♂️ Varones':'🚽'+r.inodoro}</div>
     </div>`).join('');
 }
 
@@ -5197,7 +5197,7 @@ function exportarPDFBanos() {
     html += `<h2>Curso ${curso} &nbsp;(${regs.length} salida${regs.length!==1?'s':''})</h2>
     <table><thead><tr><th>Hora</th><th>Alumno</th><th>Legajo</th><th>Baño</th><th>Preceptor/a</th></tr></thead><tbody>`;
     regs.slice().sort((a,b)=>parsearHoraArgentina(a.hora).localeCompare(parsearHoraArgentina(b.hora))).forEach(r => {
-      html += `<tr><td class="hora">${parsearHoraArgentina(r.hora)}</td><td>${r.nombre}</td><td>${r.legajo}</td><td>${r.inodoro==='rosa'?'🩷 Mujeres':r.inodoro==='celeste'?'🩵 Varones':'Baño '+r.inodoro}</td><td>${r.preceptor}</td></tr>`;
+      html += `<tr><td class="hora">${parsearHoraArgentina(r.hora)}</td><td>${r.nombre}</td><td>${r.legajo}</td><td>${r.inodoro==='rosa'?'♀️ Mujeres':r.inodoro==='celeste'?'♂️ Varones':'Baño '+r.inodoro}</td><td>${r.preceptor}</td></tr>`;
     });
     html += '</tbody></table>';
   });
