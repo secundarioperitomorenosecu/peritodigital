@@ -485,6 +485,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
+      <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this)" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
@@ -2025,6 +2026,132 @@ function dnlFeedback(msg, ok) {
   </div>
 </div>
 
+  <!-- ══════════════════════════════════════════════════════════
+       SECCIÓN BIBLIOTECA
+  ══════════════════════════════════════════════════════════ -->
+  <div id="sec-biblioteca" class="section">
+    <style>
+      #sec-biblioteca .bib-tab-bar{display:flex;gap:6px;padding:14px 16px 0;border-bottom:0.5px solid var(--color-border-secondary);background:var(--color-background-primary)}
+      #sec-biblioteca .bib-tab{padding:8px 16px;border-radius:10px 10px 0 0;font-size:13px;font-weight:600;cursor:pointer;color:var(--color-text-secondary);background:none;border:none;font-family:inherit;transition:.15s}
+      #sec-biblioteca .bib-tab.active{background:#C0001A;color:#fff}
+      #sec-biblioteca .bib-panel{display:none;padding:16px}
+      #sec-biblioteca .bib-panel.active{display:block}
+      #sec-biblioteca .bib-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      @media(max-width:600px){#sec-biblioteca .bib-form-grid{grid-template-columns:1fr}}
+      #sec-biblioteca .bib-field label{font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px}
+      #sec-biblioteca .bib-field input,#sec-biblioteca .bib-field select{width:100%;padding:10px 13px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box}
+      #sec-biblioteca .bib-field input:focus,#sec-biblioteca .bib-field select:focus{outline:none;border-color:#C0001A}
+      #sec-biblioteca .bib-autocomplete{position:relative}
+      #sec-biblioteca .bib-suggestions{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;max-height:180px;overflow-y:auto;display:none}
+      #sec-biblioteca .bib-suggestion-item{padding:9px 13px;font-size:13px;cursor:pointer;color:var(--color-text-primary)}
+      #sec-biblioteca .bib-suggestion-item:hover{background:var(--color-background-secondary)}
+      #sec-biblioteca .bib-card{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:12px;padding:13px 15px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px}
+      #sec-biblioteca .bib-card-icon{font-size:22px;flex-shrink:0;margin-top:1px}
+      #sec-biblioteca .bib-card-info{flex:1;min-width:0}
+      #sec-biblioteca .bib-card-titulo{font-size:13px;font-weight:700;color:var(--color-text-primary);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      #sec-biblioteca .bib-card-meta{font-size:11px;color:var(--color-text-secondary);line-height:1.6}
+      #sec-biblioteca .bib-badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:700}
+      #sec-biblioteca .bib-badge.pendiente{background:#fff3e0;color:#e65100}
+      #sec-biblioteca .bib-badge.devuelto{background:#e8f5e9;color:#2e7d32}
+      #sec-biblioteca .bib-badge.vencido{background:#ffebee;color:#c62828}
+      #sec-biblioteca .bib-card-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+      #sec-biblioteca .bib-empty{text-align:center;padding:40px 20px;color:var(--color-text-tertiary);font-size:13px}
+      #sec-biblioteca .bib-filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+      #sec-biblioteca .bib-filtros select,#sec-biblioteca .bib-filtros input[type="text"]{padding:7px 11px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:12px}
+    </style>
+
+    <div class="bib-tab-bar">
+      <button class="bib-tab active" onclick="bibShowTab('prestamo')">📖 Nuevo Préstamo</button>
+      <button class="bib-tab" onclick="bibShowTab('activos')">📋 Activos</button>
+      <button class="bib-tab" onclick="bibShowTab('historial')">🗂 Historial</button>
+    </div>
+
+    <!-- TAB: NUEVO PRÉSTAMO -->
+    <div class="bib-panel active" id="bib-tab-prestamo">
+      <div class="panel" style="max-width:580px">
+        <div class="panel-header">
+          <span class="panel-title">📖 Registrar Préstamo</span>
+        </div>
+        <div class="panel-body" style="padding:16px">
+          <div class="bib-form-grid">
+
+            <div class="bib-field" style="grid-column:1/-1">
+              <label>Título del libro</label>
+              <div class="bib-autocomplete">
+                <input type="text" id="bib-titulo" placeholder="Escribí el título…" oninput="bibBuscarLibro(this.value)" autocomplete="off"/>
+                <div class="bib-suggestions" id="bib-sugerencias"></div>
+              </div>
+            </div>
+
+            <div class="bib-field">
+              <label>Alumno / Destinatario</label>
+              <select id="bib-alumno">
+                <option value="">— Seleccioná curso primero —</option>
+              </select>
+            </div>
+
+            <div class="bib-field">
+              <label>Curso</label>
+              <select id="bib-curso" onchange="bibCargarAlumnos()">
+                <option value="">— Curso —</option>
+              </select>
+            </div>
+
+            <div class="bib-field">
+              <label>Fecha de préstamo</label>
+              <input type="date" id="bib-fecha-prestamo"/>
+            </div>
+
+            <div class="bib-field">
+              <label>Fecha de devolución esperada</label>
+              <input type="date" id="bib-fecha-devolucion"/>
+            </div>
+
+            <div class="bib-field" style="grid-column:1/-1">
+              <label>Observaciones (opcional)</label>
+              <input type="text" id="bib-obs" placeholder="Estado del libro, ejemplar, tomo…" maxlength="120"/>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top:16px;width:100%" onclick="bibRegistrarPrestamo()">
+            ✅ Registrar préstamo
+          </button>
+          <div id="bib-form-feedback" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:9px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: PRÉSTAMOS ACTIVOS -->
+    <div class="bib-panel" id="bib-tab-activos">
+      <div class="bib-filtros">
+        <input type="text" id="bib-filtro-buscar" placeholder="🔍 Buscar libro o alumno…" oninput="bibRenderActivos()"/>
+        <select id="bib-filtro-curso-act" onchange="bibRenderActivos()">
+          <option value="">Todos los cursos</option>
+        </select>
+        <select id="bib-filtro-estado-act" onchange="bibRenderActivos()">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="vencido">Vencidos</option>
+        </select>
+        <button class="btn btn-primary-sm btn-sm" onclick="bibExportarInforme()">📄 Exportar informe</button>
+      </div>
+      <div id="bib-lista-activos"><div class="bib-empty">Cargando…</div></div>
+    </div>
+
+    <!-- TAB: HISTORIAL COMPLETO -->
+    <div class="bib-panel" id="bib-tab-historial">
+      <div class="bib-filtros">
+        <input type="text" id="bib-filtro-hist" placeholder="🔍 Buscar…" oninput="bibRenderHistorial()"/>
+        <select id="bib-filtro-curso-hist" onchange="bibRenderHistorial()">
+          <option value="">Todos los cursos</option>
+        </select>
+        <button class="btn btn-primary-sm btn-sm" onclick="bibExportarInforme()">📄 Exportar informe</button>
+      </div>
+      <div id="bib-lista-historial"><div class="bib-empty">Cargando…</div></div>
+    </div>
+
+  </div><!-- fin sec-biblioteca -->
+
   </main>
 </div><!-- fin #app -->
 
@@ -2156,8 +2283,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -2418,6 +2545,8 @@ function doLogin(name, role, usuario, res){
   if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navDnl = document.getElementById('nav-dias-no-lectivos');
   if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navBib = document.getElementById('nav-biblioteca');
+  if (navBib) navBib.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navMsg = document.getElementById('nav-mensajes');
   if (navMsg) navMsg.style.display = isStudent ? 'none' : 'flex';
   setTimeout(actualizarBadgeMensajes, 1500);
@@ -5532,6 +5661,374 @@ function iniciarPrivado(usuarioId, nombreOtro) {
   const convId = 'priv_' + ids[0] + '_' + ids[1];
   abrirConvPrivada(convId, nombreOtro, usuarioId);
   cargarConversacionesPrivadas();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// BIBLIOTECA — lógica completa
+// ══════════════════════════════════════════════════════════════════════
+
+const CURSOS_BIB = ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
+
+// Estado en memoria
+let bibPrestamos   = [];   // todos los préstamos cargados
+let bibCatalogo    = [];   // títulos conocidos (de Firestore)
+let bibCargado     = false;
+
+// ── Inicialización ────────────────────────────────────────────────────
+function inicializarBiblioteca() {
+  // Poblar selects de cursos
+  const cursosOpciones = (Array.isArray(currentCursos) && currentCursos.length > 0)
+    ? currentCursos : CURSOS_BIB;
+  ['bib-curso','bib-filtro-curso-act','bib-filtro-curso-hist'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const primera = sel.options[0];
+    sel.innerHTML = '';
+    sel.appendChild(primera);
+    cursosOpciones.forEach(c => {
+      const o = document.createElement('option');
+      o.value = o.textContent = c;
+      sel.appendChild(o);
+    });
+  });
+
+  // Fecha de hoy por defecto
+  const hoy = new Date().toISOString().slice(0,10);
+  const enDias = d => {
+    const f = new Date(); f.setDate(f.getDate()+d);
+    return f.toISOString().slice(0,10);
+  };
+  const fp = document.getElementById('bib-fecha-prestamo');
+  const fd = document.getElementById('bib-fecha-devolucion');
+  if (fp) fp.value = hoy;
+  if (fd) fd.value = enDias(14);
+
+  bibCargarTodo();
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────
+function bibShowTab(tab) {
+  document.querySelectorAll('#sec-biblioteca .bib-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#sec-biblioteca .bib-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('bib-tab-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ── Cargar catálogo y préstamos desde Firestore vía WebApp ────────────
+function bibCargarTodo() {
+  callWebApp({ accion: 'bibObtenerTodo' }).then(res => {
+    if (res && res.ok) {
+      bibPrestamos = res.prestamos || [];
+      bibCatalogo  = res.catalogo  || [];
+    }
+    bibCargado = true;
+    bibRenderActivos();
+    bibRenderHistorial();
+  }).catch(() => {
+    bibCargado = true;
+    bibRenderActivos();
+    bibRenderHistorial();
+  });
+}
+
+// ── Autocomplete de títulos ───────────────────────────────────────────
+function bibBuscarLibro(q) {
+  const box = document.getElementById('bib-sugerencias');
+  if (!q || q.length < 2) { box.style.display='none'; return; }
+  const lower = q.toLowerCase();
+  const matches = bibCatalogo.filter(t => t.toLowerCase().includes(lower)).slice(0,8);
+  if (!matches.length) { box.style.display='none'; return; }
+  box.innerHTML = matches.map(t =>
+    `<div class="bib-suggestion-item" onclick="bibSeleccionarTitulo('${t.replace(/'/g,"\\'")}')">📗 ${t}</div>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+function bibSeleccionarTitulo(titulo) {
+  document.getElementById('bib-titulo').value = titulo;
+  document.getElementById('bib-sugerencias').style.display = 'none';
+}
+
+// Cerrar sugerencias al hacer click afuera
+document.addEventListener('click', e => {
+  if (!e.target.closest('.bib-autocomplete'))
+    document.getElementById('bib-sugerencias') && (document.getElementById('bib-sugerencias').style.display='none');
+});
+
+// ── Cargar alumnos del curso seleccionado ─────────────────────────────
+function bibCargarAlumnos() {
+  const curso = document.getElementById('bib-curso').value;
+  const sel   = document.getElementById('bib-alumno');
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  if (!curso) { sel.innerHTML = '<option value="">— Seleccioná curso primero —</option>'; return; }
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    if (res && res.alumnos && res.alumnos.length) {
+      sel.innerHTML = '<option value="">— Alumno —</option>' +
+        res.alumnos.map(a => `<option value="${a.legajo||a.nombre}">${a.nombre}</option>`).join('');
+    } else {
+      sel.innerHTML = '<option value="">Sin alumnos en este curso</option>';
+    }
+  }).catch(() => {
+    sel.innerHTML = '<option value="">Error al cargar</option>';
+  });
+}
+
+// ── Registrar nuevo préstamo ──────────────────────────────────────────
+function bibRegistrarPrestamo() {
+  const titulo    = document.getElementById('bib-titulo').value.trim();
+  const alumnoSel = document.getElementById('bib-alumno');
+  const alumno    = alumnoSel.options[alumnoSel.selectedIndex]?.text || '';
+  const alumnoId  = alumnoSel.value;
+  const curso     = document.getElementById('bib-curso').value;
+  const fPrest    = document.getElementById('bib-fecha-prestamo').value;
+  const fDev      = document.getElementById('bib-fecha-devolucion').value;
+  const obs       = document.getElementById('bib-obs').value.trim();
+  const fb        = document.getElementById('bib-form-feedback');
+
+  const mostrarFb = (msg, ok) => {
+    fb.textContent = msg;
+    fb.style.display = 'block';
+    fb.style.background = ok ? 'var(--color-background-success,#e8f5e9)' : '#fff3e0';
+    fb.style.color = ok ? 'var(--color-text-success,#2e7d32)' : '#e65100';
+  };
+
+  if (!titulo) return mostrarFb('⚠️ Escribí el título del libro.', false);
+  if (!alumnoId) return mostrarFb('⚠️ Seleccioná un alumno.', false);
+  if (!curso)   return mostrarFb('⚠️ Seleccioná el curso.', false);
+  if (!fPrest)  return mostrarFb('⚠️ Indicá la fecha de préstamo.', false);
+  if (!fDev)    return mostrarFb('⚠️ Indicá la fecha de devolución.', false);
+
+  mostrarFb('Guardando…', true);
+
+  const prestamo = {
+    titulo, alumno, alumnoId, curso,
+    fechaPrestamo: fPrest, fechaDevolucionEsperada: fDev,
+    observaciones: obs, registradoPor: currentNombre || currentUser,
+    estado: 'pendiente', fechaDevolucionReal: null
+  };
+
+  callWebApp({ accion: 'bibRegistrarPrestamo', prestamo }).then(res => {
+    if (res && res.ok) {
+      mostrarFb('✅ Préstamo registrado correctamente.', true);
+      // Agregar al catálogo local si no existe
+      if (!bibCatalogo.includes(titulo)) bibCatalogo.push(titulo);
+      bibPrestamos.unshift({ ...prestamo, id: res.id });
+      bibRenderActivos();
+      bibRenderHistorial();
+      // Resetear form
+      document.getElementById('bib-titulo').value = '';
+      document.getElementById('bib-alumno').innerHTML = '<option value="">— Seleccioná curso primero —</option>';
+      document.getElementById('bib-curso').value = '';
+      document.getElementById('bib-obs').value = '';
+      const hoy = new Date().toISOString().slice(0,10);
+      document.getElementById('bib-fecha-prestamo').value = hoy;
+      const fd = new Date(); fd.setDate(fd.getDate()+14);
+      document.getElementById('bib-fecha-devolucion').value = fd.toISOString().slice(0,10);
+    } else {
+      mostrarFb('❌ Error: ' + (res?.error || 'No se pudo guardar.'), false);
+    }
+  }).catch(() => mostrarFb('❌ Error de conexión.', false));
+}
+
+// ── Marcar como devuelto ──────────────────────────────────────────────
+function bibMarcarDevuelto(id) {
+  if (!confirm('¿Confirmar devolución del libro?')) return;
+  const hoy = new Date().toISOString().slice(0,10);
+  callWebApp({ accion: 'bibMarcarDevuelto', id, fechaDevolucionReal: hoy }).then(res => {
+    if (res && res.ok) {
+      const p = bibPrestamos.find(x => x.id === id);
+      if (p) { p.estado = 'devuelto'; p.fechaDevolucionReal = hoy; }
+      bibRenderActivos();
+      bibRenderHistorial();
+      showToast('Devolución registrada ✅', '📗');
+    } else {
+      showToast('Error al registrar devolución', '❌');
+    }
+  });
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function bibEstado(p) {
+  if (p.estado === 'devuelto') return 'devuelto';
+  const hoy = new Date().toISOString().slice(0,10);
+  return p.fechaDevolucionEsperada < hoy ? 'vencido' : 'pendiente';
+}
+
+function bibBadge(estado) {
+  const labels = { pendiente:'Pendiente', devuelto:'Devuelto', vencido:'Vencido ⚠️' };
+  return `<span class="bib-badge ${estado}">${labels[estado]||estado}</span>`;
+}
+
+function bibFechaLinda(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ── Render activos (solo pendientes/vencidos) ─────────────────────────
+function bibRenderActivos() {
+  const container = document.getElementById('bib-lista-activos');
+  if (!container) return;
+  const q     = (document.getElementById('bib-filtro-buscar')?.value||'').toLowerCase();
+  const curso = document.getElementById('bib-filtro-curso-act')?.value||'';
+  const estFil= document.getElementById('bib-filtro-estado-act')?.value||'';
+
+  let lista = bibPrestamos.filter(p => bibEstado(p) !== 'devuelto');
+  if (curso)  lista = lista.filter(p => p.curso === curso);
+  if (estFil) lista = lista.filter(p => bibEstado(p) === estFil);
+  if (q)      lista = lista.filter(p =>
+    p.titulo.toLowerCase().includes(q) || p.alumno.toLowerCase().includes(q));
+
+  if (!lista.length) {
+    container.innerHTML = `<div class="bib-empty">${bibCargado ? '✅ No hay préstamos pendientes.' : 'Cargando…'}</div>`;
+    return;
+  }
+
+  container.innerHTML = lista.map(p => {
+    const est = bibEstado(p);
+    return `<div class="bib-card">
+      <div class="bib-card-icon">${est==='vencido'?'⚠️':'📖'}</div>
+      <div class="bib-card-info">
+        <div class="bib-card-titulo">${p.titulo}</div>
+        <div class="bib-card-meta">
+          👤 ${p.alumno} &nbsp;·&nbsp; 🏫 ${p.curso}<br>
+          📅 Prestado: ${bibFechaLinda(p.fechaPrestamo)} &nbsp;·&nbsp; 🔔 Vence: ${bibFechaLinda(p.fechaDevolucionEsperada)}<br>
+          ${p.observaciones ? `📝 ${p.observaciones}` : ''}
+        </div>
+      </div>
+      <div class="bib-card-actions">
+        ${bibBadge(est)}
+        <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;font-size:11px"
+          onclick="bibMarcarDevuelto('${p.id}')">✅ Devuelto</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Render historial completo ─────────────────────────────────────────
+function bibRenderHistorial() {
+  const container = document.getElementById('bib-lista-historial');
+  if (!container) return;
+  const q     = (document.getElementById('bib-filtro-hist')?.value||'').toLowerCase();
+  const curso = document.getElementById('bib-filtro-curso-hist')?.value||'';
+
+  let lista = [...bibPrestamos];
+  if (curso) lista = lista.filter(p => p.curso === curso);
+  if (q)     lista = lista.filter(p =>
+    p.titulo.toLowerCase().includes(q) || p.alumno.toLowerCase().includes(q));
+
+  if (!lista.length) {
+    container.innerHTML = `<div class="bib-empty">${bibCargado ? 'Sin registros.' : 'Cargando…'}</div>`;
+    return;
+  }
+
+  container.innerHTML = lista.map(p => {
+    const est = bibEstado(p);
+    return `<div class="bib-card">
+      <div class="bib-card-icon">${est==='devuelto'?'✅':est==='vencido'?'⚠️':'📖'}</div>
+      <div class="bib-card-info">
+        <div class="bib-card-titulo">${p.titulo}</div>
+        <div class="bib-card-meta">
+          👤 ${p.alumno} &nbsp;·&nbsp; 🏫 ${p.curso}<br>
+          📅 Prestado: ${bibFechaLinda(p.fechaPrestamo)}
+          &nbsp;·&nbsp; 🔔 Vence: ${bibFechaLinda(p.fechaDevolucionEsperada)}
+          ${est==='devuelto' ? `&nbsp;·&nbsp; ✅ Devuelto: ${bibFechaLinda(p.fechaDevolucionReal)}` : ''}
+          <br>${p.observaciones ? `📝 ${p.observaciones}` : ''}
+          <br><span style="font-size:10px;color:var(--color-text-tertiary)">Registrado por: ${p.registradoPor||'—'}</span>
+        </div>
+      </div>
+      <div class="bib-card-actions">
+        ${bibBadge(est)}
+        ${est!=='devuelto'?`<button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;font-size:11px"
+          onclick="bibMarcarDevuelto('${p.id}')">✅ Devuelto</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Exportar informe HTML (Blob, mobile-safe) ─────────────────────────
+function bibExportarInforme() {
+  const anio = new Date().getFullYear();
+  const pendientes = bibPrestamos.filter(p => bibEstado(p) !== 'devuelto')
+    .sort((a,b)=> a.fechaDevolucionEsperada > b.fechaDevolucionEsperada ? 1 : -1);
+  const devueltos  = bibPrestamos.filter(p => bibEstado(p) === 'devuelto');
+  const total      = bibPrestamos.length;
+  const vencidos   = pendientes.filter(p => bibEstado(p) === 'vencido').length;
+
+  const filaTabla = (p, idx) => {
+    const est = bibEstado(p);
+    const color = est==='devuelto'?'#2e7d32':est==='vencido'?'#c62828':'#e65100';
+    const estLabel = est==='devuelto'?'Devuelto':est==='vencido'?'Vencido ⚠️':'Pendiente';
+    return `<tr style="background:${idx%2?'#fafafa':'#fff'}">
+      <td>${p.titulo}</td>
+      <td>${p.alumno}</td>
+      <td>${p.curso}</td>
+      <td>${bibFechaLinda(p.fechaPrestamo)}</td>
+      <td>${bibFechaLinda(p.fechaDevolucionEsperada)}</td>
+      <td>${est==='devuelto'?bibFechaLinda(p.fechaDevolucionReal):'—'}</td>
+      <td><span style="color:${color};font-weight:700">${estLabel}</span></td>
+    </tr>`;
+  };
+
+  const html = `<!DOCTYPE html><html lang="es"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Informe Biblioteca ${anio}</title>
+  <style>
+    body{font-family:sans-serif;padding:24px;color:#1a1a1a;max-width:900px;margin:0 auto}
+    h1{font-size:20px;color:#C0001A;margin-bottom:4px}
+    .subtitulo{font-size:13px;color:#666;margin-bottom:20px}
+    .resumen{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+    .card{flex:1;min-width:120px;padding:14px;border-radius:10px;border:1px solid #ddd;text-align:center}
+    .num{font-size:26px;font-weight:800;color:#C0001A}
+    .lbl{font-size:11px;color:#666;margin-top:2px}
+    h2{font-size:14px;margin:24px 0 10px;padding-bottom:4px;border-bottom:2px solid #C0001A}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th{background:#C0001A;color:#fff;padding:8px 10px;text-align:left}
+    td{padding:7px 10px;border-bottom:1px solid #eee}
+    .empty{color:#999;font-size:12px;padding:12px 0}
+    @media print{body{padding:0}}
+  </style></head><body>
+  <h1>📚 Informe de Biblioteca — ${anio}</h1>
+  <div class="subtitulo">Generado el ${bibFechaLinda(new Date().toISOString().slice(0,10))} · ${total} registros en total</div>
+
+  <div class="resumen">
+    <div class="card"><div class="num">${total}</div><div class="lbl">Total préstamos</div></div>
+    <div class="card"><div class="num" style="color:#e65100">${pendientes.length}</div><div class="lbl">Pendientes</div></div>
+    <div class="card"><div class="num" style="color:#c62828">${vencidos}</div><div class="lbl">Vencidos</div></div>
+    <div class="card"><div class="num" style="color:#2e7d32">${devueltos.length}</div><div class="lbl">Devueltos</div></div>
+  </div>
+
+  <h2>⚠️ Libros pendientes de devolución (${pendientes.length})</h2>
+  ${pendientes.length ? `<table>
+    <tr><th>Título</th><th>Alumno</th><th>Curso</th><th>Prestado</th><th>Vence</th><th>Dev. real</th><th>Estado</th></tr>
+    ${pendientes.map((p,i) => filaTabla(p,i)).join('')}
+  </table>` : '<div class="empty">✅ No hay préstamos pendientes.</div>'}
+
+  <h2>✅ Historial completo — todos los préstamos (${total})</h2>
+  ${total ? `<table>
+    <tr><th>Título</th><th>Alumno</th><th>Curso</th><th>Prestado</th><th>Vence</th><th>Dev. real</th><th>Estado</th></tr>
+    ${bibPrestamos.map((p,i) => filaTabla(p,i)).join('')}
+  </table>` : '<div class="empty">Sin registros.</div>'}
+
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Informe_Biblioteca_${anio}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('Informe exportado ✅','📄');
+}
+
+// ── Hook en showSection para inicializar al entrar ────────────────────
+const _origShowSection = showSection;
+function showSection(id, el) {
+  _origShowSection(id, el);
+  if (id === 'biblioteca' && !bibCargado) inicializarBiblioteca();
 }
 
 // ── Badge global ─────────────────────────────────────────────────────
