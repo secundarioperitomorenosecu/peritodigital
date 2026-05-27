@@ -1292,9 +1292,21 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       por materia de los alumnos — sin tocar la asistencia general.
     </p>
 
-    <!-- Formulario -->
-    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
-      <div style="font-size:11px;font-weight:600;color:#C0001A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Nuevo registro</div>
+    <!-- Selector de modo -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button id="aud-modo-btn-curso" onclick="audSetModo('curso')"
+        style="padding:7px 16px;border-radius:20px;border:1.5px solid #C0001A;background:#C0001A;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+        Por curso
+      </button>
+      <button id="aud-modo-btn-docente" onclick="audSetModo('docente')"
+        style="padding:7px 16px;border-radius:20px;border:1.5px solid #C0001A;background:transparent;color:#C0001A;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
+        📋 Todos los cursos del docente
+      </button>
+    </div>
+
+    <!-- Formulario modo POR CURSO (original) -->
+    <div id="aud-form-curso" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:#C0001A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Nuevo registro — por curso</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Fecha</label>
@@ -1336,6 +1348,45 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </button>
       </div>
       <div id="aud-feedback" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
+    </div>
+
+    <!-- Formulario modo POR DOCENTE (todos los cursos del día) -->
+    <div id="aud-form-docente" style="display:none;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:#C0001A;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Registrar ausencia — todos los cursos del docente en el día</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Fecha</label>
+          <input type="date" id="aud-fecha-doc" onchange="audVerificarCursosDocente()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div style="min-width:220px">
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Docente</label>
+          <select id="aud-sel-docente" onchange="audVerificarCursosDocente()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+            <option value="">— Seleccioná —</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Motivo</label>
+          <select id="aud-motivo-doc" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit">
+            <option value="Sin aviso">Sin aviso</option>
+            <option value="Enfermedad">Enfermedad</option>
+            <option value="Licencia médica">Licencia médica</option>
+            <option value="Licencia personal">Licencia personal</option>
+            <option value="Capacitación">Capacitación</option>
+            <option value="Paro/huelga">Paro / Huelga</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <button onclick="audRegistrarTodos()" id="btn-registrar-todos"
+          style="padding:7px 18px;background:#C0001A;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
+          Registrar todos
+        </button>
+      </div>
+      <!-- Preview de cursos del docente ese día -->
+      <div id="aud-preview-cursos" style="margin-top:12px;display:none">
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;font-weight:600">CURSOS QUE TIENE ESE DÍA:</div>
+        <div id="aud-preview-lista" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <div id="aud-feedback-doc" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
     </div>
 
     <!-- Filtros historial -->
@@ -1470,6 +1521,93 @@ function audFeedback(msg, ok) {
   fb.style.background = ok ? 'var(--color-background-success,#e8f5e9)' : '#fff0f0';
   fb.style.color = ok ? 'var(--color-text-success,#2e7d32)' : '#C0001A';
   setTimeout(() => { fb.style.display = 'none'; }, 4000);
+}
+
+// ── Modo dual: por curso / por docente ────────────────────────────────
+let _audDocentesCargados = false;
+
+function audSetModo(modo) {
+  const esCurso = modo === 'curso';
+  document.getElementById('aud-form-curso').style.display    = esCurso ? '' : 'none';
+  document.getElementById('aud-form-docente').style.display  = esCurso ? 'none' : '';
+  document.getElementById('aud-modo-btn-curso').style.background   = esCurso ? '#C0001A' : 'transparent';
+  document.getElementById('aud-modo-btn-curso').style.color        = esCurso ? '#fff' : '#C0001A';
+  document.getElementById('aud-modo-btn-docente').style.background = esCurso ? 'transparent' : '#C0001A';
+  document.getElementById('aud-modo-btn-docente').style.color      = esCurso ? '#C0001A' : '#fff';
+  if (!esCurso && !_audDocentesCargados) {
+    const sel = document.getElementById('aud-sel-docente');
+    sel.innerHTML = '<option value="">Cargando…</option>';
+    callWebApp({ accion: 'obtenerTodosDocentes' }).then(res => {
+      if (res && res.ok && res.docentes.length) {
+        sel.innerHTML = '<option value="">— Seleccioná —</option>' +
+          res.docentes.map(d => '<option value="' + d + '">' + d + '</option>').join('');
+        _audDocentesCargados = true;
+      } else {
+        sel.innerHTML = '<option value="">Error al cargar docentes</option>';
+      }
+    }).catch(() => { sel.innerHTML = '<option value="">Error de conexión</option>'; });
+  }
+}
+
+function audVerificarCursosDocente() {
+  const docente = document.getElementById('aud-sel-docente').value;
+  const fecha   = document.getElementById('aud-fecha-doc').value;
+  const preview = document.getElementById('aud-preview-cursos');
+  const lista   = document.getElementById('aud-preview-lista');
+  if (!docente || !fecha) { preview.style.display = 'none'; return; }
+  const p = fecha.split('-');
+  const fechaBack = p[2]+'/'+p[1]+'/'+p[0];
+  lista.innerHTML = '<span style="font-size:12px;color:var(--color-text-tertiary)">Verificando…</span>';
+  preview.style.display = 'block';
+  callWebApp({ accion: 'obtenerCursosDocente', docente: docente, fecha: fechaBack }).then(res => {
+    if (!res || !res.ok) {
+      lista.innerHTML = '<span style="color:#C0001A;font-size:12px">' + (res && res.error ? res.error : 'Error') + '</span>';
+      return;
+    }
+    if (!res.cursos.length) {
+      lista.innerHTML = '<span style="font-size:12px;color:var(--color-text-tertiary)">No tiene cursos asignados ese día (' + res.diaNom + ').</span>';
+      return;
+    }
+    lista.innerHTML = res.cursos.map(function(c) {
+      return '<span style="background:#fff0f0;color:#C0001A;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600">' + c.curso + ' · ' + c.materia + '</span>';
+    }).join('');
+  }).catch(function() { lista.innerHTML = '<span style="color:#C0001A;font-size:12px">Error de conexión</span>'; });
+}
+
+function audRegistrarTodos() {
+  const docente = document.getElementById('aud-sel-docente').value;
+  const fecha   = document.getElementById('aud-fecha-doc').value;
+  const motivo  = document.getElementById('aud-motivo-doc').value;
+  const fb      = document.getElementById('aud-feedback-doc');
+  const mostrarFb = function(msg, ok) {
+    fb.textContent = msg; fb.style.display = 'block';
+    fb.style.background = ok ? '#e8f5e9' : '#fff0f0';
+    fb.style.color = ok ? '#2e7d32' : '#C0001A';
+  };
+  if (!docente) return mostrarFb('⚠️ Selección un docente.', false);
+  if (!fecha)   return mostrarFb('⚠️ Seleccioná la fecha.', false);
+  const btn = document.getElementById('btn-registrar-todos');
+  btn.disabled = true; btn.textContent = 'Registrando…';
+  const p = fecha.split('-');
+  const fechaBack = p[2]+'/'+p[1]+'/'+p[0];
+  callWebApp({
+    accion: 'registrarAusenciaDocenteTodos',
+    datos: JSON.stringify({ fecha: fechaBack, docente: docente, motivo: motivo, usuarioNombre: currentNombre, usuarioRol: currentRole })
+  }).then(function(res) {
+    btn.disabled = false; btn.textContent = 'Registrar todos';
+    if (res && res.ok) {
+      var msg = res.registrados > 0
+        ? '✅ ' + res.registrados + ' ausencia' + (res.registrados>1?'s':'') + ' registrada' + (res.registrados>1?'s':'') + ': ' + res.detalles.join(', ') + (res.omitidos > 0 ? ' (' + res.omitidos + ' ya existían)' : '')
+        : '⚠️ Todos los registros ya existían para esa fecha.';
+      mostrarFb(msg, res.registrados > 0);
+      cargarHistorialAud();
+    } else {
+      mostrarFb('❌ ' + ((res && res.error) ? res.error : 'Error al registrar'), false);
+    }
+  }).catch(function() {
+    btn.disabled = false; btn.textContent = 'Registrar todos';
+    mostrarFb('❌ Error de conexión', false);
+  });
 }
 </script>
 
@@ -3799,12 +3937,13 @@ function cargarResumenCurso() {
           <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">% Asistencia</th>
         </tr></thead>
         <tbody>${res.alumnos.map(a => {
-          const total = a.presentes + a.ausentes + a.tardes;
-          const pct = total > 0 ? Math.round((a.presentes + a.tardes) / total * 100) : 0;
+          const total = a.presentes + a.ausentes + a.tardes + (a.retiros||0);
+          const inasist1 = a.ausentes + (a.tardes * 0.25) + ((a.retiros||0) * 0.5);
+          const pct = total > 0 ? Math.round(((total - inasist1) / total) * 100) : 0;
           const color = pct >= 85 ? '#4CAF50' : pct >= 70 ? '#FF9800' : '#F44336';
           return `<tr>
             <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${a.nombre}</td>
-            <td style="text-align:center;padding:8px;font-size:13px;color:#4CAF50;border-bottom:1px solid rgba(255,255,255,.05)">${a.presentes + a.tardes}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#4CAF50;border-bottom:1px solid rgba(255,255,255,.05)">${a.presentes + a.tardes + (a.retiros||0)}</td>
             <td style="text-align:center;padding:8px;font-size:13px;color:#F44336;border-bottom:1px solid rgba(255,255,255,.05)">${a.ausentes}</td>
             <td style="text-align:center;padding:8px;font-size:13px;color:#FF9800;border-bottom:1px solid rgba(255,255,255,.05)">${a.tardes}</td>
             <td style="text-align:center;padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">
@@ -3892,7 +4031,8 @@ function cargarResumenAlumno() {
     const tardes    = registros.filter(r=>r.estado==='T').length;
     const retiros   = registros.filter(r=>r.estado==='R').length;
     const total     = presentes + ausentes + tardes + retiros;
-    const pct       = total > 0 ? Math.round((presentes+tardes+retiros)/total*100) : 0;
+    const inasistTotal = ausentes + (tardes * 0.25) + (retiros * 0.5);
+    const pct       = total > 0 ? Math.round(((total - inasistTotal) / total) * 100) : 0;
     const pctColor  = pct>=85?'#4CAF50':pct>=70?'#FF9800':'#F44336';
     const materias  = resNot.materias || [];
     const periodos  = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
@@ -4853,7 +4993,8 @@ function cargarEvolucion() {
     if (Object.keys(asist).length > 0) {
       html += '<div style="margin-bottom:24px"><h4 style="margin:0 0 12px;color:#C0001A;font-size:14px">📅 Asistencia por Año/Curso</h4><div style="display:grid;gap:8px">';
       Object.entries(asist).forEach(([curso, d]) => {
-        const pct = d.total > 0 ? Math.round((d.presentes + d.tardanzas) / d.total * 100) : 0;
+        const inasistD = d.ausentes + ((d.tardanzas||0) * 0.25) + ((d.retiros||0) * 0.5);
+        const pct = d.total > 0 ? Math.round(((d.total - inasistD) / d.total) * 100) : 0;
         const color = pct >= 75 ? '#4CAF50' : pct >= 60 ? '#FF9800' : '#F44336';
         html += `<div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600;font-size:13px">Curso ${curso}</div>
@@ -4861,6 +5002,7 @@ function cargarEvolucion() {
             <span>✅ ${d.presentes + d.tardanzas} P</span>
             <span>❌ ${d.ausentes} A</span>
             <span>⏰ ${d.tardanzas} T</span>
+            <span>🚪 ${d.retiros||0} R</span>
             <span style="font-weight:700;color:${color}">${pct}%</span>
           </div>
         </div>`;
