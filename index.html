@@ -485,7 +485,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
-      <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this)" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
+      <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this);if(!bibCargado)inicializarBiblioteca()" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
@@ -2571,6 +2571,7 @@ function logout(){
 }
 
 function showSection(id,el){
+  if(id==='biblioteca' && !bibCargado) inicializarBiblioteca();
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   const sec=document.getElementById('sec-'+id);
@@ -6032,18 +6033,7 @@ function bibExportarInforme() {
   showToast('Informe exportado ✅','📄');
 }
 
-// ── Hook en showSection para inicializar al entrar ────────────────────
-const _origShowSection = (typeof _origShowSection === 'undefined') ? showSection : _origShowSection;
-const _showSectionPatched = true;
-const _origShowSectionRef = showSection;
-function showSection(id, el) {
-  _origShowSectionRef(id, el);
-  if (id === 'biblioteca') {
-    if (!bibCargado) {
-      inicializarBiblioteca();
-    }
-  }
-}
+// (hook de biblioteca eliminado — se inicializa desde el nav)
 
 // ── Badge global ─────────────────────────────────────────────────────
 function actualizarBadgeMensajes() {
