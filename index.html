@@ -792,7 +792,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div class="panel-header">
           <h3>📝 Libro de Calificaciones</h3>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <select id="cal-periodo" style="padding:7px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:12px" onchange="buildGrades()">
+            <select id="cal-periodo" style="padding:7px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:12px" onchange="buildGrades();cargarCalificacionesExistentes()">
               <option value="1BIM">1° Bimestre</option>
               <option value="1CUAT">1° Cuatrimestre</option>
               <option value="3BIM">3° Bimestre</option>
@@ -811,7 +811,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
               <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
               <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
             </select>
-            <input type="text" id="cal-materia" placeholder="Materia (ej: Matemática)" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;width:200px"/>
+            <select id="cal-materia" style="padding:8px 14px;background:#ffffff;border:1px solid #c8e6d4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;min-width:200px">
+              <option value="">— Seleccioná curso primero —</option>
+            </select>
           </div>
           <div class="table-container">
             <table>
@@ -819,6 +821,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
                 <th>Alumno</th>
                 <th style="text-align:center">Nota / TEA-TEP-TED</th>
                 <th id="th-estado-grade" style="text-align:center">Estado</th>
+                <th id="th-cal-final" style="text-align:center;display:none">Cal. Final</th>
               </tr></thead>
               <tbody id="grades-table">
                 <tr><td colspan="3" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>
@@ -3360,56 +3363,119 @@ function guardarAttendance() {
 
 
 function buildGrades(){
-  const tb=document.getElementById('grades-table');
-  if(!tb) return;
+  const tb = document.getElementById('grades-table');
+  if (!tb) return;
   const selPeriodo = document.getElementById('cal-periodo');
   const periodo = selPeriodo ? selPeriodo.value : '1BIM';
-  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a=>a.nombre) : [];
-  if(lista.length === 0){
-    tb.innerHTML='<tr><td colspan="3" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>';
+  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a => a.nombre) : [];
+  if (lista.length === 0) {
+    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>';
     return;
   }
 
   const esBimestral = (periodo === '1BIM' || periodo === '3BIM');
-  const esDicFeb    = (periodo === 'DIC'  || periodo === 'FEB');
+  const esCuat      = (periodo === '1CUAT' || periodo === '2CUAT');
+  const esDicFeb    = (periodo === 'DIC'   || periodo === 'FEB');
 
+  // Opciones según período
   let opcionesHTML = '';
   if (esBimestral) {
-    opcionesHTML = `<option value="">-</option>
-      <option value="TEA" style="color:#4CAF50">TEA</option>
-      <option value="TEP" style="color:#FFC107">TEP</option>
-      <option value="TED" style="color:#FF5252">TED</option>`;
+    opcionesHTML = '<option value="">-</option>' +
+      '<option value="TEA">TEA</option>' +
+      '<option value="TEP">TEP</option>' +
+      '<option value="TED">TED</option>';
   } else if (esDicFeb) {
+    // DIC y FEB aceptan numérica 1-10 o TEA/TEP/TED
     opcionesHTML = '<option value="">-</option>' +
-      [1,2,3,4,5,6,7,8,9,10].map(n =>
-        `<option value="${n}">${n}</option>`
-      ).join('');
+      [1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n}</option>`).join('') +
+      '<option value="TEA">TEA</option>' +
+      '<option value="TEP">TEP</option>' +
+      '<option value="TED">TED</option>';
   } else {
-    // cuatrimestre
+    // Cuatrimestre: numérica 1-10
     opcionesHTML = '<option value="">-</option>' +
-      [1,2,3,4,5,6,7,8,9,10].map(n =>
-        `<option value="${n}">${n}</option>`
-      ).join('');
+      [1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}">${n}</option>`).join('');
   }
 
-  // Mostrar u ocultar columna Estado en el encabezado
+  // Columna Estado
   const thEstado = document.getElementById('th-estado-grade');
-  if (thEstado) thEstado.style.display = esBimestral ? 'none' : '';
+  if (thEstado) {
+    thEstado.style.display = '';
+    thEstado.textContent = esBimestral ? 'Estado' : esCuat ? 'Estado / Prom. Anual' : 'Estado';
+  }
 
-  tb.innerHTML = lista.map((s,i) => {
-    const mostrarEstado = !esBimestral;
+  // Columna Cal. Final — solo visible en DIC y FEB
+  const thFinal = document.getElementById('th-cal-final');
+  if (thFinal) thFinal.style.display = esDicFeb ? '' : 'none';
+
+  tb.innerHTML = lista.map((s, i) => {
+    const colFinal = esDicFeb
+      ? `<td id="cal-final-cell-${i}" style="text-align:center">
+           <input type="number" id="cal-final-${i}" min="1" max="10" step="0.01"
+             placeholder="—"
+             style="width:60px;text-align:center;padding:4px;border:1px solid #c8e6d4;border-radius:6px;background:#f5f9f6;font-family:inherit;font-size:13px"
+             onchange="onCalFinalChange(${i})"/>
+         </td>`
+      : '<td style="display:none"></td>';
     return `<tr>
       <td class="td-name">${s}</td>
       <td style="text-align:center">
         <select class="grade-input" id="grade-${i}"
           style="width:80px;text-align:center;padding:4px;border:1px solid #e8d5c4;border-radius:6px;background:#fdf8f3;font-family:inherit;font-size:13px"
-          onchange="colorGradeSelect(this, '${periodo}', ${i})">
+          onchange="colorGradeSelect(this, '${periodo}', ${i}); onGradeDicFebChange(${i}, '${periodo}')">
           ${opcionesHTML}
         </select>
       </td>
-      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(0,0,0,.5);text-align:center">${mostrarEstado ? '—' : ''}</td>
+      <td id="estado-grade-${i}" style="font-size:12px;color:rgba(0,0,0,.5);text-align:center">—</td>
+      ${colFinal}
     </tr>`;
   }).join('');
+}
+
+// Detecta cuando en DIC/FEB se pone TEP o TED → avisa que falta Cal. Final numérica
+function onGradeDicFebChange(i, periodo) {
+  if (periodo !== 'DIC' && periodo !== 'FEB') return;
+  const sel   = document.getElementById('grade-' + i);
+  const val   = sel ? sel.value : '';
+  const aviso = document.getElementById('aviso-cal-final-' + i);
+  const cell  = document.getElementById('cal-final-cell-' + i);
+  if (val === 'TEP' || val === 'TED') {
+    // Mostrar aviso dentro de la celda Cal. Final
+    if (cell) cell.innerHTML =
+      `<div id="aviso-cal-final-${i}" style="font-size:10px;color:#e65100;font-weight:700;line-height:1.3;max-width:100px">
+         ⚠️ Por favor ingresá una calificación numérica en Cal. Final
+       </div>
+       <input type="number" id="cal-final-${i}" min="1" max="10" step="0.01"
+         placeholder="—"
+         style="width:60px;text-align:center;padding:4px;border:1.5px solid #e65100;border-radius:6px;background:#fff3e0;font-family:inherit;font-size:13px;margin-top:4px"
+         onchange="onCalFinalChange(${i})"/>`;
+  } else if (val === 'TEA') {
+    // TEA en DIC/FEB = aprobado conceptual, Cal. Final queda como TEA
+    if (cell) cell.innerHTML =
+      `<span style="color:#1a9e5c;font-weight:700;font-size:12px">TEA ✅</span>`;
+  } else if (!isNaN(parseFloat(val)) && val !== '') {
+    // Numérica — limpiar aviso
+    if (cell) cell.innerHTML =
+      `<input type="number" id="cal-final-${i}" min="1" max="10" step="0.01"
+         value="${val}"
+         style="width:60px;text-align:center;padding:4px;border:1px solid #c8e6d4;border-radius:6px;background:#f5f9f6;font-family:inherit;font-size:13px"
+         onchange="onCalFinalChange(${i})"/>`;
+  }
+}
+
+function onCalFinalChange(i) {
+  const input = document.getElementById('cal-final-' + i);
+  if (!input) return;
+  const val = parseFloat(input.value);
+  if (!isNaN(val)) {
+    input.style.borderColor = val >= 4 ? '#1a9e5c' : '#F44336';
+    input.style.background  = val >= 4 ? '#e8f5e9' : '#ffebee';
+    // Actualizar estado visual
+    const td = document.getElementById('estado-grade-' + i);
+    if (td) td.innerHTML = val >= 4
+      ? '<span style="color:#1a9e5c;font-weight:700">✅ Aprobado</span>'
+      : '<span style="color:#F44336;font-weight:700">❌ Adeuda</span>';
+  }
 }
 
 function cargarAlumnosCalificaciones() {
@@ -3419,30 +3485,110 @@ function cargarAlumnosCalificaciones() {
   callWebApp({ accion: 'obtenerAsistencia', curso, fecha: fechaHoy() }).then(res => {
     if (res.ok && res.alumnos) { alumnosActuales = res.alumnos; }
     buildGrades();
+    cargarCalificacionesExistentes();
+  });
+}
+
+// Carga notas ya guardadas y las muestra en los selectores
+function cargarCalificacionesExistentes() {
+  const curso   = document.getElementById('cal-curso').value;
+  const materia = document.getElementById('cal-materia').value;
+  const periodo = document.getElementById('cal-periodo').value;
+  if (!curso || !materia || alumnosActuales.length === 0) return;
+
+  callWebApp({ accion: 'obtenerCalificaciones', curso, materia, anio: new Date().getFullYear() }).then(res => {
+    if (!res || !res.ok || !res.calificaciones.length) return;
+
+    const mapaNotas = {};
+    res.calificaciones.forEach(a => { mapaNotas[a.legajo] = a; });
+
+    const colPeriodo = {
+      '1BIM':'bim1', '1CUAT':'cuat1', '3BIM':'bim3',
+      '2CUAT':'cuat2', 'DIC':'dic', 'FEB':'feb'
+    }[periodo];
+
+    alumnosActuales.forEach((a, i) => {
+      const datos = mapaNotas[a.legajo];
+      if (!datos) return;
+      const val = datos[colPeriodo];
+      const sel = document.getElementById('grade-' + i);
+      if (sel && val !== undefined && val !== '') {
+        sel.value = val;
+        colorGradeSelect(sel, periodo, i);
+      }
+      // Mostrar promedio anual si ambos cuatrimestres aprobados
+      if (datos.promedioAnual !== null && datos.promedioAnual !== undefined) {
+        const tdEstado = document.getElementById('estado-grade-' + i);
+        if (tdEstado) {
+          tdEstado.innerHTML = '<span style="color:#1a9e5c;font-weight:700">Prom: ' + datos.promedioAnual.toFixed(2) + '</span>';
+        }
+      }
+    });
   });
 }
 
 function guardarCalificaciones() {
   const curso   = document.getElementById('cal-curso').value;
-  const materia = document.getElementById('cal-materia').value.trim();
+  const materia = document.getElementById('cal-materia').value.trim ? document.getElementById('cal-materia').value.trim() : document.getElementById('cal-materia').value;
   const periodo = document.getElementById('cal-periodo').value;
+  const esDicFeb = (periodo === 'DIC' || periodo === 'FEB');
+
   if (!curso)   { showToast('Seleccioná un curso','⚠️'); return; }
-  if (!materia) { showToast('Ingresá la materia','⚠️'); return; }
+  if (!materia) { showToast('Seleccioná la materia','⚠️'); return; }
   if (alumnosActuales.length === 0) { showToast('No hay alumnos cargados','⚠️'); return; }
 
+  // Validar que TEP/TED en DIC/FEB tengan Cal. Final numérica
+  if (esDicFeb) {
+    for (let i = 0; i < alumnosActuales.length; i++) {
+      const sel = document.getElementById('grade-' + i);
+      const val = sel ? sel.value : '';
+      if (val === 'TEP' || val === 'TED') {
+        const cf = document.getElementById('cal-final-' + i);
+        if (!cf || !cf.value || isNaN(parseFloat(cf.value))) {
+          showToast('⚠️ ' + alumnosActuales[i].nombre + ' tiene TEP/TED pero falta la Calificación Final numérica', '❌');
+          return;
+        }
+      }
+    }
+  }
+
   const promesas = alumnosActuales.map((a, i) => {
-    const input = document.getElementById('grade-'+i);
-    const val = input ? input.value.trim() : '';
+    const input = document.getElementById('grade-' + i);
+    const val   = input ? input.value.trim() : '';
     if (!val) return Promise.resolve({ ok: true });
+
+    // Cal. Final para DIC/FEB
+    let calFinal = '';
+    if (esDicFeb) {
+      if (val === 'TEA') {
+        calFinal = 'TEA';
+      } else if (val === 'TEP' || val === 'TED') {
+        const cf = document.getElementById('cal-final-' + i);
+        calFinal = cf ? cf.value : '';
+      } else {
+        // Nota numérica → Cal. Final = misma nota
+        calFinal = val;
+      }
+    }
+
     return callWebApp({
       accion: 'guardarCalificacion',
       legajo: a.legajo, nombre: a.nombre, email: '', curso, materia,
-      docente: currentUser, trimestre: periodo, notas: val
+      docente: currentUser, trimestre: periodo, notas: val,
+      calFinal: calFinal
     });
   });
 
-  showToast('Guardando calificaciones...','⏳');
-  Promise.all(promesas).then(() => showToast('Calificaciones guardadas ✓','✅'));
+  showToast('Guardando calificaciones...', '⏳');
+  Promise.all(promesas).then(res => {
+    const errores = res.filter(r => r && !r.ok).length;
+    if (errores > 0) {
+      showToast('Guardado con ' + errores + ' error(es)', '⚠️');
+    } else {
+      showToast('Calificaciones guardadas ✓', '✅');
+      cargarCalificacionesExistentes();
+    }
+  });
 }
 
 function subirArchivo() {
@@ -3837,8 +3983,40 @@ function setupCalificaciones() {
   cursoSel.innerHTML = '<option value="">— Seleccioná un curso —</option>' +
     opciones.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  // Materia: campo fijo si tiene una, selector si tiene varias
-  buildMateriaField('cal-materia');
+  // Materia: para admin carga desde Horarios al elegir curso; para docentes usa buildMateriaField
+  const isAdminCal = ['director','vicedirector','secretary','secretario','secretario/a','legal'].some(r => currentRole.toLowerCase().includes(r));
+  if (isAdminCal) {
+    cursoSel.addEventListener('change', function() {
+      cargarMateriasCurso(this.value, 'cal-materia');
+    });
+    // Al cambiar materia también cargar notas existentes
+    const matSel = document.getElementById('cal-materia');
+    if (matSel) matSel.addEventListener('change', function() {
+      if (alumnosActuales.length) cargarCalificacionesExistentes();
+    });
+  } else {
+    buildMateriaField('cal-materia');
+  }
+}
+
+function cargarMateriasCurso(curso, selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  if (!curso) {
+    sel.innerHTML = '<option value="">— Seleccioná curso primero —</option>';
+    return;
+  }
+  sel.innerHTML = '<option value="">Cargando materias…</option>';
+  callWebApp({ accion: 'obtenerMateriasCurso', curso }).then(res => {
+    if (res && res.ok && res.materias.length) {
+      sel.innerHTML = '<option value="">— Materia —</option>' +
+        res.materias.map(m => `<option value="${m}">${m}</option>`).join('');
+    } else {
+      sel.innerHTML = '<option value="">Sin materias en el horario</option>';
+    }
+  }).catch(() => {
+    sel.innerHTML = '<option value="">Error al cargar</option>';
+  });
 }
 
 function setupAsistencia() {
