@@ -839,7 +839,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div id="informe-periodo-body" style="display:none">
           <div class="panel-body">
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
-              <select id="inf-curso" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+              <select id="inf-curso" onchange="infCargarMaterias()" style="padding:8px 14px;background:#ffffff;border:1px solid #c8e6d4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
                 <option value="">— Seleccioná curso —</option>
                 <option value="1A">1°A</option><option value="1B">1°B</option>
                 <option value="2A">2°A</option><option value="2B">2°B</option>
@@ -848,7 +848,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
                 <option value="5A">5°A</option><option value="5B">5°B</option>
                 <option value="6A">6°A</option><option value="6B">6°B</option>
               </select>
-              <select id="inf-periodo" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+              <select id="inf-materia" style="padding:8px 14px;background:#ffffff;border:1px solid #c8e6d4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;min-width:180px">
+                <option value="">— Seleccioná curso primero —</option>
+              </select>
+              <select id="inf-periodo" style="padding:8px 14px;background:#ffffff;border:1px solid #c8e6d4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
                 <option value="1BIM">1° Bimestre</option>
                 <option value="1CUAT">1° Cuatrimestre</option>
                 <option value="3BIM">3° Bimestre</option>
@@ -4327,6 +4330,11 @@ function toggleInformePeriodo() {
   if (btn) btn.textContent = abierto ? 'Ver ▼' : 'Ocultar ▲';
 }
 
+function infCargarMaterias() {
+  const curso = document.getElementById('inf-curso').value;
+  cargarMateriasCurso(curso, 'inf-materia');
+}
+
 function generarInformePeriodo() {
   const curso   = document.getElementById('inf-curso').value;
   const periodo = document.getElementById('inf-periodo').value;
@@ -4338,9 +4346,12 @@ function generarInformePeriodo() {
   resultado.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando informe...</div>';
   btnImpr.style.display = 'none';
 
+  const materia = document.getElementById('inf-materia') ? document.getElementById('inf-materia').value : (currentMateria || '');
+  if (!materia) { showToast('Seleccioná una materia', '⚠️'); return; }
+
   // Traer alumnos del curso y sus notas del período
   callWebApp({ accion: 'obtenerNotasPorCursoPeriodo', curso, periodo,
-    materia: currentMateria || '', docente: currentUser }).then(res => {
+    materia: materia, docente: currentUser }).then(res => {
     if (!res || !res.ok) {
       resultado.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No se pudo obtener el informe.</div>';
       return;
@@ -4383,7 +4394,7 @@ function generarInformePeriodo() {
     const pctAp = total > 0 ? Math.round(aprobados/total*100) : 0;
     const pctIn = total > 0 ? Math.round(intensifican/total*100) : 0;
     const pctSn = total > 0 ? Math.round(sinNota/total*100) : 0;
-    const matLabel = currentMateria || 'Materia';
+    const matLabel = (document.getElementById('inf-materia') && document.getElementById('inf-materia').value) ? document.getElementById('inf-materia').value : (currentMateria || 'Materia');
 
     resultado.innerHTML = `
       <div id="contenido-informe-imprimible">
