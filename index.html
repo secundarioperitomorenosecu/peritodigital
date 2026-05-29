@@ -3303,7 +3303,7 @@ function updateCounts(){
   const tardes    = vals.filter(v=>v==='tarde').length;
   const ausentes  = vals.filter(v=>v==='ausente').length;
   const retiros   = vals.filter(v=>v==='retiro').length;
-  document.getElementById('cnt-p').textContent='P: '+(presentes + tardes);
+  document.getElementById('cnt-p').textContent='P: '+(presentes + tardes + retiros);
   document.getElementById('cnt-a').textContent='A: '+ausentes;
   document.getElementById('cnt-t').textContent='T: '+tardes;
   if (document.getElementById('cnt-r')) {
@@ -4043,7 +4043,7 @@ function cargarResumenAlumno() {
     contenido.innerHTML = `
       <h3 style="margin-bottom:16px;font-size:16px">${nombre} — ${curso}</h3>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-        <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes + tardes}</div><div class="stat-label">Presentes</div></div>
+        <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes + tardes + retiros}</div><div class="stat-label">Presentes</div></div>
         <div class="stat-card" style="--color:#F44336;flex:1;min-width:100px"><div class="stat-icon">❌</div><div class="stat-value">${ausentes}</div><div class="stat-label">Ausentes</div></div>
         <div class="stat-card" style="--color:#FF9800;flex:1;min-width:100px"><div class="stat-icon">🕐</div><div class="stat-value">${tardes}</div><div class="stat-label">Tardanzas</div></div>
         <div class="stat-card" style="--color:#424242;flex:1;min-width:100px"><div class="stat-icon">🚪</div><div class="stat-value">${retiros}</div><div class="stat-label">Retiros</div></div>
@@ -4101,7 +4101,7 @@ function cargarMiAsistencia() {
     const presentes = registros.filter(r => r.estado === 'P').length;
     const ausentes  = registros.filter(r => r.estado === 'A').length;
     const tardes    = registros.filter(r => r.estado === 'T').length;
-    document.getElementById('cnt-presentes').textContent = presentes + tardes;
+    document.getElementById('cnt-presentes').textContent = presentes + tardes + retiros;
     document.getElementById('cnt-ausentes').textContent  = ausentes;
     document.getElementById('cnt-tardes').textContent    = tardes;
     const tabla = document.getElementById('mi-asistencia-tabla');
@@ -5003,7 +5003,7 @@ function cargarEvolucion() {
         html += `<div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600;font-size:13px">Curso ${curso}</div>
           <div style="display:flex;gap:16px;font-size:12px;color:#666">
-            <span>✅ ${d.presentes + d.tardanzas} P</span>
+            <span>✅ ${d.presentes + d.tardanzas + (d.retiros||0)} P</span>
             <span>❌ ${d.ausentes} A</span>
             <span>⏰ ${d.tardanzas} T</span>
             <span>🚪 ${d.retiros||0} R</span>
