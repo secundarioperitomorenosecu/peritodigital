@@ -3552,43 +3552,41 @@ function guardarCalificaciones() {
     }
   }
 
-  const promesas = alumnosActuales.map((a, i) => {
+  // Armar bloque con todos los alumnos — UNA sola llamada al backend
+  const alumnosBloque = alumnosActuales.map((a, i) => {
     const input = document.getElementById('grade-' + i);
     const val   = input ? input.value.trim() : '';
-    if (!val) return Promise.resolve({ ok: true });
-
-    // Cal. Final para DIC/FEB
     let calFinal = '';
-    if (esDicFeb) {
+    if (esDicFeb && val) {
       if (val === 'TEA') {
         calFinal = 'TEA';
       } else if (val === 'TEP' || val === 'TED') {
         const cf = document.getElementById('cal-final-' + i);
         calFinal = cf ? cf.value : '';
       } else {
-        // Nota numérica → Cal. Final = misma nota
         calFinal = val;
       }
     }
+    return { legajo: a.legajo, nombre: a.nombre, valor: val, calFinal };
+  }).filter(a => a.valor); // solo los que tienen nota
 
-    return callWebApp({
-      accion: 'guardarCalificacion',
-      legajo: a.legajo, nombre: a.nombre, email: '', curso, materia,
-      docente: currentUser, trimestre: periodo, notas: val,
-      calFinal: calFinal
-    });
-  });
+  if (alumnosBloque.length === 0) {
+    showToast('No hay notas para guardar','⚠️'); return;
+  }
 
-  showToast('Guardando calificaciones...', '⏳');
-  Promise.all(promesas).then(res => {
-    const errores = res.filter(r => r && !r.ok).length;
-    if (errores > 0) {
-      showToast('Guardado con ' + errores + ' error(es)', '⚠️');
-    } else {
-      showToast('Calificaciones guardadas ✓', '✅');
+  showToast('Guardando ' + alumnosBloque.length + ' calificaciones...', '⏳');
+
+  callWebApp({
+    accion: 'guardarCalificacionesBloque',
+    datos: JSON.stringify({ curso, materia, docente: currentUser, periodo, alumnos: alumnosBloque })
+  }).then(res => {
+    if (res && res.ok) {
+      showToast('✅ ' + res.guardados + ' calificaciones guardadas', '✅');
       cargarCalificacionesExistentes();
+    } else {
+      showToast('❌ Error: ' + (res?.error || 'No se pudo guardar'), '❌');
     }
-  });
+  }).catch(() => showToast('❌ Error de conexión', '❌'));
 }
 
 function subirArchivo() {
