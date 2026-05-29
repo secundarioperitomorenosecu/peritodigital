@@ -208,19 +208,19 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .student-avatar-sm{width:42px;height:42px;border-radius:50%;margin:0 auto 9px;background:linear-gradient(135deg,#e8d5c4,#f0e9e0);color:#888;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
 .student-name{font-size:11px;font-weight:600;color:#1a1a1a;margin-bottom:7px}
 .attendance-btns{display:flex;gap:3px;justify-content:center}
-.att-btn{padding:5px 9px;border-radius:6px;border:2px solid transparent;cursor:pointer;font-size:11px;font-weight:800;transition:all .15s;opacity:.5}
-.att-btn.p{background:rgba(76,175,80,.15);color:#388E3C;border-color:transparent}
-.att-btn.p:hover{opacity:.8}
-.att-btn.p.active{background:#4CAF50;color:#fff;border-color:#2E7D32;opacity:1;box-shadow:0 2px 6px rgba(76,175,80,.5)}
-.att-btn.a{background:rgba(244,67,54,.12);color:#C62828;border-color:transparent}
-.att-btn.a:hover{opacity:.8}
-.att-btn.a.active{background:#F44336;color:#fff;border-color:#B71C1C;opacity:1;box-shadow:0 2px 6px rgba(244,67,54,.5)}
-.att-btn.t{background:rgba(255,152,0,.15);color:#E65100;border-color:transparent}
-.att-btn.t:hover{opacity:.8}
-.att-btn.t.active{background:#FF9800;color:#fff;border-color:#E65100;opacity:1;box-shadow:0 2px 6px rgba(255,152,0,.5)}
-.att-btn.r{background:rgba(96,125,139,.12);color:#455A64;border-color:transparent}
-.att-btn.r:hover{opacity:.8}
-.att-btn.r.active{background:#607D8B;color:#fff;border-color:#37474F;opacity:1;box-shadow:0 2px 6px rgba(96,125,139,.5)}
+.att-btn{padding:5px 9px;border-radius:6px;border:2px solid transparent;cursor:pointer;font-size:11px;font-weight:800;transition:all .15s;opacity:.35;min-width:28px}
+.att-btn.p{background:rgba(76,175,80,.15);color:#388E3C}
+.att-btn.p:hover{opacity:.65}
+.att-btn.p.active{background:#4CAF50 !important;color:#fff !important;border-color:#2E7D32 !important;opacity:1 !important;box-shadow:0 3px 8px rgba(76,175,80,.6) !important;transform:scale(1.1)}
+.att-btn.a{background:rgba(244,67,54,.12);color:#C62828}
+.att-btn.a:hover{opacity:.65}
+.att-btn.a.active{background:#F44336 !important;color:#fff !important;border-color:#B71C1C !important;opacity:1 !important;box-shadow:0 3px 8px rgba(244,67,54,.6) !important;transform:scale(1.1)}
+.att-btn.t{background:rgba(255,152,0,.15);color:#E65100}
+.att-btn.t:hover{opacity:.65}
+.att-btn.t.active{background:#FF9800 !important;color:#fff !important;border-color:#E65100 !important;opacity:1 !important;box-shadow:0 3px 8px rgba(255,152,0,.6) !important;transform:scale(1.1)}
+.att-btn.r{background:rgba(96,125,139,.12);color:#455A64}
+.att-btn.r:hover{opacity:.65}
+.att-btn.r.active{background:#607D8B !important;color:#fff !important;border-color:#37474F !important;opacity:1 !important;box-shadow:0 3px 8px rgba(96,125,139,.6) !important;transform:scale(1.1)}
 .grade-input{width:55px;padding:5px;text-align:center;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:7px;color:#1a1a1a;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600}
 .grade-input:focus{outline:none;border-color:var(--rojo)}
 .upload-zone{border:2px dashed #e8d5c4;border-radius:15px;padding:36px;text-align:center;cursor:pointer;transition:all .3s}
@@ -3283,8 +3283,15 @@ function buildAttendance(){
 
 function setAtt(i,val){
   attendanceState[i]=val;
+  // Actualizar clase de la card
   const c=document.getElementById('att-'+i);
   c.className='student-card '+val;
+  // Actualizar clases active de los botones P A T R
+  ['presente','ausente','tarde','retiro'].forEach(function(est){
+    const letra = est==='presente'?'p':est==='ausente'?'a':est==='tarde'?'t':'r';
+    const btn = c.querySelector('.att-btn.'+letra);
+    if(btn) btn.classList.toggle('active', val===est);
+  });
   // Mostrar/ocultar campo de hora tardía
   const wrap = document.getElementById('tarde-wrap-'+i);
   if (wrap) wrap.style.display = val === 'tarde' ? 'flex' : 'none';
