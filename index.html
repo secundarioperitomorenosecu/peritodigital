@@ -4153,18 +4153,20 @@ function cargarResumenCurso() {
       const periodoKeys = ['bim1','cuat1','bim3','cuat2','dic','feb','calFinal'];
 
       // Botón exportar
-      const btnExportar = '<div style="margin-bottom:12px;text-align:right">' +
-        '<button class="btn btn-primary btn-sm" onclick="exportarResumenIntegral()">📄 Exportar informe</button></div>';
+      const btnExportar = '<div style="margin-bottom:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
+        '<button class="btn btn-primary btn-sm" onclick="exportarResumenIntegral()">📄 Exportar informe integral</button>' +
+        '<button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarDetalleInasistenciasCurso('' + curso + '')">📋 Detalle inasistencias por fecha</button>' +
+        '</div>';
 
       // Tabla: columnas = Alumno | [materia × período] | %Asist | Inasist.Materia
       const thMaterias = materias.map(m =>
         `<th colspan="${periodos.length + 1}" style="text-align:center;padding:6px 8px;font-size:10px;font-weight:700;background:#e8f5e9;color:#1a9e5c;border:1px solid #c8e6d4;white-space:nowrap">${m}</th>`
-      ).join('');
+      ).join('') + '<th style="text-align:center;padding:6px 8px;font-size:10px;font-weight:700;background:#1a9e5c;color:#fff;border:1px solid #157a45">% Asist.</th>';
 
       const thPeriodos = materias.map(() =>
         periodos.map(p => `<th style="text-align:center;padding:4px 6px;font-size:9px;color:#666;border:1px solid #e0e0e0;white-space:nowrap">${p}</th>`).join('') +
         '<th style="text-align:center;padding:4px 6px;font-size:9px;color:#F44336;border:1px solid #e0e0e0">Inasist.</th>'
-      ).join('');
+      ).join('') + '<th style="border:1px solid #157a45"></th>';
 
       const filas = alumnos.map((a, ai) => {
         const asist = a.asist;
@@ -4193,12 +4195,13 @@ function cargarResumenCurso() {
           return celdasNotas + `<td style="text-align:center;padding:3px 5px;font-size:11px;border:1px solid #eee;background:${bgAlerta}">${inasistLabel}</td>`;
         }).join('');
 
-        return `<tr style="background:${ai%2===0?'#fafafa':'#fff'}">
-          <td style="padding:6px 10px;font-size:12px;font-weight:600;border:1px solid #eee;white-space:nowrap;position:sticky;left:0;background:${ai%2===0?'#fafafa':'#fff'};z-index:1">
-            ${a.nombre}<br>
-            <span style="font-size:10px;color:${pctColor};font-weight:700">${pctG}% asistencia</span>
+        const bgRow = ai%2===0?'#fafafa':'#fff';
+        return `<tr style="background:${bgRow}">
+          <td style="padding:6px 10px;font-size:12px;font-weight:600;border:1px solid #eee;white-space:nowrap;position:sticky;left:0;background:${bgRow};z-index:1">
+            ${a.nombre}
           </td>
           ${celdasMaterias}
+          <td style="text-align:center;padding:6px 10px;border:1px solid #eee;font-weight:800;font-size:13px;color:${pctColor};white-space:nowrap;background:${bgRow}">${pctG}%</td>
         </tr>`;
       }).join('');
 
@@ -4225,6 +4228,106 @@ function cargarResumenCurso() {
   }
 }
 
+// ── Exportar detalle inasistencias — curso completo ──────────────────
+function exportarDetalleInasistenciasCurso(curso) {
+  showToast('Generando detalle...', '⏳');
+  callWebApp({ accion: 'obtenerDetalleInasistencias', curso }).then(res => {
+    if (!res || !res.ok) { showToast('Error: ' + (res?.error||'sin datos'), '❌'); return; }
+    _generarInformeDetalleInasistencias(res, curso, null);
+  });
+}
+
+// ── Exportar detalle inasistencias — alumno individual ────────────────
+function exportarDetalleInasistenciasAlumno(legajo, curso, nombre) {
+  showToast('Generando detalle...', '⏳');
+  callWebApp({ accion: 'obtenerDetalleInasistencias', curso, legajo }).then(res => {
+    if (!res || !res.ok) { showToast('Error: ' + (res?.error||'sin datos'), '❌'); return; }
+    _generarInformeDetalleInasistencias(res, curso, nombre);
+  });
+}
+
+// ── Genera y descarga el HTML del informe de detalle ─────────────────
+function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
+  const fechaHoyStr = new Date().toLocaleDateString('es-AR');
+  const anio = new Date().getFullYear();
+
+  const seccionesAlumnos = res.alumnos.map(a => {
+    if (!a.detalle.length) return '';
+
+    const filas = a.detalle.map((d, di) => {
+      const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : 'Retiro';
+      const estColor = d.estado === 'A' ? '#c62828' : d.estado === 'T' ? '#e65100' : '#607D8B';
+      const matsHtml = d.materias.length
+        ? d.materias.map(m =>
+            `<tr style="background:${di%2===0?'#fafafa':'#fff'}">
+              ${di===0||true?'':''} 
+              <td style="padding:5px 10px;font-size:12px;border:1px solid #eee">${d.fecha}</td>
+              <td style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:${estColor};font-weight:700">${estLabel}</td>
+              <td style="padding:5px 10px;font-size:12px;border:1px solid #eee">${m.materia}</td>
+              <td style="text-align:center;padding:5px 10px;font-size:12px;border:1px solid #eee">${m.modulos}</td>
+              <td style="text-align:center;padding:5px 10px;font-size:12px;border:1px solid #eee;font-weight:700;color:${m.inasistencias>=1?'#c62828':'#e65100'}">${m.inasistencias % 1 === 0 ? m.inasistencias : m.inasistencias.toFixed(2)}</td>
+            </tr>`
+          ).join('')
+        : `<tr style="background:${di%2===0?'#fafafa':'#fff'}">
+            <td style="padding:5px 10px;font-size:12px;border:1px solid #eee">${d.fecha}</td>
+            <td style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:${estColor};font-weight:700">${estLabel}</td>
+            <td colspan="3" style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:#999">Sin materias asignadas ese día</td>
+          </tr>`;
+      return matsHtml;
+    }).join('');
+
+    return `<div style="margin-bottom:24px;page-break-inside:avoid">
+      <div style="background:#1a9e5c;color:#fff;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:13px">
+        ${a.nombre} — ${a.totalDiasFalta} día${a.totalDiasFalta!==1?'s':''} de inasistencia
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:left">Fecha</th>
+            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:left">Estado</th>
+            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:left">Materia</th>
+            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:center">Módulos</th>
+            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:center">Inasist.</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Detalle Inasistencias — ${curso} — ${anio}</title>
+    <style>
+      body{font-family:sans-serif;padding:20px;color:#1a1a1a;max-width:900px;margin:0 auto}
+      h1{color:#1a9e5c;font-size:18px;margin-bottom:4px}
+      .sub{color:#666;font-size:12px;margin-bottom:20px}
+      .leyenda{margin-top:20px;font-size:11px;padding:8px 12px;background:#fff3e0;border-left:3px solid #e65100;border-radius:4px}
+      @media print{body{padding:0;max-width:none}}
+    </style>
+  </head><body>
+    <h1>📋 Detalle de Inasistencias por Materia — Curso ${curso}</h1>
+    <div class="sub">${nombreFiltro ? 'Alumno: ' + nombreFiltro + ' · ' : ''}Año ${anio} · Generado el ${fechaHoyStr}</div>
+    ${seccionesAlumnos || '<p style="color:#999">Sin inasistencias registradas.</p>'}
+    <div class="leyenda">
+      Las inasistencias por materia se calculan según los módulos del horario ese día.<br>
+      Ausente = 1 inasistencia por módulo · Tarde = 0.25 · Retiro = 0.5
+    </div>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const fn   = nombreFiltro
+    ? 'Inasistencias_' + nombreFiltro.replace(/[^a-zA-Z0-9]/g,'_') + '_' + anio + '.html'
+    : 'Inasistencias_Detalle_' + curso + '_' + anio + '.html';
+  a.href = url; a.download = fn;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('Detalle exportado ✅', '📋');
+}
+
 function exportarResumenIntegral() {
   const res = window._resumenIntegralData;
   if (!res) return;
@@ -4234,11 +4337,11 @@ function exportarResumenIntegral() {
 
   const thMat = materias.map(m =>
     `<th colspan="${periodos.length+1}" style="background:#1a9e5c;color:#fff;padding:6px;border:1px solid #c8e6d4;font-size:11px">${m}</th>`
-  ).join('');
+  ).join('') + '<th style="background:#157a45;color:#fff;padding:6px;border:1px solid #157a45;font-size:11px">% Asist.</th>';
   const thPer = materias.map(() =>
     periodos.map(p => `<th style="background:#e8f5e9;color:#1a9e5c;padding:4px;border:1px solid #ddd;font-size:10px">${p}</th>`).join('') +
     '<th style="background:#ffebee;color:#c62828;padding:4px;border:1px solid #ddd;font-size:10px">Inasist.</th>'
-  ).join('');
+  ).join('') + '<th style="border:1px solid #157a45"></th>';
 
   const filas = alumnos.map((a, ai) => {
     const asist = a.asist;
@@ -4256,8 +4359,10 @@ function exportarResumenIntegral() {
     }).join('');
     return `<tr>
       <td style="padding:5px 8px;font-size:11px;font-weight:600;border:1px solid #ddd;background:${ai%2===0?'#fafafa':'#fff'};white-space:nowrap">
-        ${a.nombre} <span style="color:${pctColor};font-size:10px">(${pctG}%)</span>
-      </td>${celdas}</tr>`;
+        ${a.nombre}
+      </td>${celdas}
+      <td style="text-align:center;padding:5px 8px;font-size:12px;font-weight:800;border:1px solid #ddd;color:${pctColor};background:${ai%2===0?'#fafafa':'#fff'}">${pctG}%</td>
+      </tr>`;
   }).join('');
 
   const fechaHoyStr = new Date().toLocaleDateString('es-AR');
@@ -4405,7 +4510,13 @@ function cargarResumenAlumno() {
           </tr>`;
         }).join('')}</tbody>
       </table>` : ''}
-    `;
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="exportarDetalleInasistenciasAlumno('${legajo}','${curso}','${nombre.replace(/'/g,'')}')"
+        class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80">
+        📋 Detalle inasistencias por materia
+      </button>
+    </div>
+    \`;
   });
 }
 // ─────────────────────────────────────────────────────────────────────
