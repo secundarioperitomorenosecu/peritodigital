@@ -529,6 +529,99 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value" id="dash-materias-riesgo">—</div><div class="stat-label">Materias en riesgo</div></div>
         <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">📢</div><div class="stat-value" id="dash-comunicados">—</div><div class="stat-label">Comunicados</div></div>
       </div>
+      <!-- Generador de Acta de Accidente — solo staff -->
+      <div class="panel" id="panel-acta-accidente" style="margin-top:20px;display:none">
+        <div class="panel-header">
+          <span class="panel-title">🚑 Acta de Accidente Escolar</span>
+          <button class="btn btn-sm btn-outline" onclick="toggleActaAccidente()">Ocultar ▲</button>
+        </div>
+        <div class="panel-body" id="form-acta-accidente">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+            <div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:1;min-width:120px">
+                <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+                <select id="acta-curso" onchange="actaCargarAlumnos()" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                  <option value="">— Curso —</option>
+                </select>
+              </div>
+              <div style="flex:2;min-width:200px">
+                <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Alumno accidentado</label>
+                <select id="acta-alumno" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                  <option value="">— Seleccioná curso primero —</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">DNI</label>
+              <input type="text" id="acta-dni" placeholder="DNI del alumno" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha de nacimiento</label>
+              <input type="date" id="acta-fnac" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Domicilio</label>
+              <input type="text" id="acta-domicilio" placeholder="Domicilio del alumno" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Localidad</label>
+              <input type="text" id="acta-localidad" value="González Catán" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha del accidente</label>
+              <input type="date" id="acta-fecha" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Hora del accidente</label>
+              <input type="time" id="acta-hora" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Nº Siniestro</label>
+              <input type="text" id="acta-siniestro" placeholder="Opcional" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Póliza</label>
+              <input type="text" id="acta-poliza" placeholder="Opcional" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Lugar de ocurrencia</label>
+              <select id="acta-lugar" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <option value="aula">Aula</option>
+                <option value="recreo">Recreo</option>
+                <option value="educación física">Educación Física</option>
+                <option value="salida educativa">Salida educativa</option>
+                <option value="campamento">Campamento</option>
+                <option value="taller">Taller</option>
+                <option value="baño">Baño</option>
+                <option value="patio">Patio</option>
+                <option value="escalera">Escalera</option>
+                <option value="vía pública">Vía pública</option>
+                <option value="SUM">SUM</option>
+                <option value="biblioteca">Biblioteca</option>
+                <option value="espacio de educación física">Espacio de Educación Física</option>
+              </select>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Forma en que ocurrió el accidente</label>
+              <textarea id="acta-forma" rows="3" placeholder="Describir cómo ocurrió..." style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Lesiones sufridas</label>
+              <textarea id="acta-lesiones" rows="2" placeholder="Describir las lesiones..." style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+
+          </div>
+          <button onclick="generarActaAccidente()" class="btn btn-primary" style="margin-top:16px;width:100%">
+            🖨️ Generar Acta lista para imprimir
+          </button>
+        </div>
+      </div>
+
       <div class="panel" style="margin-top:20px">
         <div class="panel-header"><h3>👋 Bienvenido/a a Perito Digital</h3></div>
         <div class="panel-body" id="dash-bienvenida-staff" style="color:rgba(0,0,0,.5);font-size:14px;line-height:1.8">
@@ -2404,23 +2497,38 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function callWebApp(params) {
-  // Usar fetch con redirect:follow para compatibilidad con Safari/iPhone
+  // Operaciones de escritura en bloque usan timeout extendido (90s)
+  const accionesLentas = ['guardarCalificacionesBloque','guardarAsistencia','registrarActaAccidente',
+    'registrarAusenciaDocenteTodos','bibRegistrarPrestamo','bibMarcarDevuelto'];
+  const esLenta = accionesLentas.includes(params.accion);
+  const timeoutMs = esLenta ? 90000 : 30000;
+
   const url = BACKEND_URL + '?data=' + encodeURIComponent(JSON.stringify(params));
-  return fetch(url, { redirect: 'follow' })
-    .then(res => res.json())
-    .catch(() => {
+
+  // AbortController para manejar timeout sin caer al catch de error de red
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(url, { redirect: 'follow', signal: controller.signal })
+    .then(res => { clearTimeout(timer); return res.json(); })
+    .catch(err => {
+      clearTimeout(timer);
+      // Si fue timeout del navegador (no error de red), avisar que puede estar guardado
+      if (err && err.name === 'AbortError') {
+        return { ok: false, error: 'La operación tardó más de lo esperado. Los datos pueden haberse guardado igual — verificá en el Drive antes de reintentar.' };
+      }
       // Fallback a JSONP para navegadores que no soporten fetch con CORS
       return new Promise((resolve) => {
         const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
         const script = document.createElement('script');
         window[cbName] = function(data) {
           delete window[cbName];
-          document.body.removeChild(script);
+          if (document.body.contains(script)) document.body.removeChild(script);
           resolve(data);
         };
         script.onerror = function() {
           delete window[cbName];
-          document.body.removeChild(script);
+          if (document.body.contains(script)) document.body.removeChild(script);
           resolve({ ok: false, error: 'Error de conexión' });
         };
         script.src = BACKEND_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
@@ -3114,6 +3222,12 @@ function cargarDashboard() {
   };
 
   // Mostrar el dashboard correcto según rol
+  // Mostrar panel acta solo para staff
+  const panelActa = document.getElementById('panel-acta-accidente');
+  const isEdFisica = isDocente && currentMaterias.some(m => m.toLowerCase().includes('educaci') && m.toLowerCase().includes('f'));
+  const verActa = isAdmin || isPreceptor || isEdFisica;
+  if (panelActa) panelActa.style.display = verActa ? '' : 'none';
+  if (verActa) actaInicializar();
   const dashStaff  = document.getElementById('dash-staff');
   const dashAlumno = document.getElementById('dash-alumno');
   const bienStaff  = document.getElementById('dash-bienvenida-staff');
@@ -6621,6 +6735,197 @@ function bibExportarInforme() {
 }
 
 // (hook de biblioteca eliminado — se inicializa desde el nav)
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ACTA DE ACCIDENTE ESCOLAR
+// ═══════════════════════════════════════════════════════════════════════
+
+function toggleActaAccidente() {
+  const body = document.getElementById('form-acta-accidente');
+  const btn  = document.querySelector('#panel-acta-accidente .btn-outline');
+  const visible = body.style.display !== 'none';
+  body.style.display = visible ? 'none' : '';
+  if (btn) btn.textContent = visible ? 'Mostrar ▼' : 'Ocultar ▲';
+}
+
+function actaInicializar() {
+  // Poblar cursos
+  const sel = document.getElementById('acta-curso');
+  if (!sel) return;
+  const cursos = (Array.isArray(currentCursos) && currentCursos.length)
+    ? currentCursos : ['1°A','1°B','2°A','2°B','3°A','3°B','4°A','4°B','5°A','5°B','6°A','6°B'];
+  sel.innerHTML = '<option value="">— Curso —</option>' +
+    cursos.map(c => '<option value="' + c + '">' + c + '</option>').join('');
+  // Fecha de hoy por defecto
+  document.getElementById('acta-fecha').value = new Date().toISOString().slice(0,10);
+}
+
+function actaCargarAlumnos() {
+  const curso = document.getElementById('acta-curso').value;
+  const sel   = document.getElementById('acta-alumno');
+  if (!curso) { sel.innerHTML = '<option value="">— Seleccioná curso primero —</option>'; return; }
+  sel.innerHTML = '<option value="">Cargando...</option>';
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    if (res && res.alumnos && res.alumnos.length) {
+      sel.innerHTML = '<option value="">— Alumno —</option>' +
+        res.alumnos.map(a => '<option value="' + a.nombre + '">' + a.nombre + '</option>').join('');
+    } else {
+      sel.innerHTML = '<option value="">Sin alumnos</option>';
+    }
+  });
+}
+
+function generarActaAccidente() {
+  const alumno    = document.getElementById('acta-alumno').value;
+  const curso     = document.getElementById('acta-curso').value;
+  const dni       = document.getElementById('acta-dni').value.trim();
+  const fnac      = document.getElementById('acta-fnac').value;
+  const domicilio = document.getElementById('acta-domicilio').value.trim();
+  const localidad = document.getElementById('acta-localidad').value.trim();
+  const fecha     = document.getElementById('acta-fecha').value;
+  const hora      = document.getElementById('acta-hora').value;
+  const lugar     = document.getElementById('acta-lugar').value;
+  const forma     = document.getElementById('acta-forma').value.trim();
+  const lesiones  = document.getElementById('acta-lesiones').value.trim();
+  const siniestro = document.getElementById('acta-siniestro').value.trim();
+  const poliza    = document.getElementById('acta-poliza').value.trim();
+
+  if (!alumno) { showToast('Seleccioná un alumno', '⚠️'); return; }
+  if (!fecha)  { showToast('Ingresá la fecha del accidente', '⚠️'); return; }
+
+  // Calcular edad si hay fecha de nacimiento
+  let edad = '';
+  if (fnac) {
+    const hoy = new Date();
+    const nac = new Date(fnac);
+    edad = hoy.getFullYear() - nac.getFullYear() -
+      (hoy < new Date(hoy.getFullYear(), nac.getMonth(), nac.getDate()) ? 1 : 0);
+  }
+
+  const fechaLinda = f => {
+    if (!f) return '........................';
+    const [y,m,d] = f.split('-');
+    return d + '/' + m + '/' + y;
+  };
+
+  const fechaActa = fechaLinda(fecha);
+  const fechaNac  = fechaLinda(fnac);
+
+  // Fecha de hoy para el encabezado
+  const hoy = new Date();
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const fechaEncabezado = 'Bs. As., ' + hoy.getDate() + ' de ' + meses[hoy.getMonth()] + ' de ' + hoy.getFullYear();
+
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Denuncia de Accidente — ${alumno}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #000; padding: 20px 30px; max-width: 800px; margin: 0 auto; }
+    .encabezado { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .codigo { font-size: 11px; }
+    .fecha-enc { font-size: 11px; text-align: right; }
+    .titulo { text-align: center; font-size: 16px; font-weight: bold; text-decoration: underline; margin: 14px 0 4px; letter-spacing: 1px; }
+    .fax { font-size: 10px; text-align: center; margin-bottom: 14px; color: #333; }
+    .colegio-info { margin-bottom: 10px; font-size: 12px; line-height: 2; }
+    .campo { display: inline-block; min-width: 60px; border-bottom: 1px solid #000; padding: 0 4px; }
+    .linea { margin-bottom: 10px; line-height: 2; font-size: 12px; }
+    .linea-larga { border-bottom: 1px solid #000; display: block; min-height: 22px; margin-top: 4px; padding: 2px 4px; }
+    .siniestro-box { text-align: right; font-size: 11px; margin-bottom: 10px; }
+    .firma { margin-top: 40px; display: flex; justify-content: space-between; }
+    .firma-item { text-align: center; width: 45%; border-top: 1px solid #000; padding-top: 4px; font-size: 11px; }
+    .seccion { font-weight: bold; margin: 12px 0 4px; font-size: 12px; }
+    .lugar-grid { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11px; margin: 4px 0 10px; }
+    .lugar-item { display: flex; align-items: center; gap: 4px; }
+    .box { display: inline-block; width: 12px; height: 12px; border: 1px solid #000; vertical-align: middle; background: ${true ? 'transparent' : '#000'}; }
+    .box.marcado { background: #000; }
+    @media print { body { padding: 10px 20px; } }
+  </style>
+</head>
+<body>
+
+  <div class="encabezado">
+    <div class="codigo">Código de colegio: &nbsp;&nbsp;<strong>136</strong></div>
+    <div class="fecha-enc">${fechaEncabezado}</div>
+  </div>
+
+  <div class="siniestro-box">
+    SINIESTRO N°: <span class="campo">${siniestro || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span>
+  </div>
+
+  <div style="font-size:10px;margin-bottom:4px">
+    Enviar por fax: 02320-40 31 40 Int: 122 &nbsp;&nbsp; o e-mail a: siniestros@prome.com.ar
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PÓLIZA: <span class="campo">${poliza || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span>
+  </div>
+
+  <div class="titulo">DENUNCIA DE ACCIDENTE</div>
+
+  <div class="colegio-info">
+    <div class="linea"><strong>COLEGIO:</strong> &nbsp; PERITO MORENO</div>
+    <div class="linea"><strong>DOMICILIO:</strong> &nbsp; TOMÁS VALLE 5662 &nbsp;&nbsp;&nbsp; <strong>LOCALIDAD:</strong> &nbsp; GONZÁLEZ CATÁN</div>
+    <div class="linea"><strong>CONGREGACIÓN A LA CUAL PERTENECE:</strong> &nbsp;<span class="campo" style="min-width:300px">&nbsp;</span></div>
+  </div>
+
+  <div class="linea"><strong>NOMBRE DEL ACCIDENTADO:</strong> &nbsp; <span class="campo" style="min-width:250px">${alumno}</span> &nbsp;&nbsp; <strong>DNI:</strong> &nbsp; <span class="campo" style="min-width:100px">${dni || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></div>
+  <div class="linea"><strong>DOMICILIO:</strong> &nbsp; <span class="campo" style="min-width:200px">${domicilio || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span> &nbsp;&nbsp; <strong>LOCALIDAD:</strong> &nbsp; <span class="campo" style="min-width:120px">${localidad}</span></div>
+  <div class="linea"><strong>PCIA.:</strong> &nbsp; BUENOS AIRES &nbsp;&nbsp;&nbsp; <strong>TEL.:</strong> &nbsp; <span class="campo" style="min-width:120px">&nbsp;</span></div>
+  <div class="linea"><strong>Fecha de nacimiento:</strong> &nbsp; <span class="campo" style="min-width:100px">${fechaNac}</span> &nbsp;&nbsp;&nbsp; <strong>Edad:</strong> &nbsp; <span class="campo" style="min-width:40px">${edad || '&nbsp;&nbsp;&nbsp;&nbsp;'}</span></div>
+  <div class="linea"><strong>Es alumno/a regular del grado/curso:</strong> &nbsp; <span class="campo" style="min-width:60px">${curso}</span> &nbsp; División &nbsp; <span class="campo" style="min-width:40px">&nbsp;</span> &nbsp; (SECUNDARIO)</div>
+
+  <div class="linea" style="margin-top:10px"><strong>FECHA DEL ACCIDENTE:</strong> &nbsp; <span class="campo" style="min-width:100px">${fechaActa}</span></div>
+
+  <div class="seccion">Lugar de ocurrencia:</div>
+  <div class="lugar-grid">
+    ${['aula','recreo','educación física','salida educativa','campamento','taller','convivencia','baño','patio','escalera','vía pública','SUM','biblioteca','espacio de educación física'].map(l =>
+      '<div class="lugar-item"><span class="box' + (l === lugar ? ' marcado' : '') + '"></span> ' + l + '</div>'
+    ).join('')}
+  </div>
+
+  <div class="linea"><strong>Hora del accidente:</strong> &nbsp; <span class="campo" style="min-width:80px">${hora || '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}</span></div>
+
+  <div class="seccion">Forma en la que ocurrió el accidente:</div>
+  <div style="border:1px solid #ccc;min-height:60px;padding:6px 8px;margin-bottom:10px;font-size:12px;line-height:1.6">${forma || '&nbsp;'}</div>
+
+  <div class="seccion">Lesiones sufridas:</div>
+  <div style="border:1px solid #ccc;min-height:45px;padding:6px 8px;margin-bottom:16px;font-size:12px;line-height:1.6">${lesiones || '&nbsp;'}</div>
+
+  <div class="linea"><em>Declaro que todos los datos aquí expuestos son verdaderos.</em></div>
+
+  <div class="firma">
+    <div class="firma-item">Firma y aclaración del Director/a</div>
+    <div class="firma-item">Firma y aclaración del Secretario/a</div>
+  </div>
+
+</body>
+</html>`;
+
+  // Guardar registro en Drive
+  callWebApp({
+    accion: 'registrarActaAccidente',
+    datos: JSON.stringify({
+      fechaAccidente: fecha, hora, alumno, curso, dni,
+      fechaNacimiento: fnac, edad: String(edad),
+      domicilio, localidad, lugar, forma, lesiones,
+      siniestro, poliza,
+      registradoPor: currentNombre || currentUser
+    })
+  }).then(res => {
+    if (res && res.ok) showToast('Acta generada y registrada en Drive ✅', '🖨️');
+    else showToast('Acta generada (sin guardar en Drive: ' + (res?.error||'error') + ')', '⚠️');
+  }).catch(() => showToast('Acta generada (sin conexión al Drive)', '⚠️'));
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'Acta_Accidente_' + alumno.replace(/[^a-zA-Z0-9]/g,'_') + '_' + fechaActa.replace(/\//g,'-') + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
 
 // ── Badge global ─────────────────────────────────────────────────────
 function actualizarBadgeMensajes() {
