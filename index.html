@@ -2696,7 +2696,7 @@ function doLogin(name, role, usuario, res){
   if (navBib) navBib.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navMsg = document.getElementById('nav-mensajes');
   if (navMsg) navMsg.style.display = isStudent ? 'none' : 'flex';
-  setTimeout(actualizarBadgeMensajes, 1500);
+  setTimeout(function(){ if(typeof actualizarBadgeMensajes==='function') actualizarBadgeMensajes(); }, 1500);
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -6628,4 +6628,8 @@ function actualizarBadgeMensajes() {
     const badge = document.getElementById('badge-mensajes');
     if (!badge) return;
     const total = res?.total || 0;
-    if (to
+    if (total > 0) { badge.textContent = total; badge.style.display = 'inline'; }
+    else { badge.style.display = 'none'; }
+  });
+}
+</script>
