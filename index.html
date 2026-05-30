@@ -4444,6 +4444,7 @@ function cargarResumenAlumno() {
   const curso   = document.getElementById('ra-curso').value;
   const legajo  = document.getElementById('ra-alumno').value;
   const nombre  = document.getElementById('ra-alumno').options[document.getElementById('ra-alumno').selectedIndex]?.text || '';
+  window._raLegajo = legajo; window._raCurso = curso; window._raNombre = nombre;
   const contenido = document.getElementById('resumen-alumno-contenido');
   if (!legajo) return;
   contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Cargando...</div>';
@@ -4511,13 +4512,13 @@ function cargarResumenAlumno() {
           </tr>`;
         }).join('')}</tbody>
       </table>` : ''}
-    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-      <button onclick="exportarDetalleInasistenciasAlumno('${legajo}','${curso}','${nombre.replace(/'/g,'')}')"
-        class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80">
-        📋 Detalle inasistencias por materia
-      </button>
-    </div>
-    \`;
+      <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="exportarDetalleInasistenciasAlumno(window._raLegajo,window._raCurso,window._raNombre)"
+          class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80">
+          📋 Detalle inasistencias por materia
+        </button>
+      </div>
+    `;
   });
 }
 // ─────────────────────────────────────────────────────────────────────
@@ -6627,8 +6628,4 @@ function actualizarBadgeMensajes() {
     const badge = document.getElementById('badge-mensajes');
     if (!badge) return;
     const total = res?.total || 0;
-    if (total > 0) { badge.textContent = total; badge.style.display = 'inline'; }
-    else { badge.style.display = 'none'; }
-  });
-}
-</script>
+    if (to
