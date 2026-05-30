@@ -3214,17 +3214,19 @@ function eliminarPost(id, autorOriginal) {
 }
 
 function cargarDashboard() {
-  const isAdmin  = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
-  const isAlumno = currentRole === 'alumno' || currentRole === 'tutor';
+  const role     = (currentRole || '').toLowerCase();
+  const isAdmin  = ['director','vicedirector','secretary','secretario','legal','secretario/a'].some(r => role.includes(r));
+  const isAlumno = role === 'alumno' || role === 'tutor';
+  const isPreceptor = role === 'preceptor';
+  const isDocente   = role === 'docente' || role === 'profesor';
+  const isEdFisica  = isDocente && currentMaterias.some(m => m.toLowerCase().includes('educaci') && m.toLowerCase().includes('f'));
   const set = (id, val) => {
     const el = document.getElementById(id);
     if (el && val !== undefined && val !== null) el.textContent = val;
   };
 
-  // Mostrar el dashboard correcto según rol
-  // Mostrar panel acta solo para staff
+  // Mostrar panel acta solo para staff autorizado
   const panelActa = document.getElementById('panel-acta-accidente');
-  const isEdFisica = isDocente && currentMaterias.some(m => m.toLowerCase().includes('educaci') && m.toLowerCase().includes('f'));
   const verActa = isAdmin || isPreceptor || isEdFisica;
   if (panelActa) panelActa.style.display = verActa ? '' : 'none';
   if (verActa) actaInicializar();
