@@ -4143,30 +4143,164 @@ function cargarResumenCurso() {
       </table>`;
     });
   } else {
-    callWebApp({ accion: 'obtenerNotasCurso', curso }).then(res => {
+    // Vista Calificaciones — tabla integral: alumno × materia + asistencia por materia
+    callWebApp({ accion: 'obtenerResumenIntegralCurso', curso }).then(res => {
       if (!res.ok || !res.alumnos || res.alumnos.length === 0) {
         contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin calificaciones para este curso.</div>'; return;
       }
-      const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
-      contenido.innerHTML = `<table style="width:100%;border-collapse:collapse">
-        <thead><tr>
-          <th style="text-align:left;padding:8px 12px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Alumno</th>
-          <th style="text-align:left;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Materia</th>
-          ${periodos.map(p=>`<th style="text-align:center;padding:6px;color:rgba(0,0,0,.5);font-size:10px;border-bottom:1px solid rgba(255,255,255,.1)">${p}</th>`).join('')}
-          <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
-        </tr></thead>
-        <tbody>${res.alumnos.map(a => a.materias.map((m,mi) => {
-          const estadoCol = m.estadoFinal==='Promovido'?'#4CAF50':m.estadoFinal==='Adeuda'?'#F44336':'#FF9800';
-          return `<tr>
-            ${mi===0?`<td style="padding:8px 12px;font-size:12px;font-weight:600;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top" rowspan="${a.materias.length}">${a.nombre}</td>`:''}
-            <td style="padding:6px 8px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${m.materia}</td>
-            ${[m.bim1,m.cuat1,m.bim3,m.cuat2,m.dic,m.feb].map(n=>`<td style="text-align:center;padding:6px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)">${n||'—'}</td>`).join('')}
-            <td style="text-align:center;padding:6px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="color:${estadoCol};font-size:11px;font-weight:700">${m.estadoFinal||'—'}</span></td>
-          </tr>`;
-        }).join('')).join('')}</tbody>
-      </table>`;
+      const { materias, alumnos } = res;
+      const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb','Cal.Final'];
+      const periodoKeys = ['bim1','cuat1','bim3','cuat2','dic','feb','calFinal'];
+
+      // Botón exportar
+      const btnExportar = '<div style="margin-bottom:12px;text-align:right">' +
+        '<button class="btn btn-primary btn-sm" onclick="exportarResumenIntegral()">📄 Exportar informe</button></div>';
+
+      // Tabla: columnas = Alumno | [materia × período] | %Asist | Inasist.Materia
+      const thMaterias = materias.map(m =>
+        `<th colspan="${periodos.length + 1}" style="text-align:center;padding:6px 8px;font-size:10px;font-weight:700;background:#e8f5e9;color:#1a9e5c;border:1px solid #c8e6d4;white-space:nowrap">${m}</th>`
+      ).join('');
+
+      const thPeriodos = materias.map(() =>
+        periodos.map(p => `<th style="text-align:center;padding:4px 6px;font-size:9px;color:#666;border:1px solid #e0e0e0;white-space:nowrap">${p}</th>`).join('') +
+        '<th style="text-align:center;padding:4px 6px;font-size:9px;color:#F44336;border:1px solid #e0e0e0">Inasist.</th>'
+      ).join('');
+
+      const filas = alumnos.map((a, ai) => {
+        const asist = a.asist;
+        const pctG  = asist ? asist.pct : 100;
+        const pctColor = pctG >= 85 ? '#2e7d32' : pctG >= 75 ? '#e65100' : '#c62828';
+
+        const celdasMaterias = materias.map(mat => {
+          const notas = a.notas[mat] || {};
+          const im    = a.inasistMat[mat] || {};
+          const inasistMat = im.inasist || 0;
+          const pctMat     = im.pct !== undefined ? im.pct : 100;
+          const alerta     = im.alerta === true; // >= 28 inasist Y < 75%
+
+          const bgAlerta = alerta ? '#ffebee' : '';
+          const colorAlerta = alerta ? '#c62828' : '#555';
+
+          const celdasNotas = periodoKeys.map(k => {
+            const val = notas[k] || '—';
+            return `<td style="text-align:center;padding:3px 5px;font-size:11px;border:1px solid #eee;background:${bgAlerta}">${val}</td>`;
+          }).join('');
+
+          const inasistLabel = alerta
+            ? `<span style="color:#c62828;font-weight:800">${inasistMat.toFixed(1)} ⚠️</span>`
+            : `<span style="color:#555">${inasistMat > 0 ? inasistMat.toFixed(1) : '—'}</span>`;
+
+          return celdasNotas + `<td style="text-align:center;padding:3px 5px;font-size:11px;border:1px solid #eee;background:${bgAlerta}">${inasistLabel}</td>`;
+        }).join('');
+
+        return `<tr style="background:${ai%2===0?'#fafafa':'#fff'}">
+          <td style="padding:6px 10px;font-size:12px;font-weight:600;border:1px solid #eee;white-space:nowrap;position:sticky;left:0;background:${ai%2===0?'#fafafa':'#fff'};z-index:1">
+            ${a.nombre}<br>
+            <span style="font-size:10px;color:${pctColor};font-weight:700">${pctG}% asistencia</span>
+          </td>
+          ${celdasMaterias}
+        </tr>`;
+      }).join('');
+
+      contenido.innerHTML = btnExportar +
+        `<div style="overflow-x:auto">
+          <table id="tabla-integral-curso" style="width:max-content;min-width:100%;border-collapse:collapse;font-family:inherit">
+            <thead>
+              <tr>
+                <th style="text-align:left;padding:6px 10px;font-size:11px;border:1px solid #c8e6d4;background:#1a9e5c;color:#fff;position:sticky;left:0;z-index:2">Alumno</th>
+                ${thMaterias}
+              </tr>
+              <tr>
+                <th style="border:1px solid #c8e6d4;background:#1a9e5c;position:sticky;left:0;z-index:2"></th>
+                ${thPeriodos}
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>`;
+
+      // Guardar datos para exportar
+      window._resumenIntegralData = res;
     });
   }
+}
+
+function exportarResumenIntegral() {
+  const res = window._resumenIntegralData;
+  if (!res) return;
+  const { materias, alumnos, curso, anio } = res;
+  const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb','Cal.Final'];
+  const periodoKeys = ['bim1','cuat1','bim3','cuat2','dic','feb','calFinal'];
+
+  const thMat = materias.map(m =>
+    `<th colspan="${periodos.length+1}" style="background:#1a9e5c;color:#fff;padding:6px;border:1px solid #c8e6d4;font-size:11px">${m}</th>`
+  ).join('');
+  const thPer = materias.map(() =>
+    periodos.map(p => `<th style="background:#e8f5e9;color:#1a9e5c;padding:4px;border:1px solid #ddd;font-size:10px">${p}</th>`).join('') +
+    '<th style="background:#ffebee;color:#c62828;padding:4px;border:1px solid #ddd;font-size:10px">Inasist.</th>'
+  ).join('');
+
+  const filas = alumnos.map((a, ai) => {
+    const asist = a.asist;
+    const pctG  = asist ? asist.pct : 100;
+    const pctColor = pctG >= 85 ? '#2e7d32' : pctG >= 75 ? '#e65100' : '#c62828';
+    const celdas = materias.map(mat => {
+      const notas = a.notas[mat] || {};
+      const im    = a.inasistMat[mat] || {};
+      const alerta = im.alerta === true;
+      const bg     = alerta ? '#ffebee' : (ai%2===0?'#fafafa':'#fff');
+      return periodoKeys.map(k =>
+        `<td style="text-align:center;padding:4px;border:1px solid #ddd;font-size:11px;background:${bg}">${notas[k]||'—'}</td>`
+      ).join('') +
+      `<td style="text-align:center;padding:4px;border:1px solid #ddd;font-size:11px;background:${bg};color:${alerta?'#c62828':'#555'};font-weight:${alerta?'800':'400'}">${im.inasist?im.inasist.toFixed(1):'—'}${alerta?' ⚠️':''}</td>`;
+    }).join('');
+    return `<tr>
+      <td style="padding:5px 8px;font-size:11px;font-weight:600;border:1px solid #ddd;background:${ai%2===0?'#fafafa':'#fff'};white-space:nowrap">
+        ${a.nombre} <span style="color:${pctColor};font-size:10px">(${pctG}%)</span>
+      </td>${celdas}</tr>`;
+  }).join('');
+
+  const fechaHoyStr = new Date().toLocaleDateString('es-AR');
+  const html = `<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Informe Integral ${curso} — ${anio}</title>
+    <style>
+      body{font-family:sans-serif;padding:20px;color:#1a1a1a;font-size:12px}
+      h1{color:#1a9e5c;font-size:18px;margin-bottom:4px}
+      .sub{color:#666;font-size:12px;margin-bottom:16px}
+      table{border-collapse:collapse;width:max-content;min-width:100%}
+      .leyenda{margin-top:16px;font-size:11px;padding:8px 12px;background:#fff3e0;border-left:3px solid #e65100;border-radius:4px}
+      @media print{body{padding:0}}
+    </style>
+  </head><body>
+    <h1>📊 Informe Integral — Curso ${curso}</h1>
+    <div class="sub">Año ${anio} · Generado el ${fechaHoyStr}</div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="background:#1a9e5c;color:#fff;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:left">Alumno</th>
+            ${thMat}
+          </tr>
+          <tr>
+            <th style="background:#1a9e5c;border:1px solid #c8e6d4"></th>
+            ${thPer}
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>
+    <div class="leyenda">⚠️ Celdas en rojo: alumno con ≥ 28 inasistencias en la materia y menos del 75% de asistencia en la misma.</div>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `Informe_Integral_${curso}_${anio}.html`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('Informe exportado ✅','📄');
 }
 
 // ── Resumen por Alumno (directivo/preceptor) ──────────────────────────
