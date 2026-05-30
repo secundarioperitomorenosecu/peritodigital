@@ -4155,7 +4155,7 @@ function cargarResumenCurso() {
       // Botón exportar
       const btnExportar = '<div style="margin-bottom:12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">' +
         '<button class="btn btn-primary btn-sm" onclick="exportarResumenIntegral()">📄 Exportar informe integral</button>' +
-        '<button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarDetalleInasistenciasCurso('"+curso+"')">📋 Detalle inasistencias por fecha</button>' +
+        '<button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarDetalleInasistenciasCurso(window._cursoIntegral)">📋 Detalle inasistencias por fecha</button>' +
         '</div>';
 
       // Tabla: columnas = Alumno | [materia × período] | %Asist | Inasist.Materia
@@ -4224,6 +4224,7 @@ function cargarResumenCurso() {
 
       // Guardar datos para exportar
       window._resumenIntegralData = res;
+      window._cursoIntegral = curso;
     });
   }
 }
