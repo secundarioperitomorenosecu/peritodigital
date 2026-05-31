@@ -1070,18 +1070,27 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <!-- INFORME TARDANZAS -->
       <div class="panel" style="margin-top:16px">
         <div class="panel-header">
-          <h3>⏰ Informe de Tardanzas por Curso</h3>
+          <h3>⏰ Tardanzas del Día</h3>
         </div>
         <div class="panel-body">
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
-            <select id="inf-tard-curso" style="flex:1;min-width:120px;padding:9px 12px;border:1px solid #c8e6d4;border-radius:9px;background:#f5f9f6;font-family:inherit;font-size:13px">
-              <option value="">— Todos los cursos —</option>
-              <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
-              <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
-              <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
-            </select>
-            <button class="btn btn-primary btn-sm" onclick="generarInformeTardanzas()">📊 Generar</button>
-            <button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarInformeTardanzas()">📄 Exportar</button>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha</label>
+              <input type="date" id="inf-tard-fecha" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+              <select id="inf-tard-curso" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <option value="">— Todos los cursos —</option>
+                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;align-self:flex-end">
+              <button class="btn btn-primary btn-sm" onclick="generarInformeTardanzas()">📊 Ver</button>
+              <button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarInformeTardanzas()">📄 Exportar</button>
+            </div>
           </div>
           <div id="inf-tard-contenido"></div>
         </div>
@@ -2888,6 +2897,7 @@ function showSection(id,el){
   if(id === 'resumen-curso') cargarResumenCurso();
   if(id === 'resumen-alumno') { document.getElementById('resumen-alumno-contenido').innerHTML='<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Seleccioná un curso y un alumno.</div>'; }
   if(id === 'alertas') cargarAlertas();
+  if(id === 'reportes') { const fd = document.getElementById('inf-tard-fecha'); if(fd && !fd.value) fd.value = new Date().toISOString().slice(0,10); }
   if(id === 'comunicados') cargarComunicados();
   if(id === 'ausencias-docentes') inicializarAusenciasDocentes();
   if(id === 'informe-materias') inicializarInformeMaterias();
@@ -5564,117 +5574,106 @@ function cargarAlertas() {
 let _tardanzasData = null;
 
 function generarInformeTardanzas() {
-  const curso = document.getElementById('inf-tard-curso').value;
-  const cont  = document.getElementById('inf-tard-contenido');
-  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Calculando tardanzas...</div>';
+  const fechaInput = document.getElementById('inf-tard-fecha').value;
+  const curso      = document.getElementById('inf-tard-curso').value;
+  const cont       = document.getElementById('inf-tard-contenido');
 
-  callWebApp({ accion: 'obtenerTardanzasPorCurso', curso }).then(res => {
-    if (!res || !res.ok) {
-      cont.innerHTML = '<div style="color:#F44336;text-align:center;padding:20px">Error al cargar tardanzas.</div>';
-      return;
-    }
-    _tardanzasData = res;
-    const { cursos } = res;
+  if (!fechaInput) { showToast('Seleccioná una fecha', '⚠️'); return; }
 
-    if (!cursos || Object.keys(cursos).length === 0) {
-      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#4CAF50">✅ No hay tardanzas registradas.</div>';
-      return;
-    }
+  const [y,m,d] = fechaInput.split('-');
+  const fechaBack  = d + '/' + m + '/' + y;
+  const fechaLinda = d + '/' + m + '/' + y;
 
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Buscando tardanzas...</div>';
+
+  const cursos = curso ? [curso] : ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+
+  Promise.all(cursos.map(c => callWebApp({ accion: 'obtenerAsistencia', curso: c, fecha: fechaBack })
+    .then(res => ({ curso: c, alumnos: (res.ok ? res.alumnos : []).filter(a => a.estado === 'T') }))
+  )).then(resultados => {
+    _tardanzasData = { resultados, fechaLinda, curso };
     let html = '';
-    const cursosOrdenados = Object.keys(cursos).sort();
+    let totalTardanzas = 0;
 
-    cursosOrdenados.forEach(cur => {
-      const alumnos = cursos[cur];
-      if (!alumnos.length) return;
-      html += `<div style="margin-bottom:20px">
-        <div style="font-size:12px;font-weight:700;color:#1a9e5c;text-transform:uppercase;letter-spacing:.5px;
-          padding:6px 12px;background:#e8f5e9;border-radius:8px;margin-bottom:8px;display:inline-block">
-          📚 ${cur} — ${alumnos.length} alumno${alumnos.length>1?'s':''} con tardanzas
+    resultados.forEach(r => {
+      if (!r.alumnos.length) return;
+      totalTardanzas += r.alumnos.length;
+      html += `<div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#1a9e5c;padding:5px 10px;
+          background:#e8f5e9;border-radius:7px;margin-bottom:6px;display:inline-block">
+          📚 ${r.curso} — ${r.alumnos.length} tardanza${r.alumnos.length>1?'s':''}
         </div>
-        <div style="display:grid;gap:6px">`;
+        <div style="display:grid;gap:5px">`;
 
-      alumnos.forEach(a => {
-        const pctColor = a.tardanzas >= 10 ? '#c62828' : a.tardanzas >= 5 ? '#e65100' : '#1a9e5c';
+      r.alumnos.forEach(a => {
         html += `<div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);
-          border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${a.nombre}</div>
-            <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">
-              Equivale a ${(a.tardanzas * 0.25).toFixed(2)} falta${a.tardanzas * 0.25 !== 1 ? 's' : ''}
-            </div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-size:22px;font-weight:700;color:${pctColor}">${a.tardanzas}</div>
-            <div style="font-size:10px;color:var(--color-text-tertiary)">tardanzas</div>
-          </div>
+          border-radius:9px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${a.nombre}</div>
+          <div style="font-size:11px;color:#e65100;font-weight:700">${a.horaLlegada ? '🕐 ' + a.horaLlegada : 'Tarde'}</div>
         </div>`;
       });
       html += '</div></div>';
     });
 
-    cont.innerHTML = html;
+    if (!totalTardanzas) {
+      cont.innerHTML = '<div style="text-align:center;padding:30px;color:#4CAF50;font-size:14px">✅ Sin tardanzas el ' + fechaLinda + '</div>';
+    } else {
+      cont.innerHTML = `<div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px">
+        Fecha: <strong>${fechaLinda}</strong> · Total: <strong>${totalTardanzas} tardanza${totalTardanzas>1?'s':''}</strong>
+      </div>` + html;
+    }
   });
 }
 
 function exportarInformeTardanzas() {
   if (!_tardanzasData) { showToast('Generá el informe primero', '⚠️'); return; }
-  const { cursos } = _tardanzasData;
-  const anio = new Date().getFullYear();
-  const fechaHoyStr = new Date().toLocaleDateString('es-AR');
-  const cursosOrdenados = Object.keys(cursos).sort();
+  const { resultados, fechaLinda, curso } = _tardanzasData;
 
-  const secciones = cursosOrdenados.map(cur => {
-    const alumnos = cursos[cur];
-    if (!alumnos.length) return '';
-    const filas = alumnos.map((a, i) => {
-      const pctColor = a.tardanzas >= 10 ? '#c62828' : a.tardanzas >= 5 ? '#e65100' : '#2e7d32';
-      return `<tr style="background:${i%2===0?'#fafafa':'#fff'}">
+  const secciones = resultados.map(r => {
+    if (!r.alumnos.length) return '';
+    const filas = r.alumnos.map((a, i) =>
+      `<tr style="background:${i%2===0?'#fafafa':'#fff'}">
         <td style="padding:7px 12px;font-size:12px;border:1px solid #eee">${a.nombre}</td>
-        <td style="text-align:center;padding:7px 12px;font-size:13px;font-weight:700;border:1px solid #eee;color:${pctColor}">${a.tardanzas}</td>
-        <td style="text-align:center;padding:7px 12px;font-size:12px;border:1px solid #eee;color:#666">${(a.tardanzas * 0.25).toFixed(2)}</td>
-      </tr>`;
-    }).join('');
-    return `<div style="margin-bottom:24px;page-break-inside:avoid">
+        <td style="text-align:center;padding:7px 12px;font-size:12px;border:1px solid #eee;color:#e65100;font-weight:700">
+          ${a.horaLlegada || '—'}
+        </td>
+      </tr>`
+    ).join('');
+    return `<div style="margin-bottom:20px;page-break-inside:avoid">
       <div style="background:#1a9e5c;color:#fff;padding:7px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:13px">
-        ${cur} — ${alumnos.length} alumno${alumnos.length>1?'s':''} con tardanzas
+        Curso ${r.curso} — ${r.alumnos.length} tardanza${r.alumnos.length>1?'s':''}
       </div>
       <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr>
-            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 12px;border:1px solid #c8e6d4;font-size:11px;text-align:left">Alumno</th>
-            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 12px;border:1px solid #c8e6d4;font-size:11px;text-align:center">Tardanzas</th>
-            <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 12px;border:1px solid #c8e6d4;font-size:11px;text-align:center">Equiv. Faltas</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 12px;border:1px solid #c8e6d4;font-size:11px;text-align:left">Alumno</th>
+          <th style="background:#e8f5e9;color:#1a9e5c;padding:6px 12px;border:1px solid #c8e6d4;font-size:11px;text-align:center">Hora llegada</th>
+        </tr></thead>
         <tbody>${filas}</tbody>
       </table>
     </div>`;
   }).join('');
 
-  const cursoFiltro = document.getElementById('inf-tard-curso').value || 'Todos los cursos';
+  const cursoLabel = curso || 'Todos los cursos';
   const html = `<!DOCTYPE html><html lang="es"><head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Informe Tardanzas — ${cursoFiltro} — ${anio}</title>
+    <title>Tardanzas ${fechaLinda}</title>
     <style>
-      body{font-family:sans-serif;padding:20px;color:#1a1a1a;max-width:800px;margin:0 auto}
-      h1{color:#1a9e5c;font-size:18px;margin-bottom:4px}
-      .sub{color:#666;font-size:12px;margin-bottom:20px}
-      .leyenda{margin-top:16px;font-size:11px;padding:8px 12px;background:#fff3e0;border-left:3px solid #e65100;border-radius:4px}
+      body{font-family:sans-serif;padding:20px;color:#1a1a1a;max-width:700px;margin:0 auto}
+      h1{color:#1a9e5c;font-size:17px;margin-bottom:4px}
+      .sub{color:#666;font-size:12px;margin-bottom:18px}
       @media print{body{padding:0;max-width:none}}
     </style>
   </head><body>
-    <h1>⏰ Informe de Tardanzas — ${cursoFiltro}</h1>
-    <div class="sub">Año ${anio} · Generado el ${fechaHoyStr}</div>
-    ${secciones || '<p style="color:#999">Sin tardanzas registradas.</p>'}
-    <div class="leyenda">Cada tardanza equivale a 0.25 de inasistencia (¼ falta). 4 tardanzas = 1 falta.</div>
+    <h1>⏰ Tardanzas del ${fechaLinda} — ${cursoLabel}</h1>
+    <div class="sub">Generado el ${new Date().toLocaleDateString('es-AR')}</div>
+    ${secciones || '<p style="color:#4CAF50">✅ Sin tardanzas ese día.</p>'}
   </body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = 'Tardanzas_' + cursoFiltro.replace(/\s/g,'_') + '_' + anio + '.html';
+  a.download = 'Tardanzas_' + fechaLinda.replace(/\//g,'-') + '_' + cursoLabel.replace(/\s/g,'_') + '.html';
   document.body.appendChild(a); a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
