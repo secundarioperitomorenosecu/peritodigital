@@ -5581,7 +5581,7 @@ function generarInformeTardanzas() {
   if (!fechaInput) { showToast('Seleccioná una fecha', '⚠️'); return; }
 
   const [y,m,d] = fechaInput.split('-');
-  const fechaBack  = d + '/' + m + '/' + y;
+  const fechaBack  = fechaInput;  // yyyy-MM-dd — parseFecha en backend lo convierte
   const fechaLinda = d + '/' + m + '/' + y;
 
   cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Buscando tardanzas...</div>';
