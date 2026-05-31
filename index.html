@@ -5609,7 +5609,7 @@ function generarInformeTardanzas() {
         html += `<div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);
           border-radius:9px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${a.nombre}</div>
-          <div style="font-size:11px;color:#e65100;font-weight:700">${a.horaLlegada ? '🕐 ' + a.horaLlegada : 'Tarde'}</div>
+          <div style="font-size:11px;color:#e65100;font-weight:700">⏰ Tarde${a.horaLlegada && !a.horaLlegada.includes("1899") ? ' · ' + a.horaLlegada : ''}</div>
         </div>`;
       });
       html += '</div></div>';
@@ -5635,7 +5635,7 @@ function exportarInformeTardanzas() {
       `<tr style="background:${i%2===0?'#fafafa':'#fff'}">
         <td style="padding:7px 12px;font-size:12px;border:1px solid #eee">${a.nombre}</td>
         <td style="text-align:center;padding:7px 12px;font-size:12px;border:1px solid #eee;color:#e65100;font-weight:700">
-          ${a.horaLlegada || '—'}
+          Tarde${a.horaLlegada && !a.horaLlegada.includes("1899") ? ' · ' + a.horaLlegada : ''}
         </td>
       </tr>`
     ).join('');
