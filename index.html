@@ -205,6 +205,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .student-card.ausente{border-color:#F44336;border-width:2px;background:rgba(244,67,54,.08)}
 .student-card.tarde{border-color:#FF9800;border-width:2px;background:rgba(255,152,0,.08)}
 .student-card.retiro{border-color:#607D8B;border-width:2px;background:rgba(96,125,139,.08)}
+.student-card.ausentePres{border-color:#9C27B0;border-width:2px;background:rgba(156,39,176,.08)}
 .student-avatar-sm{width:42px;height:42px;border-radius:50%;margin:0 auto 9px;background:linear-gradient(135deg,#e8d5c4,#f0e9e0);color:#888;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
 .student-name{font-size:11px;font-weight:600;color:#1a1a1a;margin-bottom:7px}
 .attendance-btns{display:flex;gap:3px;justify-content:center}
@@ -221,6 +222,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .att-btn.r{background:rgba(96,125,139,.12);color:#455A64}
 .att-btn.r:hover{opacity:.65}
 .att-btn.r.active{background:#607D8B !important;color:#fff !important;border-color:#37474F !important;opacity:1 !important;box-shadow:0 3px 8px rgba(96,125,139,.6) !important;transform:scale(1.1)}
+.att-btn.ap{background:rgba(156,39,176,.12);color:#6A1B9A}
+.att-btn.ap:hover{opacity:.65}
+.att-btn.ap.active{background:#9C27B0 !important;color:#fff !important;border-color:#6A1B9A !important;opacity:1 !important;box-shadow:0 3px 8px rgba(156,39,176,.6) !important;transform:scale(1.1)}
 .grade-input{width:55px;padding:5px;text-align:center;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:7px;color:#1a1a1a;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600}
 .grade-input:focus{outline:none;border-color:var(--rojo)}
 .upload-zone{border:2px dashed #e8d5c4;border-radius:15px;padding:36px;text-align:center;cursor:pointer;transition:all .3s}
@@ -3367,7 +3371,7 @@ function cargarAsistenciaDesdeSheets() {
 
     // Cargar estados guardados o P por defecto
     alumnosActuales.forEach((a, i) => {
-      const est = a.estado === 'A' ? 'ausente' : a.estado === 'T' ? 'tarde' : 'presente';
+      const est = a.estado === 'A' ? 'ausente' : a.estado === 'AP' ? 'ausentePres' : a.estado === 'T' ? 'tarde' : a.estado === 'R' ? 'retiro' : 'presente';
       attendanceState[i] = est;
       tardyTimes[i] = a.horaLlegada || '';
     });
@@ -3398,8 +3402,9 @@ function buildAttendance(){
     const isRetiro = attendanceState[i] === 'retiro';
     const horaVal = tardyTimes[i] || '';
     const modoLectura = window._attModoLectura;
-    const estadoLabel = attendanceState[i]==='presente' ? 'P' : attendanceState[i]==='ausente' ? 'A' : attendanceState[i]==='retiro' ? 'R' : 'T';
-    const estadoColor = attendanceState[i]==='presente' ? '#4CAF50' : attendanceState[i]==='ausente' ? '#F44336' : attendanceState[i]==='retiro' ? '#212121' : '#FF9800';
+    const isAusentePres = attendanceState[i] === 'ausentePres';
+    const estadoLabel = attendanceState[i]==='presente' ? 'P' : attendanceState[i]==='ausente' ? 'A' : attendanceState[i]==='ausentePres' ? 'AP' : attendanceState[i]==='retiro' ? 'R' : 'T';
+    const estadoColor = attendanceState[i]==='presente' ? '#4CAF50' : attendanceState[i]==='ausente' ? '#F44336' : attendanceState[i]==='ausentePres' ? '#9C27B0' : attendanceState[i]==='retiro' ? '#607D8B' : '#FF9800';
     c.innerHTML = modoLectura ? `
       <div class="student-avatar-sm">${ini}</div>
       <div class="student-name">${s}</div>
@@ -3416,6 +3421,7 @@ function buildAttendance(){
         <button class="att-btn a ${attendanceState[i]==='ausente'?'active':''}" onclick="setAtt(${i},'ausente')">A</button>
         <button class="att-btn t ${isTarde?'active':''}" onclick="setAtt(${i},'tarde')">T</button>
         <button class="att-btn r ${isRetiro?'active':''}" onclick="setAtt(${i},'retiro')">R</button>
+        <button class="att-btn ap ${isAusentePres?'active':''}" onclick="setAtt(${i},'ausentePres')" title="Ausente con Presencia">AP</button>
       </div>
       <div class="tarde-hora-wrap" id="tarde-wrap-${i}" style="display:${isTarde?'flex':'none'};align-items:center;gap:6px;margin-top:6px">
         <span style="font-size:10px;color:#FFD54F;white-space:nowrap">🕐 Hora:</span>
@@ -3439,8 +3445,8 @@ function setAtt(i,val){
   const c=document.getElementById('att-'+i);
   c.className='student-card '+val;
   // Actualizar clases active de los botones P A T R
-  ['presente','ausente','tarde','retiro'].forEach(function(est){
-    const letra = est==='presente'?'p':est==='ausente'?'a':est==='tarde'?'t':'r';
+  ['presente','ausente','tarde','retiro','ausentePres'].forEach(function(est){
+    const letra = est==='presente'?'p':est==='ausente'?'a':est==='tarde'?'t':est==='retiro'?'r':'ap';
     const btn = c.querySelector('.att-btn.'+letra);
     if(btn) btn.classList.toggle('active', val===est);
   });
@@ -3458,12 +3464,13 @@ function setTardyTime(i, hora) {
 
 function updateCounts(){
   const vals=Object.values(attendanceState);
-  const presentes = vals.filter(v=>v==='presente').length;
-  const tardes    = vals.filter(v=>v==='tarde').length;
-  const ausentes  = vals.filter(v=>v==='ausente').length;
-  const retiros   = vals.filter(v=>v==='retiro').length;
+  const presentes    = vals.filter(v=>v==='presente').length;
+  const tardes       = vals.filter(v=>v==='tarde').length;
+  const ausentes     = vals.filter(v=>v==='ausente').length;
+  const retiros      = vals.filter(v=>v==='retiro').length;
+  const ausentesPres = vals.filter(v=>v==='ausentePres').length;
   document.getElementById('cnt-p').textContent='P: '+(presentes + tardes + retiros);
-  document.getElementById('cnt-a').textContent='A: '+ausentes;
+  document.getElementById('cnt-a').textContent='A: '+(ausentes + ausentesPres);
   document.getElementById('cnt-t').textContent='T: '+tardes;
   if (document.getElementById('cnt-r')) {
     document.getElementById('cnt-r').textContent='R: '+retiros;
@@ -3483,7 +3490,7 @@ function guardarAttendance() {
     ? alumnosActuales.map((a, i) => ({
         legajo: a.legajo,
         nombre: a.nombre,
-        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : attendanceState[i] === 'retiro' ? 'R' : 'T',
+        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : attendanceState[i] === 'ausentePres' ? 'AP' : attendanceState[i] === 'retiro' ? 'R' : 'T',
         horaLlegada: tardyTimes[i] || '',
         horaRetiro: attendanceState[i] === 'retiro' ? (tardyTimes[i] || '') : '',
         observacion: ''
@@ -3491,7 +3498,7 @@ function guardarAttendance() {
     : STUDENTS.map((nombre, i) => ({
         legajo: String(i+1).padStart(3,'0'),
         nombre: nombre,
-        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : attendanceState[i] === 'retiro' ? 'R' : 'T',
+        estado: attendanceState[i] === 'presente' ? 'P' : attendanceState[i] === 'ausente' ? 'A' : attendanceState[i] === 'ausentePres' ? 'AP' : attendanceState[i] === 'retiro' ? 'R' : 'T',
         horaLlegada: tardyTimes[i] || '',
         horaRetiro: attendanceState[i] === 'retiro' ? (tardyTimes[i] || '') : '',
         observacion: ''
@@ -5609,7 +5616,7 @@ function generarInformeTardanzas() {
         html += `<div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);
           border-radius:9px;padding:9px 14px;display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${a.nombre}</div>
-          <div style="font-size:11px;color:#e65100;font-weight:700">⏰ Tarde${a.horaLlegada && !a.horaLlegada.includes("1899") ? ' · ' + a.horaLlegada : ''}</div>
+          <div style="font-size:11px;color:#e65100;font-weight:700">⏰ Tarde${a.horaLlegada && !a.horaLlegada.includes("1899") && a.horaLlegada.trim() ? ' — llegó a las ' + a.horaLlegada : ''}</div>
         </div>`;
       });
       html += '</div></div>';
@@ -5635,7 +5642,7 @@ function exportarInformeTardanzas() {
       `<tr style="background:${i%2===0?'#fafafa':'#fff'}">
         <td style="padding:7px 12px;font-size:12px;border:1px solid #eee">${a.nombre}</td>
         <td style="text-align:center;padding:7px 12px;font-size:12px;border:1px solid #eee;color:#e65100;font-weight:700">
-          Tarde${a.horaLlegada && !a.horaLlegada.includes("1899") ? ' · ' + a.horaLlegada : ''}
+          Tarde${a.horaLlegada && !a.horaLlegada.includes("1899") && a.horaLlegada.trim() ? ' — llegó a las ' + a.horaLlegada : ''}
         </td>
       </tr>`
     ).join('');
