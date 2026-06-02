@@ -3454,7 +3454,19 @@ function setAtt(i,val){
   // Mostrar/ocultar campo de hora tardía
   const wrap = document.getElementById('tarde-wrap-'+i);
   if (wrap) wrap.style.display = val === 'tarde' ? 'flex' : 'none';
-  if (val !== 'tarde') { tardyTimes[i] = ''; }
+  if (val === 'tarde') {
+    // Auto-completar con hora actual si no tiene
+    if (!tardyTimes[i]) {
+      const ahora = new Date();
+      const hh = String(ahora.getHours()).padStart(2,'0');
+      const mm = String(ahora.getMinutes()).padStart(2,'0');
+      tardyTimes[i] = hh + ':' + mm;
+      const inputHora = document.getElementById('tarde-hora-' + i);
+      if (inputHora) inputHora.value = tardyTimes[i];
+    }
+  } else {
+    tardyTimes[i] = '';
+  }
   updateCounts();
 }
 
