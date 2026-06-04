@@ -1072,6 +1072,66 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
       </div>
 
+      <!-- PARTE DIARIO GENERAL -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>📋 Parte Diario General</h3>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha</label>
+              <input type="date" id="parte-fecha" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px"/>
+            </div>
+            <div style="display:flex;gap:8px;align-self:flex-end">
+              <button class="btn btn-primary btn-sm" onclick="generarParteDiario()">📊 Ver</button>
+              <button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarParteDiario()">📄 Exportar</button>
+            </div>
+          </div>
+          <div id="parte-contenido"></div>
+        </div>
+      </div>
+
+      <!-- TARDANZAS ROBÓTICA / TÉCNICAS -->
+      <div class="panel" style="margin-top:16px" id="panel-tardanzas-materias">
+        <div class="panel-header">
+          <h3>⏰ Tardanzas — Robótica / Técnicas de Estudio</h3>
+          <span style="font-size:11px;color:var(--color-text-tertiary)">Registro informativo · no afecta inasistencias</span>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Materia</label>
+              <select id="tm-materia" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <option value="ROBÓTICA">Robótica</option>
+                <option value="TÉCNICAS DE ESTUDIO">Técnicas de Estudio</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+              <select id="tm-curso" onchange="tmCargarAlumnos()" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <option value="">— Curso —</option>
+                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha</label>
+              <input type="date" id="tm-fecha" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px"/>
+            </div>
+          </div>
+          <!-- Lista de alumnos para marcar tardanza -->
+          <div id="tm-alumnos-lista" style="margin-bottom:14px"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="tmGuardarTardanzas()">💾 Guardar tardanzas</button>
+            <button class="btn btn-sm" style="background:#e8f5e9;color:#1a9e5c;border:1px solid #c8e6d4" onclick="tmVerHistorial()">📋 Ver historial</button>
+            <button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="tmExportarHistorial()">📄 Exportar</button>
+          </div>
+          <div id="tm-historial" style="margin-top:14px"></div>
+        </div>
+      </div>
+
       <!-- INFORME TARDANZAS -->
       <div class="panel" style="margin-top:16px">
         <div class="panel-header">
@@ -2822,7 +2882,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-resumen-alumno').style.display = canSeeResumenAlumno ? 'flex' : 'none';
   document.getElementById('nav-alertas').style.display   = (isAdmin || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-evolucion').style.display = (isAdmin || isPreceptor || isEOE) ? 'flex' : 'none';
-  document.getElementById('nav-reportes').style.display  = isAdmin ? 'flex' : 'none';
+  document.getElementById('nav-reportes').style.display  = (isAdmin || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
   document.getElementById('nav-banos').style.display     = (isAdmin || isPreceptor) ? 'flex' : 'none';
@@ -2902,7 +2962,7 @@ function showSection(id,el){
   if(id === 'resumen-curso') cargarResumenCurso();
   if(id === 'resumen-alumno') { document.getElementById('resumen-alumno-contenido').innerHTML='<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Seleccioná un curso y un alumno.</div>'; }
   if(id === 'alertas') cargarAlertas();
-  if(id === 'reportes') { const fd = document.getElementById('inf-tard-fecha'); if(fd && !fd.value) fd.value = new Date().toISOString().slice(0,10); }
+  if(id === 'reportes') { const hoy = new Date().toISOString().slice(0,10); ['inf-tard-fecha','parte-fecha','tm-fecha'].forEach(id => { const el=document.getElementById(id); if(el&&!el.value) el.value=hoy; }); }
   if(id === 'comunicados') cargarComunicados();
   if(id === 'ausencias-docentes') inicializarAusenciasDocentes();
   if(id === 'informe-materias') inicializarInformeMaterias();
@@ -5586,6 +5646,291 @@ function cargarAlertas() {
       html += '</div>';
     });
     cont.innerHTML = html;
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PARTE DIARIO GENERAL
+// ═══════════════════════════════════════════════════════════════════════
+let _parteDiarioData = null;
+
+function generarParteDiario() {
+  const fechaInput = document.getElementById('parte-fecha').value;
+  const cont = document.getElementById('parte-contenido');
+  if (!fechaInput) { showToast('Seleccioná una fecha', '⚠️'); return; }
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando parte...</div>';
+  const [y,m,d] = fechaInput.split('-');
+  const fechaBack = d+'/'+m+'/'+y;
+  callWebApp({ accion: 'obtenerParteDiario', fecha: fechaBack }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:20px">Error: ' + (res?.error||'sin datos') + '</div>'; return; }
+    _parteDiarioData = res;
+    _parteDiarioData.fechaInput = fechaInput;
+    const a = res.asistencia;
+    const CURSOS_A = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+    const subtotA = ['1A','2A','3A','4A','5A','6A'].reduce((s,c)=>({ inscriptos:s.inscriptos+(a[c]?.inscriptos||0), presentes:s.presentes+(a[c]?.presentes||0), ausentes:s.ausentes+(a[c]?.ausentes||0), tardes:s.tardes+(a[c]?.tardes||0), retiros:s.retiros+(a[c]?.retiros||0) }),{inscriptos:0,presentes:0,ausentes:0,tardes:0,retiros:0});
+    const subtotB = ['1B','2B','3B','4B','5B','6B'].reduce((s,c)=>({ inscriptos:s.inscriptos+(a[c]?.inscriptos||0), presentes:s.presentes+(a[c]?.presentes||0), ausentes:s.ausentes+(a[c]?.ausentes||0), tardes:s.tardes+(a[c]?.tardes||0), retiros:s.retiros+(a[c]?.retiros||0) }),{inscriptos:0,presentes:0,ausentes:0,tardes:0,retiros:0});
+    const total = { inscriptos:subtotA.inscriptos+subtotB.inscriptos, presentes:subtotA.presentes+subtotB.presentes, ausentes:subtotA.ausentes+subtotB.ausentes, tardes:subtotA.tardes+subtotB.tardes, retiros:subtotA.retiros+subtotB.retiros };
+
+    const fila = (label, datos, bold) => {
+      const st = bold ? 'font-weight:700;background:#e8f5e9' : '';
+      return `<tr style="${st}">
+        <td style="padding:6px 10px;border:1px solid #ddd;font-size:12px">${label}</td>
+        <td style="text-align:center;padding:6px;border:1px solid #ddd;font-size:12px">${datos.inscriptos||0}</td>
+        <td style="text-align:center;padding:6px;border:1px solid #ddd;font-size:12px">${datos.presentes||0}</td>
+        <td style="text-align:center;padding:6px;border:1px solid #ddd;font-size:12px;color:#F44336">${datos.ausentes||0}</td>
+        <td style="text-align:center;padding:6px;border:1px solid #ddd;font-size:12px;color:#FF9800">${datos.tardes||0}</td>
+        <td style="text-align:center;padding:6px;border:1px solid #ddd;font-size:12px;color:#607D8B">${datos.retiros||0}</td>
+      </tr>`;
+    };
+
+    const docHtml = res.docentesAusentes.length
+      ? res.docentesAusentes.map(d => `<div style="padding:6px 10px;border-bottom:0.5px solid var(--color-border-secondary);font-size:13px"><strong>${d.docente}</strong> <span style="color:var(--color-text-secondary);font-size:11px">· ${d.motivo||'Sin aviso'}</span></div>`).join('')
+      : '<div style="padding:12px;color:var(--color-text-tertiary);font-size:13px">✅ Sin docentes ausentes</div>';
+
+    cont.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+        <thead><tr style="background:#1a9e5c;color:#fff">
+          <th style="padding:7px 10px;border:1px solid #157a45;font-size:11px;text-align:left">Curso</th>
+          <th style="padding:7px;border:1px solid #157a45;font-size:11px">Insc.</th>
+          <th style="padding:7px;border:1px solid #157a45;font-size:11px">Pres.</th>
+          <th style="padding:7px;border:1px solid #157a45;font-size:11px">Aus.</th>
+          <th style="padding:7px;border:1px solid #157a45;font-size:11px">Tarde</th>
+          <th style="padding:7px;border:1px solid #157a45;font-size:11px">Ret.</th>
+        </tr></thead>
+        <tbody>
+          ${['1A','2A','3A','4A','5A','6A'].map(c=>fila(c+'°',a[c]||{})).join('')}
+          ${fila('Subtotal Turno Mañana', subtotA, true)}
+          ${['1B','2B','3B','4B','5B','6B'].map(c=>fila(c+'°',a[c]||{})).join('')}
+          ${fila('Subtotal Turno Tarde', subtotB, true)}
+          ${fila('TOTAL', total, true)}
+        </tbody>
+      </table>
+      <div style="font-size:12px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Profesores Ausentes</div>
+      <div style="border:0.5px solid var(--color-border-secondary);border-radius:10px;overflow:hidden">${docHtml}</div>`;
+  });
+}
+
+function exportarParteDiario() {
+  if (!_parteDiarioData) { showToast('Generá el parte primero', '⚠️'); return; }
+  const { asistencia, docentesAusentes, fecha, fechaInput } = _parteDiarioData;
+  const [y,m,d] = fechaInput.split('-');
+  const fechaLinda = d+'/'+m+'/'+y;
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const fechaEncab = d + ' de ' + meses[Number(m)-1] + ' de ' + y;
+
+  const subtotA = ['1A','2A','3A','4A','5A','6A'].reduce((s,c)=>({ inscriptos:s.inscriptos+(asistencia[c]?.inscriptos||0), presentes:s.presentes+(asistencia[c]?.presentes||0), ausentes:s.ausentes+(asistencia[c]?.ausentes||0), tardes:s.tardes+(asistencia[c]?.tardes||0), retiros:s.retiros+(asistencia[c]?.retiros||0) }),{inscriptos:0,presentes:0,ausentes:0,tardes:0,retiros:0});
+  const subtotB = ['1B','2B','3B','4B','5B','6B'].reduce((s,c)=>({ inscriptos:s.inscriptos+(asistencia[c]?.inscriptos||0), presentes:s.presentes+(asistencia[c]?.presentes||0), ausentes:s.ausentes+(asistencia[c]?.ausentes||0), tardes:s.tardes+(asistencia[c]?.tardes||0), retiros:s.retiros+(asistencia[c]?.retiros||0) }),{inscriptos:0,presentes:0,ausentes:0,tardes:0,retiros:0});
+  const total = { inscriptos:subtotA.inscriptos+subtotB.inscriptos, presentes:subtotA.presentes+subtotB.presentes, ausentes:subtotA.ausentes+subtotB.ausentes, tardes:subtotA.tardes+subtotB.tardes, retiros:subtotA.retiros+subtotB.retiros };
+
+  const tr = (label, d, bold) => `<tr style="${bold?'font-weight:bold;background:#e8f5e9':''}">
+    <td style="padding:5px 8px;border:1px solid #ccc">${label}</td>
+    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.inscriptos||0}</td>
+    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.presentes||0}</td>
+    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.ausentes||0}</td>
+    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.tardes||0}</td>
+    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.retiros||0}</td>
+  </tr>`;
+
+  const docRows = docentesAusentes.length
+    ? docentesAusentes.map(d => `<tr><td style="padding:5px 8px;border:1px solid #ccc">${d.docente}</td><td style="padding:5px 8px;border:1px solid #ccc">${d.motivo||'Sin aviso'}</td></tr>`).join('')
+    : '<tr><td colspan="2" style="padding:5px 8px;border:1px solid #ccc;color:#999">Sin docentes ausentes</td></tr>';
+
+  const html = `<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8"><title>Parte Diario — ${fechaLinda}</title>
+    <style>
+      body{font-family:Arial,sans-serif;font-size:12px;padding:20px;max-width:800px;margin:0 auto;color:#000}
+      h2{text-align:center;font-size:15px;border:2px solid #000;padding:6px;margin-bottom:0}
+      .header-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #000;margin-bottom:0}
+      .left-cell{padding:10px;border-right:1px solid #000;font-size:12px;line-height:1.8}
+      table{width:100%;border-collapse:collapse;margin-top:0}
+      th{background:#1a9e5c;color:#fff;padding:6px;border:1px solid #157a45;font-size:11px}
+      .subtotal td{font-weight:bold;background:#e8f5e9}
+      @media print{body{padding:0;max-width:none}}
+    </style>
+  </head><body>
+    <h2>PARTE DIARIO GENERAL</h2>
+    <div class="header-grid">
+      <div class="left-cell">
+        Fecha: <strong>${fechaLinda}</strong><br>
+        Señor/a Directora: <strong>Melisa Melgarejo</strong><br>
+        tengo el agrado de dirigirme a Ud. comunicándole que, el día de la fecha, ocurrieron las siguientes novedades:
+      </div>
+      <div>
+        <table>
+          <thead><tr>
+            <th>Curso</th><th>Insc.</th><th>Pres.</th><th>Aus.</th><th>Tarde</th><th>Ret.</th>
+          </tr></thead>
+          <tbody>
+            ${['1A','2A','3A','4A','5A','6A'].map(c=>tr(c+'°',asistencia[c]||{})).join('')}
+            <tr class="subtotal">${tr('Subtotal T.Mañana',subtotA).replace('<tr style="font-weight:bold;background:#e8f5e9">','').replace('</tr>','')}</tr>
+            ${['1B','2B','3B','4B','5B','6B'].map(c=>tr(c+'°',asistencia[c]||{})).join('')}
+            <tr class="subtotal">${tr('Subtotal T.Tarde',subtotB).replace('<tr style="font-weight:bold;background:#e8f5e9">','').replace('</tr>','')}</tr>
+            <tr class="subtotal">${tr('TOTAL',total).replace('<tr style="font-weight:bold;background:#e8f5e9">','').replace('</tr>','')}</tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <table>
+        <thead><tr><th colspan="2" style="text-align:left">PROFESORES AUSENTES</th></tr>
+        <tr><th style="text-align:left">Nombre</th><th style="text-align:left">Motivo</th></tr></thead>
+        <tbody>${docRows}</tbody>
+      </table>
+    </div>
+    <div style="margin-top:40px;display:flex;justify-content:space-between">
+      <div style="text-align:center;width:45%;border-top:1px solid #000;padding-top:4px;font-size:11px">Firma Preceptor/a</div>
+      <div style="text-align:center;width:45%;border-top:1px solid #000;padding-top:4px;font-size:11px">Firma Secretario/a</div>
+    </div>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'Parte_Diario_' + fechaLinda.replace(/\//g,'-') + '.html';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast('Parte diario exportado ✅', '📋');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TARDANZAS ROBÓTICA / TÉCNICAS DE ESTUDIO
+// ═══════════════════════════════════════════════════════════════════════
+let _tmAlumnos = [];
+let _tmTardanzas = {}; // idx → { marcado, hora }
+
+function tmCargarAlumnos() {
+  const curso = document.getElementById('tm-curso').value;
+  const lista = document.getElementById('tm-alumnos-lista');
+  if (!curso) { lista.innerHTML = ''; return; }
+  lista.innerHTML = '<div style="color:var(--color-text-tertiary);font-size:13px">Cargando...</div>';
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    _tmAlumnos = (res && res.alumnos) ? res.alumnos : [];
+    _tmTardanzas = {};
+    if (!_tmAlumnos.length) { lista.innerHTML = '<div style="color:var(--color-text-tertiary)">Sin alumnos</div>'; return; }
+    lista.innerHTML = _tmAlumnos.map((a, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-secondary)">
+        <input type="checkbox" id="tm-chk-${i}" onchange="tmToggle(${i})" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
+        <label for="tm-chk-${i}" style="flex:1;font-size:13px;cursor:pointer">${a.nombre}</label>
+        <input type="time" id="tm-hora-${i}" style="display:none;padding:5px 8px;border-radius:7px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);font-family:inherit;font-size:12px;color:var(--color-text-primary);width:90px"/>
+      </div>`).join('');
+    // Fecha por defecto hoy
+    const fd = document.getElementById('tm-fecha');
+    if (fd && !fd.value) fd.value = new Date().toISOString().slice(0,10);
+  });
+}
+
+function tmToggle(i) {
+  const chk  = document.getElementById('tm-chk-' + i);
+  const hora = document.getElementById('tm-hora-' + i);
+  if (chk.checked) {
+    const ahora = new Date();
+    const hh = String(ahora.getHours()).padStart(2,'0');
+    const mm = String(ahora.getMinutes()).padStart(2,'0');
+    hora.value = hh + ':' + mm;
+    hora.style.display = 'inline-block';
+    _tmTardanzas[i] = { marcado: true, hora: hora.value };
+  } else {
+    hora.style.display = 'none';
+    delete _tmTardanzas[i];
+  }
+}
+
+function tmGuardarTardanzas() {
+  const curso   = document.getElementById('tm-curso').value;
+  const materia = document.getElementById('tm-materia').value;
+  const fechaIn = document.getElementById('tm-fecha').value;
+  if (!curso || !materia || !fechaIn) { showToast('Completá curso, materia y fecha', '⚠️'); return; }
+  const marcados = Object.keys(_tmTardanzas).filter(i => _tmTardanzas[i].marcado);
+  if (!marcados.length) { showToast('Marcá al menos un alumno', '⚠️'); return; }
+  const [y,m,d] = fechaIn.split('-');
+  const fechaBack = d+'/'+m+'/'+y;
+  const promesas = marcados.map(i => {
+    const horaEl = document.getElementById('tm-hora-' + i);
+    return callWebApp({ accion: 'registrarTardanzaMateria', datos: JSON.stringify({
+      fecha: fechaBack, materia, curso,
+      alumno: _tmAlumnos[i].nombre,
+      horaLlegada: horaEl ? horaEl.value : '',
+      registradoPor: currentNombre || currentUser
+    })});
+  });
+  showToast('Guardando...', '⏳');
+  Promise.all(promesas).then(() => {
+    showToast(marcados.length + ' tardanza(s) registrada(s) ✅', '✅');
+    // Desmarcar
+    marcados.forEach(i => {
+      const chk = document.getElementById('tm-chk-' + i);
+      if (chk) chk.checked = false;
+      const hora = document.getElementById('tm-hora-' + i);
+      if (hora) hora.style.display = 'none';
+    });
+    _tmTardanzas = {};
+  });
+}
+
+function tmVerHistorial() {
+  const curso   = document.getElementById('tm-curso').value;
+  const materia = document.getElementById('tm-materia').value;
+  const fechaIn = document.getElementById('tm-fecha').value;
+  const hist    = document.getElementById('tm-historial');
+  let fechaBack = '';
+  if (fechaIn) { const [y,m,d] = fechaIn.split('-'); fechaBack = d+'/'+m+'/'+y; }
+  hist.innerHTML = '<div style="color:var(--color-text-tertiary);font-size:13px">Cargando...</div>';
+  callWebApp({ accion: 'obtenerTardanzasMateria', materia, curso, fecha: fechaBack }).then(res => {
+    if (!res || !res.ok || !res.registros.length) {
+      hist.innerHTML = '<div style="color:var(--color-text-tertiary);font-size:13px;padding:10px">Sin registros para ese filtro.</div>';
+      return;
+    }
+    hist.innerHTML = '<div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Historial</div>' +
+      res.registros.map((r,i) => `<div style="padding:8px 12px;border-bottom:0.5px solid var(--color-border-secondary);font-size:12px;background:${i%2===0?'var(--color-background-secondary)':'var(--color-background-primary)'}">
+        <strong>${r.alumno}</strong> · ${r.curso} · ${r.materia}
+        <span style="float:right;color:#e65100;font-weight:700">${r.fecha}${r.horaLlegada?' · '+r.horaLlegada:''}</span>
+      </div>`).join('');
+  });
+}
+
+function tmExportarHistorial() {
+  const curso   = document.getElementById('tm-curso').value;
+  const materia = document.getElementById('tm-materia').value;
+  const fechaIn = document.getElementById('tm-fecha').value;
+  let fechaBack = '';
+  if (fechaIn) { const [y,m,d] = fechaIn.split('-'); fechaBack = d+'/'+m+'/'+y; }
+  callWebApp({ accion: 'obtenerTardanzasMateria', materia, curso, fecha: fechaBack }).then(res => {
+    if (!res || !res.ok || !res.registros.length) { showToast('Sin datos para exportar', '⚠️'); return; }
+    const filas = res.registros.map((r,i) => `<tr style="background:${i%2===0?'#fafafa':'#fff'}">
+      <td style="padding:6px 10px;border:1px solid #eee;font-size:12px">${r.fecha}</td>
+      <td style="padding:6px 10px;border:1px solid #eee;font-size:12px">${r.alumno}</td>
+      <td style="padding:6px 10px;border:1px solid #eee;font-size:12px">${r.curso}</td>
+      <td style="padding:6px 10px;border:1px solid #eee;font-size:12px">${r.materia}</td>
+      <td style="text-align:center;padding:6px 10px;border:1px solid #eee;font-size:12px;color:#e65100;font-weight:700">${r.horaLlegada||'—'}</td>
+    </tr>`).join('');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>Tardanzas ${materia}</title>
+      <style>body{font-family:sans-serif;padding:20px;color:#1a1a1a}h1{color:#1a9e5c;font-size:16px}
+      .leyenda{margin-top:12px;font-size:11px;padding:8px 12px;background:#e8f5e9;border-left:3px solid #1a9e5c;border-radius:4px}
+      @media print{body{padding:0}}</style></head><body>
+      <h1>⏰ Tardanzas — ${materia} ${curso ? '· Curso '+curso : ''}</h1>
+      <p style="color:#666;font-size:12px">Registro informativo · no afecta inasistencias del alumno</p>
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr>
+          <th style="background:#1a9e5c;color:#fff;padding:7px;border:1px solid #157a45;font-size:11px;text-align:left">Fecha</th>
+          <th style="background:#1a9e5c;color:#fff;padding:7px;border:1px solid #157a45;font-size:11px;text-align:left">Alumno</th>
+          <th style="background:#1a9e5c;color:#fff;padding:7px;border:1px solid #157a45;font-size:11px;text-align:left">Curso</th>
+          <th style="background:#1a9e5c;color:#fff;padding:7px;border:1px solid #157a45;font-size:11px;text-align:left">Materia</th>
+          <th style="background:#1a9e5c;color:#fff;padding:7px;border:1px solid #157a45;font-size:11px;text-align:center">Hora llegada</th>
+        </tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <div class="leyenda">Este registro es informativo y no afecta el cómputo de inasistencias del alumno.</div>
+    </body></html>`;
+    const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'Tardanzas_' + materia.replace(/\s/g,'_') + (curso?'_'+curso:'') + '.html';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast('Historial exportado ✅', '📄');
   });
 }
 
