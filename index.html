@@ -632,13 +632,74 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             </div>
 
             <div style="grid-column:1/-1">
-              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Forma en que ocurrió el accidente</label>
-              <textarea id="acta-forma" rows="3" placeholder="Describir cómo ocurrió..." style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Tipo de accidente</label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px 16px;padding:4px 0">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-tipo-caida"> Caída</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-tipo-herida"> Herida</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-tipo-golpe"> Golpe</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-tipo-quemadura"> Quemadura</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-tipo-otro"> Otro</label>
+              </div>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Lugar en que ocurrió</label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px 16px;padding:4px 0">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-lugar-aula"> Aula</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-lugar-patio"> Patio</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-lugar-banio"> Baño</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-lugar-escalera"> Escalera</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="acta-lugar-otro"> Otro</label>
+              </div>
+            </div>
+
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Breve informe del docente a cargo</label>
+              <textarea id="acta-forma" rows="3" placeholder="Describir cómo ocurrió, medidas implementadas, etc." style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
             </div>
 
             <div style="grid-column:1/-1">
               <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Lesiones sufridas</label>
               <textarea id="acta-lesiones" rows="2" placeholder="Describir las lesiones..." style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+            </div>
+
+            <!-- EMERGENCIA ESCOLAR -->
+            <div style="grid-column:1/-1;border-top:1px solid var(--color-border-secondary);padding-top:12px;margin-top:4px">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">🚑 Servicio de Emergencia Escolar</label>
+              <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+                <span style="font-size:13px">¿La familia hizo uso del servicio?</span>
+                <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="radio" name="acta-emergencia" id="acta-emergencia-si" value="si"> Sí</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer"><input type="radio" name="acta-emergencia" id="acta-emergencia-no" value="no" checked> No</label>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Hora de retiro (emergencia)</label>
+              <input type="time" id="acta-hora-emergencia" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Nombre del profesional que asistió</label>
+              <input type="text" id="acta-profesional" placeholder="Nombre y apellido" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+
+            <!-- RETIRO ANTICIPADO -->
+            <div style="grid-column:1/-1;border-top:1px solid var(--color-border-secondary);padding-top:12px;margin-top:4px">
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:8px">🚪 Retiro Anticipado</label>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Hora de retiro</label>
+              <input type="time" id="acta-hora-retiro" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Nombre y parentesco de quien retira</label>
+              <input type="text" id="acta-quien-retira" placeholder="Ej: García María (madre)" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">DNI de quien retira</label>
+              <input type="text" id="acta-dni-retira" placeholder="DNI" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Docente a cargo</label>
+              <input type="text" id="acta-docente" placeholder="Nombre del docente" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
             </div>
 
           </div>
@@ -1503,8 +1564,59 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 
 
 <div id="sec-ausencias-docentes" class="section">
+
+  <!-- Modal Agregar Docente -->
+  <div id="modal-agregar-docente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:var(--color-background-primary);border-radius:16px;padding:24px;width:min(92%,440px);box-shadow:0 8px 32px rgba(0,0,0,.25)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+        <span style="font-size:16px;font-weight:700">➕ Agregar Docente / Preceptor</span>
+        <button onclick="cerrarModalDocente()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--color-text-secondary)">✕</button>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Nombre completo</label>
+          <input type="text" id="nd-nombre" placeholder="Apellido, Nombre" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Cargo</label>
+          <select id="nd-cargo" onchange="ndToggleCargo()" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+            <option value="docente">Docente</option>
+            <option value="preceptor">Preceptor/a</option>
+          </select>
+        </div>
+        <div id="nd-campos-docente">
+          <div style="margin-bottom:12px">
+            <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Materia</label>
+            <input type="text" id="nd-materia" placeholder="Ej: Matemática" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Cursos (separados por coma)</label>
+            <input type="text" id="nd-cursos" placeholder="Ej: 1A, 2B, 3A" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Horario (días y horas)</label>
+          <input type="text" id="nd-horario" placeholder="Ej: Lun 08:00-10:00, Mié 10:00-12:00" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Email (opcional)</label>
+          <input type="email" id="nd-email" placeholder="docente@ejemplo.com" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box"/>
+        </div>
+        <div id="nd-feedback" style="display:none;font-size:12px;padding:8px 12px;border-radius:8px;margin-top:4px"></div>
+        <button onclick="guardarNuevoDocente()" style="width:100%;padding:11px;background:#1a9e5c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px">
+          💾 Guardar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div style="padding:16px 16px 0">
-    <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">🚫 Ausencias Docentes</h2>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <h2 style="font-size:18px;font-weight:500;margin-bottom:0">🚫 Ausencias Docentes</h2>
+      <button onclick="abrirModalDocente()" style="padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">
+        ➕ Agregar Docente
+      </button>
+    </div>
     <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">
       Registrá cuando un docente no se presenta. Estas ausencias se descuentan del % de asistencia
       por materia de los alumnos — sin tocar la asistencia general.
@@ -2823,10 +2935,9 @@ function buildBottomNav(role) {
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
     if (isAdmin) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
+      items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
       items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
     }
-    if (isAdmin || isPreceptor)
-      items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
     if (isAdmin || isEOE)
       items.push({ id: 'eoe', icon: '🧠', label: 'EOE' });
   }
@@ -2871,6 +2982,8 @@ function doLogin(name, role, usuario, res){
   if(window.innerWidth<=800) document.getElementById('hamburger').style.display='none';
   // Cargar dashboard al entrar
   setTimeout(cargarDashboard, 500);
+  // Mensaje de bienvenida según horario
+  setTimeout(() => mostrarBienvenida(name), 900);
   document.getElementById('sidebar-name').textContent=name;
   const rl={teacher:'Docente',Docente:'Docente',director:'Director/a',vicedirector:'Vicedirector/a',secretary:'Secretario/a',secretario:'Secretario/a',legal:'Rep. Legal',alumno:'Alumno/a',preceptor:'Preceptor/a',eoe:'Eq. Orientación'};
   // Si es tutor que entró como alumno, mostrar "Padre/Madre" en el rol
@@ -7348,6 +7461,25 @@ function generarActaAccidente() {
   const lesiones  = document.getElementById('acta-lesiones').value.trim();
   const siniestro = document.getElementById('acta-siniestro').value.trim();
   const poliza    = document.getElementById('acta-poliza').value.trim();
+  // Nuevos campos
+  const tipoCaida     = document.getElementById('acta-tipo-caida')?.checked;
+  const tipoHerida    = document.getElementById('acta-tipo-herida')?.checked;
+  const tipoGolpe     = document.getElementById('acta-tipo-golpe')?.checked;
+  const tipoQuemadura = document.getElementById('acta-tipo-quemadura')?.checked;
+  const tipoOtro      = document.getElementById('acta-tipo-otro')?.checked;
+  const lugarAula     = document.getElementById('acta-lugar-aula')?.checked;
+  const lugarPatio    = document.getElementById('acta-lugar-patio')?.checked;
+  const lugarBanio    = document.getElementById('acta-lugar-banio')?.checked;
+  const lugarEscalera = document.getElementById('acta-lugar-escalera')?.checked;
+  const lugarOtro     = document.getElementById('acta-lugar-otro')?.checked;
+  const emergenciaUso  = document.querySelector('input[name="acta-emergencia"]:checked')?.value === 'si';
+  const horaEmergencia = document.getElementById('acta-hora-emergencia').value;
+  const profesional    = document.getElementById('acta-profesional').value.trim();
+  const horaRetiro     = document.getElementById('acta-hora-retiro').value;
+  const quienRetira    = document.getElementById('acta-quien-retira').value.trim();
+  const dniRetira      = document.getElementById('acta-dni-retira').value.trim();
+  const docente        = document.getElementById('acta-docente').value.trim();
+  const chk = v => v ? '&#10003;' : '&nbsp;';
 
   if (!alumno) { showToast('Seleccioná un alumno', '⚠️'); return; }
   if (!fecha)  { showToast('Ingresá la fecha del accidente', '⚠️'); return; }
@@ -7485,6 +7617,132 @@ function generarActaAccidente() {
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
+
+
+// ── Bienvenida con frases según horario ──────────────────────────────
+function mostrarBienvenida(nombre) {
+  const primerNombre = nombre.split(/[\s,]+/)[0];
+  const h = new Date().getHours();
+  let frases;
+  if (h >= 7 && h < 13) {
+    frases = [
+      `☀️ Buenos días, ${primerNombre}! Bienvenido/a. Que tengas un día espléndido y lleno de energía.`,
+      `🌅 Buenos días, ${primerNombre}! Arrancamos con todo. Que este día te traiga cosas buenas.`,
+      `😊 Buenos días, ${primerNombre}! Es un gusto tenerte por acá. ¡Que sea un gran día!`,
+      `🌻 Buenos días, ${primerNombre}! Bienvenido/a. Espero que tu mañana esté siendo fantástica.`,
+      `✨ Buenos días, ${primerNombre}! Un nuevo día, nuevas oportunidades. ¡Adelante!`,
+    ];
+  } else if (h >= 13 && h < 20) {
+    frases = [
+      `🌤️ Buenas tardes, ${primerNombre}! Espero que tu día esté transcurriendo en calma.`,
+      `☕ Hola, ${primerNombre}! Buenas tardes. Que la tarde te encuentre con energías renovadas.`,
+      `🌿 Buenas tardes, ${primerNombre}! Pasá, que la tarde recién arranca y hay mucho por hacer.`,
+      `😎 Hola ${primerNombre}, buenas tardes! Espero que todo vaya de diez por allá afuera.`,
+      `🌈 Buenas tardes, ${primerNombre}! Bienvenido/a de vuelta. Que la tarde sea tan buena como vos.`,
+    ];
+  } else {
+    frases = [
+      `🌙 Buenas noches, ${primerNombre}! ¿Todavía trabajando? ¡Sos una máquina! Gente como vos es la que marca la diferencia. 💪`,
+      `⭐ Buenas noches, ${primerNombre}! A esta hora y acá adentro... ¡Chapeau! Sos de los que no se rinden. 🙌`,
+      `🌟 Buenas noches, ${primerNombre}! Trabajando a esta hora... Se nota que te importa. Eso vale mucho. 🫶`,
+      `🦉 Buenas noches, ${primerNombre}! Modo noctámbulo activado. Sabemos que si lo hacés vos, sale bien. ✅`,
+      `🌠 Buenas noches, ${primerNombre}! El colegio funciona gracias a personas como vos que dan todo. ¡Gracias! 🎉`,
+    ];
+  }
+  const frase = frases[Math.floor(Math.random() * frases.length)];
+  // Mostrar como toast largo
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = frase;
+  toast.style.display = 'block';
+  toast.style.opacity = '1';
+  toast.style.bottom = '30px';
+  toast.style.maxWidth = '340px';
+  toast.style.lineHeight = '1.5';
+  toast.style.padding = '14px 18px';
+  toast.style.fontSize = '13px';
+  toast.style.whiteSpace = 'normal';
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => { toast.style.display = 'none'; }, 400);
+  }, 6000);
+}
+
+
+// ── Modal Agregar Docente/Preceptor ───────────────────────────────────
+function abrirModalDocente() {
+  const m = document.getElementById('modal-agregar-docente');
+  m.style.display = 'flex';
+  // Limpiar campos
+  ['nd-nombre','nd-materia','nd-cursos','nd-horario','nd-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('nd-cargo').value = 'docente';
+  ndToggleCargo();
+  document.getElementById('nd-feedback').style.display = 'none';
+}
+
+function cerrarModalDocente() {
+  document.getElementById('modal-agregar-docente').style.display = 'none';
+}
+
+function ndToggleCargo() {
+  const cargo = document.getElementById('nd-cargo').value;
+  const camposDocente = document.getElementById('nd-campos-docente');
+  camposDocente.style.display = cargo === 'preceptor' ? 'none' : 'block';
+}
+
+function guardarNuevoDocente() {
+  const nombre  = document.getElementById('nd-nombre').value.trim();
+  const cargo   = document.getElementById('nd-cargo').value;
+  const materia = cargo === 'preceptor' ? '' : document.getElementById('nd-materia').value.trim();
+  const cursos  = cargo === 'preceptor' ? '' : document.getElementById('nd-cursos').value.trim();
+  const horario = document.getElementById('nd-horario').value.trim();
+  const email   = document.getElementById('nd-email').value.trim();
+  const fb      = document.getElementById('nd-feedback');
+
+  if (!nombre) { mostrarFeedbackND('⚠️ Ingresá el nombre completo.', false); return; }
+  if (cargo === 'docente' && !materia) { mostrarFeedbackND('⚠️ Ingresá la materia.', false); return; }
+  if (!horario) { mostrarFeedbackND('⚠️ Ingresá el horario.', false); return; }
+
+  const btn = document.querySelector('#modal-agregar-docente button[onclick="guardarNuevoDocente()"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+  callWebApp({
+    accion: 'agregarDocente',
+    nombre, cargo, materia, cursos, horario, email,
+    registradoPor: currentNombre || currentUser
+  }).then(res => {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+    if (res && res.ok) {
+      mostrarFeedbackND('✅ ' + (cargo === 'preceptor' ? 'Preceptor/a' : 'Docente') + ' agregado/a correctamente.', true);
+      setTimeout(cerrarModalDocente, 1800);
+      // Recargar lista de docentes si está cargada
+      if (typeof audCargarDocentes === 'function') audCargarDocentes();
+    } else {
+      mostrarFeedbackND('❌ Error: ' + (res?.error || 'No se pudo guardar.'), false);
+    }
+  }).catch(() => {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Guardar'; }
+    mostrarFeedbackND('❌ Sin conexión al servidor.', false);
+  });
+}
+
+function mostrarFeedbackND(msg, ok) {
+  const fb = document.getElementById('nd-feedback');
+  fb.textContent = msg;
+  fb.style.display = 'block';
+  fb.style.background = ok ? 'rgba(26,158,92,.12)' : 'rgba(220,50,50,.1)';
+  fb.style.color = ok ? '#1a9e5c' : '#c0392b';
+}
+
+// Cerrar modal al hacer click fuera
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('modal-agregar-docente');
+  if (modal && e.target === modal) cerrarModalDocente();
+});
 
 // ── Toggle menú inferior mobile ──────────────────────────────────────
 function toggleBottomNav() {
