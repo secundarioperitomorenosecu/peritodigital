@@ -302,9 +302,31 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   position:fixed;
   bottom:0;left:0;right:0;
   background:#ffffff;
-  border-top:1.5px solid #e8d5c4;
+  border-top:1.5px solid #c8e6d4;
   z-index:500;
   padding:4px 4px 6px;
+  transition:transform .25s ease;
+}
+.bottom-nav.collapsed{transform:translateY(calc(100% - 28px))}
+.bottom-nav-toggle{
+  display:block;
+  width:40px;height:4px;
+  background:#c8e6d4;
+  border-radius:4px;
+  margin:0 auto 4px;
+  cursor:pointer;
+}
+.bottom-nav-handle{
+  text-align:center;
+  padding:2px 0 0;
+  cursor:pointer;
+  user-select:none;
+}
+.bottom-nav-handle-icon{
+  font-size:10px;
+  color:#1a9e5c;
+  font-weight:700;
+  letter-spacing:1px;
 }
 .bottom-nav-inner{
   display:flex;
@@ -2556,6 +2578,10 @@ function dnlFeedback(msg, ok) {
 
 
 <div class="bottom-nav" id="bottom-nav">
+  <div class="bottom-nav-handle" onclick="toggleBottomNav()" id="bottom-nav-handle">
+    <div class="bottom-nav-toggle"></div>
+    <div class="bottom-nav-handle-icon" id="bottom-nav-arrow">▼ menú</div>
+  </div>
   <div class="bottom-nav-inner" id="bottom-nav-inner"></div>
 </div>
 
@@ -5722,14 +5748,14 @@ function exportarParteDiario() {
   const subtotB = ['1B','2B','3B','4B','5B','6B'].reduce((s,c)=>({ inscriptos:s.inscriptos+(asistencia[c]?.inscriptos||0), presentes:s.presentes+(asistencia[c]?.presentes||0), ausentes:s.ausentes+(asistencia[c]?.ausentes||0), tardes:s.tardes+(asistencia[c]?.tardes||0), retiros:s.retiros+(asistencia[c]?.retiros||0) }),{inscriptos:0,presentes:0,ausentes:0,tardes:0,retiros:0});
   const total = { inscriptos:subtotA.inscriptos+subtotB.inscriptos, presentes:subtotA.presentes+subtotB.presentes, ausentes:subtotA.ausentes+subtotB.ausentes, tardes:subtotA.tardes+subtotB.tardes, retiros:subtotA.retiros+subtotB.retiros };
 
-  const tr = (label, d, bold) => `<tr style="${bold?'font-weight:bold;background:#e8f5e9':''}">
-    <td style="padding:5px 8px;border:1px solid #ccc">${label}</td>
-    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.inscriptos||0}</td>
-    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.presentes||0}</td>
-    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.ausentes||0}</td>
-    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.tardes||0}</td>
-    <td style="text-align:center;padding:5px;border:1px solid #ccc">${d.retiros||0}</td>
-  </tr>`;
+  const mkRow = (label, d, bold) => '<tr style="' + (bold?'font-weight:bold;background:#e8f5e9':'') + '">' +
+    '<td style="padding:5px 8px;border:1px solid #ccc">' + label + '</td>' +
+    '<td style="text-align:center;padding:5px;border:1px solid #ccc">' + (d.inscriptos||0) + '</td>' +
+    '<td style="text-align:center;padding:5px;border:1px solid #ccc">' + (d.presentes||0) + '</td>' +
+    '<td style="text-align:center;padding:5px;border:1px solid #ccc">' + (d.ausentes||0) + '</td>' +
+    '<td style="text-align:center;padding:5px;border:1px solid #ccc">' + (d.tardes||0) + '</td>' +
+    '<td style="text-align:center;padding:5px;border:1px solid #ccc">' + (d.retiros||0) + '</td>' +
+    '</tr>';
 
   const docRows = docentesAusentes.length
     ? docentesAusentes.map(d => `<tr><td style="padding:5px 8px;border:1px solid #ccc">${d.docente}</td><td style="padding:5px 8px;border:1px solid #ccc">${d.motivo||'Sin aviso'}</td></tr>`).join('')
@@ -5761,11 +5787,11 @@ function exportarParteDiario() {
             <th>Curso</th><th>Insc.</th><th>Pres.</th><th>Aus.</th><th>Tarde</th><th>Ret.</th>
           </tr></thead>
           <tbody>
-            ${['1A','2A','3A','4A','5A','6A'].map(c=>tr(c+'°',asistencia[c]||{})).join('')}
-            <tr class="subtotal">${tr('Subtotal T.Mañana',subtotA).replace('<tr style="font-weight:bold;background:#e8f5e9">','').replace('</tr>','')}</tr>
-            ${['1B','2B','3B','4B','5B','6B'].map(c=>tr(c+'°',asistencia[c]||{})).join('')}
-            <tr class="subtotal">${tr('Subtotal T.Tarde',subtotB).replace('<tr style="font-weight:bold;background:#e8f5e9">','').replace('</tr>','')}</tr>
-            <tr class="subtotal">${tr('TOTAL',total).replace('<tr style="font-weight:bold;background:#e8f5e9">','').replace('</tr>','')}</tr>
+            ${['1A','2A','3A','4A','5A','6A'].map(c=>mkRow(c+'°',asistencia[c]||{})).join('')}
+            ${mkRow('Subtotal T.Mañana',subtotA,true)}
+            ${['1B','2B','3B','4B','5B','6B'].map(c=>mkRow(c+'°',asistencia[c]||{})).join('')}
+            ${mkRow('Subtotal T.Tarde',subtotB,true)}
+            ${mkRow('TOTAL',total,true)}
           </tbody>
         </table>
       </div>
@@ -7457,6 +7483,14 @@ function generarActaAccidente() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// ── Toggle menú inferior mobile ──────────────────────────────────────
+function toggleBottomNav() {
+  const nav    = document.getElementById('bottom-nav');
+  const arrow  = document.getElementById('bottom-nav-arrow');
+  const collapsed = nav.classList.toggle('collapsed');
+  if (arrow) arrow.textContent = collapsed ? '▲ menú' : '▼ menú';
 }
 
 // ── Badge global ─────────────────────────────────────────────────────
