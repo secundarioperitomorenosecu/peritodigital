@@ -3366,8 +3366,7 @@ function exportarHistorialEOE(legajosStr, alumno, curso) {
     Documento generado el ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})} · 
     Portal Perito Digital · Uso exclusivo institucional · No distribuir sin autorización
   </div>
-  <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
-</body></html>`;
+  </html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
@@ -7768,3 +7767,6 @@ function actualizarBadgeMensajes() {
   });
 }
 </script>
+<div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
+</body>
+</html>
