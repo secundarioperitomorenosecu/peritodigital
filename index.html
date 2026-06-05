@@ -3664,13 +3664,22 @@ function buildAttendance(){
         <button class="att-btn ap ${isAusentePres?'active':''}" onclick="setAtt(${i},'ausentePres')" title="Ausente con Presencia">AP</button>
       </div>
       <div class="tarde-hora-wrap" id="tarde-wrap-${i}" style="display:${isTarde?'flex':'none'};align-items:center;gap:6px;margin-top:6px">
-        <span style="font-size:10px;color:#FFD54F;white-space:nowrap">🕐 Hora:</span>
+        <span style="font-size:10px;color:#FFD54F;white-space:nowrap">🕐 Hora llegada:</span>
         <input type="time" id="tarde-hora-${i}" value="${horaVal}"
           style="background:rgba(255,193,7,.15);border:1px solid rgba(255,193,7,.4);border-radius:7px;color:#FFD54F;
                  font-size:12px;font-weight:700;padding:4px 8px;width:90px;font-family:inherit"
           onchange="setTardyTime(${i}, this.value)"
           placeholder="HH:MM"/>
         <span style="font-size:9px;color:rgba(255,255,255,.35)">editable</span>
+      </div>
+      <div class="ap-hora-wrap" id="ap-wrap-${i}" style="display:${isAusentePres?'flex':'none'};align-items:center;gap:6px;margin-top:6px">
+        <span style="font-size:10px;color:#CE93D8;white-space:nowrap">🕐 Ingresó a las:</span>
+        <input type="time" id="ap-hora-${i}" value="${isAusentePres ? horaVal : ''}"
+          style="background:rgba(156,39,176,.15);border:1px solid rgba(156,39,176,.4);border-radius:7px;color:#CE93D8;
+                 font-size:12px;font-weight:700;padding:4px 8px;width:90px;font-family:inherit"
+          onchange="setTardyTime(${i}, this.value)"
+          placeholder="HH:MM"/>
+        <span style="font-size:9px;color:rgba(255,255,255,.35)">hora ingreso</span>
       </div>
     `;
     grid.appendChild(c);
@@ -3690,11 +3699,12 @@ function setAtt(i,val){
     const btn = c.querySelector('.att-btn.'+letra);
     if(btn) btn.classList.toggle('active', val===est);
   });
-  // Mostrar/ocultar campo de hora tardía
+  // Mostrar/ocultar campo de hora tardía y AP
   const wrap = document.getElementById('tarde-wrap-'+i);
+  const apWrap = document.getElementById('ap-wrap-'+i);
   if (wrap) wrap.style.display = val === 'tarde' ? 'flex' : 'none';
+  if (apWrap) apWrap.style.display = val === 'ausentePres' ? 'flex' : 'none';
   if (val === 'tarde') {
-    // Auto-completar con hora actual si no tiene
     if (!tardyTimes[i]) {
       const ahora = new Date();
       const hh = String(ahora.getHours()).padStart(2,'0');
@@ -3703,6 +3713,10 @@ function setAtt(i,val){
       const inputHora = document.getElementById('tarde-hora-' + i);
       if (inputHora) inputHora.value = tardyTimes[i];
     }
+  } else if (val === 'ausentePres') {
+    // No auto-complete para AP: el preceptor ingresa la hora de llegada
+    const inputAP = document.getElementById('ap-hora-' + i);
+    if (inputAP && tardyTimes[i]) inputAP.value = tardyTimes[i];
   } else {
     tardyTimes[i] = '';
   }
@@ -4665,8 +4679,8 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
     if (!a.detalle.length) return '';
 
     const filas = a.detalle.map((d, di) => {
-      const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : 'Retiro';
-      const estColor = d.estado === 'A' ? '#c62828' : d.estado === 'T' ? '#e65100' : '#607D8B';
+      const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : d.estado === 'AP' ? 'Aus. con Presencia' : 'Retiro';
+      const estColor = d.estado === 'A' ? '#c62828' : d.estado === 'T' ? '#e65100' : d.estado === 'AP' ? '#7B1FA2' : '#607D8B';
       const matsHtml = d.materias.length
         ? d.materias.map(m =>
             `<tr style="background:${di%2===0?'#fafafa':'#fff'}">
@@ -4721,7 +4735,7 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
     ${seccionesAlumnos || '<p style="color:#999">Sin inasistencias registradas.</p>'}
     <div class="leyenda">
       Las inasistencias por materia se calculan según los módulos del horario ese día.<br>
-      Ausente = 1 inasistencia por módulo · Tarde = 0.25 · Retiro = 0.5
+      Ausente = 1 inasistencia por módulo · Aus. con Presencia = proporcional al tiempo ausente · Tarde = 0.25 · Retiro = 0.5
     </div>
   </body></html>`;
 
