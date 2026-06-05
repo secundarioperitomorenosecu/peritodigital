@@ -4165,9 +4165,11 @@ function cargarUsuarios() {
       <td><span class="status-dot ${u.activo?'green':'red'}"></span>${u.activo?'Activo':'Inactivo'}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-sm" style="background:#e8f5e9;color:#2e7d32;margin-right:4px" onclick="abrirEditarUsuario('${u.usuario}','${u.nombre}','${u.rol}','${u.materia||u.cursos||''}','${u.cursos||''}')">✏️</button>
+        ${u.usuario && u.usuario !== '—' ? `
         <button class="btn btn-sm" style="background:#fff8e1;color:#e65100;margin-right:4px" onclick="resetearPassUsuario('${u.usuario}')">🔑</button>
         <button class="btn btn-sm" style="background:${u.activo?'#ffebee':'#e8f5e9'};color:${u.activo?'#1a9e5c':'#2e7d32'};margin-right:4px" onclick="toggleActivo('${u.usuario}',${!u.activo})">${u.activo?'🚫':'✅'}</button>
-        <button class="btn btn-sm" style="background:#ffebee;color:#1a9e5c" onclick="pedirEliminarUsuario('${u.usuario}','${u.nombre}')">🗑️</button>
+        ` : '<span style="font-size:10px;color:#aaa;margin-right:6px;padding:3px 6px;background:#f5f5f5;border-radius:4px">Sin usuario</span>'}
+        <button class="btn btn-sm" style="background:#ffebee;color:#c62828" onclick="pedirEliminarUsuario('${u.usuario||''}','${u.nombre||''}')">🗑️</button>
       </td>
     </tr>`).join('');
   });
@@ -5747,20 +5749,24 @@ function toggleActivo(usuario, activar) {
   });
 }
 
+let _eliminarNombre = '';
+
 function pedirEliminarUsuario(usuario, nombre) {
   usuarioAEliminar = usuario;
-  document.getElementById('confirmar-eliminar-nombre').textContent = nombre + ' (' + usuario + ')';
+  _eliminarNombre = nombre;
+  const label = nombre + (usuario && usuario !== '—' ? ' (' + usuario + ')' : ' (sin usuario)');
+  document.getElementById('confirmar-eliminar-nombre').textContent = label;
   document.getElementById('modal-confirmar-eliminar').style.display = 'flex';
 }
 
 function confirmarEliminarUsuario() {
   document.getElementById('modal-confirmar-eliminar').style.display = 'none';
-  callWebApp({ accion: 'eliminarUsuario', usuario: usuarioAEliminar, admin: currentUser }).then(res => {
+  callWebApp({ accion: 'eliminarUsuario', usuario: usuarioAEliminar, nombre: _eliminarNombre, admin: currentUser }).then(res => {
     if (res.ok) {
-      showToast('Usuario eliminado', '🗑️');
+      showToast('Eliminado correctamente', '🗑️');
       cargarUsuarios();
     } else {
-      showToast('Error al eliminar', '❌');
+      showToast('Error al eliminar: ' + (res.error || ''), '❌');
     }
   });
 }
