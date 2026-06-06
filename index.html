@@ -4679,7 +4679,7 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
     if (!a.detalle.length) return '';
 
     const filas = a.detalle.map((d, di) => {
-      const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : d.estado === 'AP' ? 'Aus. con Presencia' : 'Retiro';
+      const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : d.estado === 'AP' ? ('Aus. con Presencia' + (d.horaLlegada ? ' (ingresó ' + d.horaLlegada + ')' : '')) : 'Retiro';
       const estColor = d.estado === 'A' ? '#c62828' : d.estado === 'T' ? '#e65100' : d.estado === 'AP' ? '#7B1FA2' : '#607D8B';
       const matsHtml = d.materias.length
         ? d.materias.map(m =>
