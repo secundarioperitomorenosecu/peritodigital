@@ -521,6 +521,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
+      <div class="nav-item" id="nav-agenda" onclick="showSection('agenda',this);if(!agendaCargada)cargarAgenda()" style="display:none"><span class="nav-icon">📓</span> Agenda Directiva</div>
     </div>
     <div class="sidebar-footer">
       <button class="btn-logout" onclick="logout()">⏻ &nbsp;Cerrar Sesión</button>
@@ -3105,6 +3106,8 @@ function doLogin(name, role, usuario, res){
   const navMsg = document.getElementById('nav-mensajes');
   if (navMsg) navMsg.style.display = isStudent ? 'none' : 'flex';
   setTimeout(function(){ if(typeof actualizarBadgeMensajes==='function') actualizarBadgeMensajes(); }, 1500);
+  const navAg = document.getElementById('nav-agenda');
+  if (navAg) navAg.style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -8091,6 +8094,512 @@ function actualizarBadgeMensajes() {
     else { badge.style.display = 'none'; }
   });
 }
+
+// ══════════════════════════════════════════════════════════════
+//  MÓDULO AGENDA DIRECTIVA
+// ══════════════════════════════════════════════════════════════
+
+let agendaCargada = false;
+let agendaMesActual = new Date().getMonth() + 1;
+let agendaAnioActual = new Date().getFullYear();
+let agendaVerTodos = true; // por defecto ve todos
+
+const AGENDA_TIPOS = [
+  'Entrevista con Docente',
+  'Entrevista con Padres',
+  'Entrevista con Alumno',
+  'Observación de Clases',
+  'Supervisión Pedagógica',
+  'Devolución Supervisión Pedagógica',
+  'Elaboración POF/PF',
+  'Registro de Estudiantes',
+  'Carga de Valoraciones en ABC',
+  'Revisión y Control de PDD',
+  'Trabajo con Calificaciones Docentes',
+  'Elaboración de Informes para RITES',
+  'Entrevista con Delegados Centro Estudiantes',
+  'Trabajo con Delegados de Convivencia',
+  'Entrevista de Matriculación',
+  'Reunión de Matriculación con Padres',
+  'Reunión General con Padres',
+  'Preparación para Jornada Escolar',
+  'Preparación Informes para Inspector/Inspección',
+  'Control y Seguimiento de Eventos Escolares',
+  'Otro'
+];
+
+const AGENDA_TIPO_COLOR = {
+  'Entrevista con Docente':           '#e3f2fd',
+  'Entrevista con Padres':            '#f3e5f5',
+  'Entrevista con Alumno':            '#e8f5e9',
+  'Observación de Clases':            '#fff3e0',
+  'Supervisión Pedagógica':           '#fce4ec',
+  'Devolución Supervisión Pedagógica':'#f1f8e9',
+  'Elaboración POF/PF':               '#e0f7fa',
+  'Registro de Estudiantes':          '#fff8e1',
+  'Carga de Valoraciones en ABC':     '#f9fbe7',
+  'Revisión y Control de PDD':        '#ede7f6',
+  'Trabajo con Calificaciones Docentes':'#e8eaf6',
+  'Elaboración de Informes para RITES':'#fbe9e7',
+  'Entrevista con Delegados Centro Estudiantes':'#e0f2f1',
+  'Trabajo con Delegados de Convivencia':'#f0f4c3',
+  'Entrevista de Matriculación':      '#e8f5e9',
+  'Reunión de Matriculación con Padres':'#fce4ec',
+  'Reunión General con Padres':       '#e3f2fd',
+  'Preparación para Jornada Escolar': '#fff3e0',
+  'Preparación Informes para Inspector/Inspección':'#f3e5f5',
+  'Control y Seguimiento de Eventos Escolares':'#e0f7fa',
+  'Otro':                             '#f5f5f5'
+};
+
+// Crea el HTML de la sección si no existe
+function crearSeccionAgenda() {
+  if (document.getElementById('section-agenda')) return;
+  const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                          'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const tiposOptions = AGENDA_TIPOS.map(t => `<option value="${t}">${t}</option>`).join('');
+
+  const html = `
+<div class="section" id="section-agenda">
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>📓 Agenda Directiva</h3>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="agendaMes(-1)" style="background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c;font-weight:700;font-size:16px;padding:4px 12px">◀</button>
+        <span id="agenda-mes-label" style="font-weight:700;font-size:14px;color:#1a1a1a;min-width:140px;text-align:center"></span>
+        <button class="btn btn-sm" onclick="agendaMes(1)" style="background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c;font-weight:700;font-size:16px;padding:4px 12px">▶</button>
+        <select id="agenda-filtro-usuario" class="btn btn-sm" style="background:#fff;border:1px solid #c8e6d4;color:#1a1a1a" onchange="agendaFiltrarUsuario(this.value)">
+          <option value="todos">Ver todos</option>
+          <option value="mio">Solo mis eventos</option>
+        </select>
+        <button class="btn btn-primary-sm btn-sm" onclick="abrirFormAgenda()">+ Nuevo Evento</button>
+        <button class="btn btn-sm" style="background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c" onclick="imprimirAgenda()">🖨️ Imprimir Reporte</button>
+      </div>
+    </div>
+    <div class="panel-body" style="padding:12px">
+      <!-- Encabezado días de semana -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#aaa;padding:4px">Dom</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#1a9e5c;padding:4px">Lun</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#1a9e5c;padding:4px">Mar</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#1a9e5c;padding:4px">Mié</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#1a9e5c;padding:4px">Jue</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#1a9e5c;padding:4px">Vie</div>
+        <div style="text-align:center;font-size:10px;font-weight:700;color:#aaa;padding:4px">Sáb</div>
+      </div>
+      <div id="agenda-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+    </div>
+  </div>
+
+  <!-- Leyenda de colores -->
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header"><h3>🎨 Tipos de Actividad</h3></div>
+    <div class="panel-body" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px">
+      ${AGENDA_TIPOS.map(t => `<span style="font-size:10px;padding:3px 8px;border-radius:12px;background:${AGENDA_TIPO_COLOR[t]||'#f5f5f5'};border:1px solid #ddd;color:#333">${t}</span>`).join('')}
+    </div>
+  </div>
+
+  <!-- Lista del mes -->
+  <div class="panel">
+    <div class="panel-header"><h3>📋 Eventos del Mes</h3></div>
+    <div class="panel-body" id="agenda-lista-mes" style="padding:10px 14px">
+      <p style="color:#aaa;font-size:13px">Cargando...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nuevo evento -->
+<div class="modal-overlay" id="modal-agenda-overlay">
+  <div class="modal" id="modal-agenda" style="max-width:520px">
+    <button class="modal-close" onclick="cerrarFormAgenda()">✕</button>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:#1a1a1a;margin-bottom:16px">📓 Registrar Evento en Agenda</h2>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="ag-fecha" style="font-size:14px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label>Hora inicio (opcional)</label>
+          <input type="time" id="ag-hora-inicio" style="font-size:14px">
+        </div>
+        <div class="form-group">
+          <label>Hora fin (opcional)</label>
+          <input type="time" id="ag-hora-fin" style="font-size:14px">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tipo de actividad</label>
+        <select id="ag-tipo" style="font-size:14px">${tiposOptions}</select>
+      </div>
+      <div class="form-group">
+        <label>Descripción / Detalle</label>
+        <textarea id="ag-descripcion" rows="3" style="font-size:14px;width:100%;padding:10px;border:1px solid #e8d5c4;border-radius:8px;font-family:'Outfit',sans-serif;resize:vertical" placeholder="Detallá aquí de qué se trata la actividad..."></textarea>
+      </div>
+      <div id="ag-feedback" style="display:none;padding:8px 12px;border-radius:8px;font-size:13px"></div>
+      <button class="btn-primary" id="ag-btn-guardar" onclick="guardarEventoAgenda()">Guardar Evento</button>
+    </div>
+  </div>
+</div>
+`;
+  // Insertar antes del toast
+  const toast = document.getElementById('toast');
+  if (toast) {
+    toast.insertAdjacentHTML('beforebegin', html);
+  } else {
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+}
+
+function cargarAgenda() {
+  crearSeccionAgenda();
+  agendaCargada = true;
+  renderizarAgenda();
+}
+
+function agendaMes(delta) {
+  agendaMesActual += delta;
+  if (agendaMesActual > 12) { agendaMesActual = 1; agendaAnioActual++; }
+  if (agendaMesActual < 1)  { agendaMesActual = 12; agendaAnioActual--; }
+  renderizarAgenda();
+}
+
+function agendaFiltrarUsuario(val) {
+  agendaVerTodos = (val === 'todos');
+  renderizarAgenda();
+}
+
+function renderizarAgenda() {
+  const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                          'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const lbl = document.getElementById('agenda-mes-label');
+  if (lbl) lbl.textContent = NOMBRES_MESES[agendaMesActual-1] + ' ' + agendaAnioActual;
+
+  callWebApp({
+    accion: 'obtenerEventosAgenda',
+    usuario: currentUser,
+    mes: agendaMesActual,
+    anio: agendaAnioActual,
+    verTodos: agendaVerTodos
+  }).then(res => {
+    if (!res || !res.ok) return;
+    renderCalendarioAgenda(res.eventos);
+    renderListaAgenda(res.eventos);
+  }).catch(e => console.error('Error cargarAgenda', e));
+}
+
+function renderCalendarioAgenda(eventos) {
+  const cal = document.getElementById('agenda-calendario');
+  if (!cal) return;
+  const hoy = new Date();
+  const diaHoy = hoy.getDate(), mesHoy = hoy.getMonth()+1, anioHoy = hoy.getFullYear();
+
+  const primerDia = new Date(agendaAnioActual, agendaMesActual-1, 1).getDay();
+  const diasEnMes = new Date(agendaAnioActual, agendaMesActual, 0).getDate();
+
+  // Indexar eventos por día
+  const eventosPorDia = {};
+  eventos.forEach(ev => {
+    const p = String(ev.fecha||'').split('/');
+    if (p.length===3) {
+      const d = parseInt(p[0]);
+      if (!eventosPorDia[d]) eventosPorDia[d] = [];
+      eventosPorDia[d].push(ev);
+    }
+  });
+
+  let html = '';
+  // Celdas vacías antes del primer día
+  for (let i = 0; i < primerDia; i++) {
+    html += '<div style="min-height:70px;background:#fafafa;border-radius:6px;border:1px solid #f0f0f0"></div>';
+  }
+  for (let d = 1; d <= diasEnMes; d++) {
+    const esHoy = (d===diaHoy && agendaMesActual===mesHoy && agendaAnioActual===anioHoy);
+    const evsDia = eventosPorDia[d] || [];
+    const borde = esHoy ? '2px solid #1a9e5c' : '1px solid #e8d5c4';
+    const bg = esHoy ? 'rgba(26,158,92,.08)' : '#fff';
+    let evHtml = '';
+    evsDia.slice(0,3).forEach(ev => {
+      const color = AGENDA_TIPO_COLOR[ev.tipo] || '#f5f5f5';
+      const hora = ev.horaInicio ? ` ${ev.horaInicio}` : '';
+      const owner = ev.usuario === currentUser ? '•' : '○';
+      evHtml += `<div style="font-size:9px;padding:2px 4px;border-radius:3px;background:${color};margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;border:1px solid #ddd" title="${ev.tipo}: ${ev.descripcion}" onclick="verDetalleEventoAgenda('${ev.id}')">${owner}${hora} ${ev.tipo.split(' ')[0]}</div>`;
+    });
+    if (evsDia.length > 3) evHtml += `<div style="font-size:9px;color:#1a9e5c;font-weight:700">+${evsDia.length-3} más</div>`;
+    html += `<div style="min-height:70px;background:${bg};border-radius:6px;border:${borde};padding:5px;cursor:default" onclick="abrirFormAgendaFecha('${d.toString().padStart(2,'0')}/${agendaMesActual.toString().padStart(2,'0')}/${agendaAnioActual}')">
+      <div style="font-size:11px;font-weight:700;color:${esHoy?'#1a9e5c':'#1a1a1a'}">${d}</div>
+      ${evHtml}
+    </div>`;
+  }
+  cal.innerHTML = html;
+}
+
+function renderListaAgenda(eventos) {
+  const lista = document.getElementById('agenda-lista-mes');
+  if (!lista) return;
+  if (!eventos.length) {
+    lista.innerHTML = '<p style="color:#aaa;font-size:13px;padding:8px 0">No hay eventos registrados para este período.</p>';
+    return;
+  }
+  const COLORES_ROL = { director:'#e3f2fd', vicedirector:'#e8f5e9', secretario:'#fff3e0', secretary:'#fff3e0', legal:'#fce4ec' };
+  let html = '';
+  let fechaAnterior = '';
+  eventos.forEach(ev => {
+    if (ev.fecha !== fechaAnterior) {
+      if (fechaAnterior) html += '</div>';
+      html += `<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1a9e5c;border-bottom:1px solid #e8f4ed;padding-bottom:4px;margin-bottom:6px">📅 ${ev.fecha}</div><div>`;
+      fechaAnterior = ev.fecha;
+    }
+    const color = AGENDA_TIPO_COLOR[ev.tipo] || '#f5f5f5';
+    const colorRol = COLORES_ROL[ev.rolUsuario] || '#f5f5f5';
+    const esMio = ev.usuario === currentUser;
+    const hora = ev.horaInicio ? `⏰ ${ev.horaInicio}${ev.horaFin ? ' – ' + ev.horaFin : ''}` : '';
+    html += `<div style="background:${color};border:1px solid #e0e0e0;border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:#1a1a1a">${ev.tipo}</span>
+          <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:${colorRol};border:1px solid #ddd;color:#333">${ev.nombreUsuario||ev.rolUsuario}</span>
+          ${hora ? `<span style="font-size:11px;color:#555">${hora}</span>` : ''}
+        </div>
+        ${ev.descripcion ? `<div style="font-size:12px;color:#555;line-height:1.5">${ev.descripcion}</div>` : ''}
+      </div>
+      ${esMio ? `<button onclick="eliminarEventoAgenda('${ev.id}')" title="Eliminar" style="background:none;border:none;cursor:pointer;font-size:14px;color:#aaa;flex-shrink:0">🗑️</button>` : ''}
+    </div>`;
+  });
+  if (fechaAnterior) html += '</div></div>';
+  lista.innerHTML = html;
+}
+
+function abrirFormAgenda() {
+  const hoy = new Date();
+  const dd = String(hoy.getDate()).padStart(2,'0');
+  const mm = String(hoy.getMonth()+1).padStart(2,'0');
+  const yyyy = hoy.getFullYear();
+  const f = document.getElementById('ag-fecha');
+  if (f) f.value = `${yyyy}-${mm}-${dd}`;
+  const fb = document.getElementById('ag-feedback');
+  if (fb) fb.style.display = 'none';
+  document.getElementById('modal-agenda-overlay').classList.add('show');
+}
+
+function abrirFormAgendaFecha(fechaDDMMYYYY) {
+  const p = fechaDDMMYYYY.split('/');
+  if (p.length !== 3) return;
+  const f = document.getElementById('ag-fecha');
+  if (f) f.value = `${p[2]}-${p[1]}-${p[0]}`;
+  const fb = document.getElementById('ag-feedback');
+  if (fb) fb.style.display = 'none';
+  document.getElementById('modal-agenda-overlay').classList.add('show');
+}
+
+function cerrarFormAgenda() {
+  document.getElementById('modal-agenda-overlay').classList.remove('show');
+}
+
+function guardarEventoAgenda() {
+  const fechaInput = document.getElementById('ag-fecha').value;
+  if (!fechaInput) { mostrarFeedbackAgenda('Ingresá una fecha', false); return; }
+  const [yyyy,mm,dd] = fechaInput.split('-');
+  const fechaDD = `${dd}/${mm}/${yyyy}`;
+  const tipo = document.getElementById('ag-tipo').value;
+  const desc = document.getElementById('ag-descripcion').value.trim();
+  const btn  = document.getElementById('ag-btn-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  callWebApp({
+    accion: 'guardarEventoAgenda',
+    datos: JSON.stringify({
+      fecha: fechaDD,
+      horaInicio: document.getElementById('ag-hora-inicio').value || '',
+      horaFin:    document.getElementById('ag-hora-fin').value || '',
+      tipo: tipo,
+      descripcion: desc,
+      usuario: currentUser,
+      nombreUsuario: currentNombre || currentUser,
+      rolUsuario: currentRole
+    })
+  }).then(res => {
+    btn.disabled = false; btn.textContent = 'Guardar Evento';
+    if (res && res.ok) {
+      mostrarFeedbackAgenda('✅ Evento guardado correctamente', true);
+      setTimeout(() => { cerrarFormAgenda(); renderizarAgenda(); }, 1000);
+    } else {
+      mostrarFeedbackAgenda('Error: ' + (res?.error||'desconocido'), false);
+    }
+  }).catch(e => {
+    btn.disabled = false; btn.textContent = 'Guardar Evento';
+    mostrarFeedbackAgenda('Error de conexión', false);
+  });
+}
+
+function mostrarFeedbackAgenda(msg, ok) {
+  const fb = document.getElementById('ag-feedback');
+  if (!fb) return;
+  fb.textContent = msg;
+  fb.style.display = 'block';
+  fb.style.background = ok ? 'rgba(26,158,92,.12)' : 'rgba(220,50,50,.1)';
+  fb.style.color = ok ? '#1a9e5c' : '#c0392b';
+}
+
+function eliminarEventoAgenda(id) {
+  if (!confirm('¿Eliminar este evento de la agenda?')) return;
+  callWebApp({ accion: 'eliminarEventoAgenda', id: id, usuario: currentUser }).then(res => {
+    if (res && res.ok) { mostrarToast('Evento eliminado'); renderizarAgenda(); }
+    else mostrarToast('Error: ' + (res?.error||''), false);
+  });
+}
+
+function verDetalleEventoAgenda(id) {
+  // Por ahora solo muestra en la lista (scroll)
+}
+
+function imprimirAgenda() {
+  // Obtener todos los eventos del mes de TODOS los directivos (separado por persona)
+  callWebApp({
+    accion: 'obtenerEventosAgenda',
+    usuario: currentUser,
+    mes: agendaMesActual,
+    anio: agendaAnioActual,
+    verTodos: true
+  }).then(res => {
+    if (!res || !res.ok) { mostrarToast('Error al obtener datos', false); return; }
+    generarReporteImprimibleAgenda(res.eventos);
+  });
+}
+
+function generarReporteImprimibleAgenda(eventos) {
+  const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                          'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const mesNombre = NOMBRES_MESES[agendaMesActual-1] + ' ' + agendaAnioActual;
+
+  // Logo base64 (usar el mismo del login)
+  const logoEl = document.querySelector('.login-logo img');
+  const logoSrc = logoEl ? logoEl.src : '';
+
+  // Agrupar por usuario/rol
+  const porUsuario = {};
+  const ordenRoles = ['director','vicedirector','secretario','secretary','legal'];
+  eventos.forEach(ev => {
+    const key = ev.usuario;
+    if (!porUsuario[key]) {
+      porUsuario[key] = { nombre: ev.nombreUsuario||ev.usuario, rol: ev.rolUsuario, eventos: [] };
+    }
+    porUsuario[key].eventos.push(ev);
+  });
+
+  // Ordenar usuarios por rol
+  const usuarios = Object.values(porUsuario).sort((a,b) => {
+    const ia = ordenRoles.indexOf(a.rol); const ib = ordenRoles.indexOf(b.rol);
+    return (ia===-1?99:ia) - (ib===-1?99:ib);
+  });
+
+  const ROL_LABEL = {director:'Director/a', vicedirector:'Vicedirector/a', secretary:'Secretario/a', secretario:'Secretario/a', legal:'Rep. Legal'};
+
+  let paginas = '';
+  usuarios.forEach((u, idx) => {
+    // Agrupar sus eventos por fecha
+    const porFecha = {};
+    u.eventos.forEach(ev => {
+      if (!porFecha[ev.fecha]) porFecha[ev.fecha] = [];
+      porFecha[ev.fecha].push(ev);
+    });
+    const fechasOrdenadas = Object.keys(porFecha).sort((a,b) => {
+      const fa = a.split('/').reverse().join('');
+      const fb = b.split('/').reverse().join('');
+      return fa.localeCompare(fb);
+    });
+
+    let filasHtml = '';
+    fechasOrdenadas.forEach(fecha => {
+      porFecha[fecha].forEach((ev, i) => {
+        const hora = ev.horaInicio ? `${ev.horaInicio}${ev.horaFin?' – '+ev.horaFin:''}` : '';
+        filasHtml += `<tr>
+          ${i===0 ? `<td rowspan="${porFecha[fecha].length}" style="font-weight:700;color:#1a9e5c;border:1px solid #ddd;padding:6px 8px;vertical-align:top;white-space:nowrap">${fecha}</td>` : ''}
+          <td style="border:1px solid #ddd;padding:6px 8px;white-space:nowrap">${hora}</td>
+          <td style="border:1px solid #ddd;padding:6px 8px;font-weight:600">${ev.tipo}</td>
+          <td style="border:1px solid #ddd;padding:6px 8px;font-size:12px;color:#555">${ev.descripcion||''}</td>
+        </tr>`;
+      });
+    });
+
+    const color = AGENDA_TIPO_COLOR[u.rol] || '#e3f2fd';
+    paginas += `
+    <div style="page-break-after:${idx < usuarios.length-1 ? 'always' : 'auto'};padding:30px 40px;font-family:'Arial',sans-serif;max-width:750px;margin:0 auto">
+      <!-- Header con logo -->
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1a9e5c;padding-bottom:14px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:14px">
+          ${logoSrc ? `<img src="${logoSrc}" style="width:60px;height:60px;object-fit:contain">` : ''}
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:2px;text-transform:uppercase">Colegio Perito Moreno</div>
+            <div style="font-size:20px;font-weight:700;color:#1a1a1a;font-family:'Georgia',serif">Agenda de Gestión Directiva</div>
+            <div style="font-size:13px;color:#555;margin-top:2px">${mesNombre}</div>
+          </div>
+        </div>
+        <div style="text-align:right;font-size:11px;color:#aaa">
+          Generado: ${new Date().toLocaleDateString('es-AR')}<br>
+          ${new Date().toLocaleTimeString('es-AR')}
+        </div>
+      </div>
+      <!-- Nombre directivo -->
+      <div style="background:${color};border:1px solid #ddd;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:28px">👤</span>
+        <div>
+          <div style="font-size:16px;font-weight:700;color:#1a1a1a">${u.nombre}</div>
+          <div style="font-size:12px;color:#555;text-transform:uppercase;letter-spacing:1px">${ROL_LABEL[u.rol]||u.rol}</div>
+        </div>
+      </div>
+      <!-- Tabla de eventos -->
+      ${filasHtml ? `
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:#1a9e5c;color:#fff">
+            <th style="padding:8px 10px;text-align:left;border:1px solid #157a45">Fecha</th>
+            <th style="padding:8px 10px;text-align:left;border:1px solid #157a45">Horario</th>
+            <th style="padding:8px 10px;text-align:left;border:1px solid #157a45">Actividad</th>
+            <th style="padding:8px 10px;text-align:left;border:1px solid #157a45">Descripción / Detalle</th>
+          </tr>
+        </thead>
+        <tbody>${filasHtml}</tbody>
+      </table>
+      <div style="margin-top:8px;font-size:11px;color:#aaa;text-align:right">Total: ${u.eventos.length} evento${u.eventos.length!==1?'s':''} registrado${u.eventos.length!==1?'s':''}</div>
+      ` : `<p style="color:#aaa;font-size:13px;padding:20px 0;text-align:center">Sin eventos registrados para este período</p>`}
+      <!-- Firma -->
+      <div style="margin-top:50px;display:flex;justify-content:flex-end">
+        <div style="text-align:center;width:200px">
+          <div style="border-top:1px solid #333;padding-top:6px;font-size:12px;color:#555">${u.nombre}<br>${ROL_LABEL[u.rol]||u.rol}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  if (!paginas) {
+    paginas = `<div style="padding:40px;text-align:center;color:#aaa;font-size:16px">No hay eventos registrados para ${mesNombre}</div>`;
+  }
+
+  const ventana = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+  ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+    <title>Agenda Directiva – ${mesNombre}</title>
+    <style>
+      @media print {
+        @page { margin: 15mm; }
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
+      body { margin:0; padding:0; background:#f5f5f5; }
+      @media screen { .pagina { background:#fff; margin:20px auto; box-shadow:0 2px 12px rgba(0,0,0,.15); } }
+    </style>
+  </head><body>${paginas}
+  <div style="text-align:center;padding:20px;font-size:12px;color:#aaa">PM Digital – Colegio Perito Moreno</div>
+  <script>window.onload=function(){window.print()}<\/script>
+  </body></html>`);
+  ventana.document.close();
+}
+
+// Cerrar modal al hacer click fuera
+document.addEventListener('click', function(e) {
+  const overlay = document.getElementById('modal-agenda-overlay');
+  if (overlay && e.target === overlay) cerrarFormAgenda();
+});
+
 </script>
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
 </body>
