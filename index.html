@@ -573,7 +573,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
               </div>
               <div style="flex:2;min-width:200px">
                 <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Alumno accidentado</label>
-                <select id="acta-alumno" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <select id="acta-alumno" onchange="actaAutocompletar()" style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
                   <option value="">— Seleccioná curso primero —</option>
                 </select>
               </div>
@@ -1107,6 +1107,17 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
         <div class="panel-body" id="reportes-contenido">
           <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Cargando reporte...</div>
+        </div>
+      </div>
+
+      <!-- REPORTE DE ALUMNOS -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>🎓 Reporte de Alumnos</h3>
+          <button class="btn btn-sm btn-outline" onclick="generarReporteAlumnos()">↺ Actualizar</button>
+        </div>
+        <div class="panel-body" id="reporte-alumnos-contenido">
+          <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Presioná Actualizar para generar el reporte.</div>
         </div>
       </div>
 
@@ -3164,7 +3175,7 @@ function showSection(id,el){
   if(id === 'dias-no-lectivos') inicializarDiasNoLectivos();
   if(id === 'mensajes') inicializarMensajes();
   if(id === 'archivos') cargarArchivos();
-  if(id === 'reportes') generarReporte();
+  if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); }
   if(id === 'usuarios') cargarUsuarios();
 }
 
@@ -4203,6 +4214,86 @@ function generarReporte() {
       </div>`;
   });
 }
+
+function generarReporteAlumnos() {
+  const cont = document.getElementById('reporte-alumnos-contenido');
+  if (!cont) return;
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Generando reporte de alumnos...</div>';
+  callWebApp({ accion: 'obtenerReporteAlumnos' }).then(res => {
+    if (!res.ok) {
+      cont.innerHTML = '<div style="text-align:center;padding:20px;color:#F44336">Error: ' + (res.error || 'desconocido') + '</div>';
+      return;
+    }
+    const edades = res.edades || [13,14,15,16,17,18];
+    const totalMujeres = res.totalGeneral - res.totalVarones;
+
+    // Cabeceras del reporte
+    let html = `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+        <div style="flex:1;min-width:140px;background:linear-gradient(135deg,#C0131A,#e53935);border-radius:12px;padding:14px 18px;color:#fff;text-align:center">
+          <div style="font-size:28px;font-weight:800">${res.totalGeneral}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.85">Total alumnos</div>
+        </div>
+        <div style="flex:1;min-width:140px;background:linear-gradient(135deg,#1a2744,#2a3a6a);border-radius:12px;padding:14px 18px;color:#fff;text-align:center">
+          <div style="font-size:28px;font-weight:800">${res.totalVarones}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.85">Varones</div>
+        </div>
+        <div style="flex:1;min-width:140px;background:linear-gradient(135deg,#1a9e5c,#26c970);border-radius:12px;padding:14px 18px;color:#fff;text-align:center">
+          <div style="font-size:28px;font-weight:800">${totalMujeres}</div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.85">Mujeres / Otro</div>
+        </div>
+      </div>`;
+
+    // Tabla por curso
+    html += `<div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#fdf8f3">
+            <th style="padding:9px 12px;text-align:left;border-bottom:2px solid #e8d5c4;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#888">Curso</th>
+            <th style="padding:9px 10px;text-align:center;border-bottom:2px solid #e8d5c4;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#888">Total</th>
+            <th style="padding:9px 10px;text-align:center;border-bottom:2px solid #e8d5c4;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#1a2744">Varones</th>
+            ${edades.map(e => `<th style="padding:9px 8px;text-align:center;border-bottom:2px solid #e8d5c4;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#C0131A">${e} años</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>`;
+
+    (res.cursos || []).forEach((c, idx) => {
+      const bg = idx % 2 === 0 ? '#fff' : '#fdf8f3';
+      html += `<tr style="background:${bg};border-bottom:1px solid #f0e9e0">
+        <td style="padding:9px 12px;font-weight:700;color:#1a2744;font-size:13px">${c.curso}</td>
+        <td style="padding:9px 10px;text-align:center;font-weight:700;font-size:13px">${c.total}</td>
+        <td style="padding:9px 10px;text-align:center;color:#1a2744;font-weight:600">${c.varones}</td>
+        ${edades.map(e => {
+          const val = (c.edades && c.edades[e]) || 0;
+          const color = val > 0 ? '#C0131A' : 'rgba(0,0,0,.25)';
+          const fw = val > 0 ? '700' : '400';
+          return `<td style="padding:9px 8px;text-align:center;color:${color};font-weight:${fw}">${val > 0 ? val : '—'}</td>`;
+        }).join('')}
+      </tr>`;
+    });
+
+    // Fila de totales
+    const totalPorEdad = {};
+    edades.forEach(e => { totalPorEdad[e] = (res.cursos || []).reduce((s, c) => s + ((c.edades && c.edades[e]) || 0), 0); });
+    html += `<tr style="background:#f0f4ff;border-top:2px solid #e8d5c4;font-weight:800">
+      <td style="padding:10px 12px;font-size:13px;color:#1a2744">TOTAL</td>
+      <td style="padding:10px;text-align:center;font-size:14px;color:#C0131A">${res.totalGeneral}</td>
+      <td style="padding:10px;text-align:center;font-size:13px;color:#1a2744">${res.totalVarones}</td>
+      ${edades.map(e => `<td style="padding:10px 8px;text-align:center;font-size:13px;color:#C0131A">${totalPorEdad[e] || '—'}</td>`).join('')}
+    </tr>`;
+
+    html += '</tbody></table></div>';
+
+    // Nota aclaratoria
+    html += `<p style="margin:12px 0 0;font-size:11px;color:rgba(0,0,0,.4);text-align:right">
+      * Edades calculadas a la fecha de hoy. Solo se cuentan alumnos activos en la hoja 3_Alumnos.
+      La columna "Varones" se basa en el campo Sexo (col G: M/V). Alumnos sin fecha de nacimiento cargada no aparecen en las columnas de edad.
+    </p>`;
+
+    cont.innerHTML = html;
+  });
+}
+
 
 function generarInformeCalificaciones() {
   const curso   = document.getElementById('inf-cal-curso').value;
@@ -7626,19 +7717,51 @@ function actaInicializar() {
   document.getElementById('acta-fecha').value = new Date().toISOString().slice(0,10);
 }
 
+// Almacena los datos completos de los alumnos del curso seleccionado
+let _actaAlumnosData = {};
+
 function actaCargarAlumnos() {
   const curso = document.getElementById('acta-curso').value;
   const sel   = document.getElementById('acta-alumno');
+  _actaAlumnosData = {};
+  // Limpiar campos al cambiar curso
+  ['acta-dni','acta-fnac','acta-domicilio'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const locEl = document.getElementById('acta-localidad');
+  if (locEl) locEl.value = 'González Catán';
+
   if (!curso) { sel.innerHTML = '<option value="">— Seleccioná curso primero —</option>'; return; }
   sel.innerHTML = '<option value="">Cargando...</option>';
   callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
     if (res && res.alumnos && res.alumnos.length) {
+      // Guardar datos completos indexados por nombre
+      res.alumnos.forEach(a => { _actaAlumnosData[a.nombre] = a; });
       sel.innerHTML = '<option value="">— Alumno —</option>' +
         res.alumnos.map(a => '<option value="' + a.nombre + '">' + a.nombre + '</option>').join('');
     } else {
       sel.innerHTML = '<option value="">Sin alumnos</option>';
     }
   });
+}
+
+function actaAutocompletar() {
+  const nombre = document.getElementById('acta-alumno').value;
+  const datos  = _actaAlumnosData[nombre];
+  if (!datos) return;
+  // DNI
+  const dniEl = document.getElementById('acta-dni');
+  if (dniEl && datos.dni) dniEl.value = datos.dni;
+  // Fecha de nacimiento
+  const fnacEl = document.getElementById('acta-fnac');
+  if (fnacEl && datos.fechaNac) fnacEl.value = datos.fechaNac;
+  // Domicilio
+  const domEl = document.getElementById('acta-domicilio');
+  if (domEl && datos.domicilio) domEl.value = datos.domicilio;
+  // Localidad
+  const locEl = document.getElementById('acta-localidad');
+  if (locEl && datos.localidad) locEl.value = datos.localidad;
 }
 
 function generarActaAccidente() {
