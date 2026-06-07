@@ -4224,7 +4224,7 @@ function generarReporteAlumnos() {
       cont.innerHTML = '<div style="text-align:center;padding:20px;color:#F44336">Error: ' + (res.error || 'desconocido') + '</div>';
       return;
     }
-    const edades = res.edades || [13,14,15,16,17,18];
+    const edades = res.edades || [12,13,14,15,16,17,18];
     const totalMujeres = res.totalGeneral - res.totalVarones;
 
     // Cabeceras del reporte
