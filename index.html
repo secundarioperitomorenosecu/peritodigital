@@ -3004,6 +3004,7 @@ function buildBottomNav(role) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
       items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
       items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
+      items.push({ id: 'agenda',     icon: '📓', label: 'Agenda' });
     }
     if (isAdmin || isEOE)
       items.push({ id: 'eoe', icon: '🧠', label: 'EOE' });
@@ -3012,7 +3013,7 @@ function buildBottomNav(role) {
   const inner = document.getElementById('bottom-nav-inner');
   if (!inner) return;
   inner.innerHTML = items.map(item => `
-    <button class="bn-item" id="bn-${item.id}" onclick="showSection('${item.id}',null);syncBottomNav('${item.id}')">
+    <button class="bn-item" id="bn-${item.id}" onclick="${item.id==='agenda'?'crearSeccionAgenda();':''}showSection('${item.id}',null);syncBottomNav('${item.id}')">
       <div class="bn-icon">${item.icon}</div>
       <div class="bn-label">${item.label}</div>
     </button>`).join('');
