@@ -2810,8 +2810,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -3151,6 +3151,7 @@ function showSection(id,el){
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
   if(id === 'seguimiento-faltas') inicializarSeguimiento();
+  if(id === 'agenda') cargarAgenda();
   const btnSubir = document.getElementById('btn-subir-topbar');
   const topbar = document.getElementById('main-topbar');
   const mainContent = document.querySelector('.main-content');
@@ -8154,13 +8155,11 @@ const AGENDA_TIPO_COLOR = {
 
 // Crea el HTML de la sección si no existe
 function crearSeccionAgenda() {
-  if (document.getElementById('section-agenda')) return;
-  const NOMBRES_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                          'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  if (document.getElementById('sec-agenda')) return;
   const tiposOptions = AGENDA_TIPOS.map(t => `<option value="${t}">${t}</option>`).join('');
 
-  const html = `
-<div class="section" id="section-agenda">
+  const secHtml = `
+<div class="section" id="sec-agenda">
   <div class="panel" style="margin-bottom:16px">
     <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
       <h3>📓 Agenda Directiva</h3>
@@ -8177,7 +8176,6 @@ function crearSeccionAgenda() {
       </div>
     </div>
     <div class="panel-body" style="padding:12px">
-      <!-- Encabezado días de semana -->
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
         <div style="text-align:center;font-size:10px;font-weight:700;color:#aaa;padding:4px">Dom</div>
         <div style="text-align:center;font-size:10px;font-weight:700;color:#1a9e5c;padding:4px">Lun</div>
@@ -8190,25 +8188,21 @@ function crearSeccionAgenda() {
       <div id="agenda-calendario" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
     </div>
   </div>
-
-  <!-- Leyenda de colores -->
   <div class="panel" style="margin-bottom:16px">
     <div class="panel-header"><h3>🎨 Tipos de Actividad</h3></div>
     <div class="panel-body" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px">
       ${AGENDA_TIPOS.map(t => `<span style="font-size:10px;padding:3px 8px;border-radius:12px;background:${AGENDA_TIPO_COLOR[t]||'#f5f5f5'};border:1px solid #ddd;color:#333">${t}</span>`).join('')}
     </div>
   </div>
-
-  <!-- Lista del mes -->
   <div class="panel">
     <div class="panel-header"><h3>📋 Eventos del Mes</h3></div>
     <div class="panel-body" id="agenda-lista-mes" style="padding:10px 14px">
       <p style="color:#aaa;font-size:13px">Cargando...</p>
     </div>
   </div>
-</div>
+</div>`;
 
-<!-- Modal nuevo evento -->
+  const modalHtml = `
 <div class="modal-overlay" id="modal-agenda-overlay">
   <div class="modal" id="modal-agenda" style="max-width:520px">
     <button class="modal-close" onclick="cerrarFormAgenda()">✕</button>
@@ -8240,19 +8234,24 @@ function crearSeccionAgenda() {
       <button class="btn-primary" id="ag-btn-guardar" onclick="guardarEventoAgenda()">Guardar Evento</button>
     </div>
   </div>
-</div>
-`;
-  // Insertar antes del toast
-  const toast = document.getElementById('toast');
-  if (toast) {
-    toast.insertAdjacentHTML('beforebegin', html);
-  } else {
-    document.body.insertAdjacentHTML('beforeend', html);
+</div>`;
+
+  // Insertar sección dentro del main-content, antes del toast
+  const mainContent = document.querySelector('.main-content');
+  if (mainContent) {
+    mainContent.insertAdjacentHTML('beforeend', secHtml);
   }
+  // Insertar modal en el body
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+  // Listener para cerrar modal al click fuera
+  document.getElementById('modal-agenda-overlay').addEventListener('click', function(e) {
+    if (e.target === this) cerrarFormAgenda();
+  });
 }
 
 function cargarAgenda() {
-  crearSeccionAgenda();
+  crearSeccionAgenda();   // idempotente — no hace nada si ya existe
   agendaCargada = true;
   renderizarAgenda();
 }
@@ -8594,11 +8593,7 @@ function generarReporteImprimibleAgenda(eventos) {
   ventana.document.close();
 }
 
-// Cerrar modal al hacer click fuera
-document.addEventListener('click', function(e) {
-  const overlay = document.getElementById('modal-agenda-overlay');
-  if (overlay && e.target === overlay) cerrarFormAgenda();
-});
+// Cerrar modal al hacer click fuera — manejado dentro de crearSeccionAgenda()
 
 </script>
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
