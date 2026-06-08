@@ -521,7 +521,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
-      <div class="nav-item" id="nav-agenda" onclick="showSection('agenda',this);if(!agendaCargada)cargarAgenda()" style="display:none"><span class="nav-icon">📓</span> Agenda Directiva</div>
+      <div class="nav-item" id="nav-agenda" onclick="crearSeccionAgenda();showSection('agenda',this)" style="display:none"><span class="nav-icon">📓</span> Agenda Directiva</div>
     </div>
     <div class="sidebar-footer">
       <button class="btn-logout" onclick="logout()">⏻ &nbsp;Cerrar Sesión</button>
@@ -3151,7 +3151,7 @@ function showSection(id,el){
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
   if(id === 'seguimiento-faltas') inicializarSeguimiento();
-  if(id === 'agenda') cargarAgenda();
+  if(id === 'agenda') { renderizarAgenda(); }
   const btnSubir = document.getElementById('btn-subir-topbar');
   const topbar = document.getElementById('main-topbar');
   const mainContent = document.querySelector('.main-content');
