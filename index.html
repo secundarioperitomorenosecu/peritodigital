@@ -334,9 +334,6 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   justify-content:center;
   gap:0;
   padding:0 2px;
-  max-height:45vh;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
 }
 .bn-item{
   display:flex;
@@ -1718,11 +1715,11 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
-          <input type="time" id="aud-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <input type="date" id="aud-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
-          <input type="time" id="aud-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <input type="date" id="aud-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px">
           <input type="checkbox" id="aud-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
@@ -1765,6 +1762,22 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <option value="Paro/huelga">Paro / Huelga</option>
             <option value="Otro">Otro</option>
           </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
+          <input type="date" id="aud-doc-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
+          <input type="date" id="aud-doc-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px">
+          <input type="checkbox" id="aud-doc-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
+          <label for="aud-doc-movimiento" style="font-size:12px;color:var(--color-text-secondary);cursor:pointer;user-select:none">Movimiento</label>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Reemplazante</label>
+          <input type="text" id="aud-doc-reemplazante" placeholder="Apellido y nombre" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:180px"/>
         </div>
         <button onclick="audRegistrarTodos()" id="btn-registrar-todos"
           style="padding:7px 18px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
@@ -1820,55 +1833,57 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   </div>
 
   <!-- Modal edición ausencia -->
-  <div id="aud-edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center">
-    <div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:20px 22px;width:90%;max-width:420px;box-shadow:0 4px 24px rgba(0,0,0,0.18)">
-      <div style="font-size:13px;font-weight:700;color:var(--color-text-primary);margin-bottom:14px">✏️ Editar Ausencia</div>
-      <input type="hidden" id="aud-edit-id"/>
-      <input type="hidden" id="aud-edit-fecha"/>
-      <input type="hidden" id="aud-edit-docente"/>
-      <input type="hidden" id="aud-edit-curso"/>
-      <input type="hidden" id="aud-edit-materia"/>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div>
-          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Motivo</label>
-          <select id="aud-edit-motivo" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
-            <option value="Sin aviso">Sin aviso</option>
-            <option value="Enfermedad">Enfermedad</option>
-            <option value="Licencia médica">Licencia médica</option>
-            <option value="Licencia personal">Licencia personal</option>
-            <option value="Capacitación">Capacitación</option>
-            <option value="Paro/huelga">Paro / Huelga</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:10px">
-          <div style="flex:1">
-            <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Desde</label>
-            <input type="time" id="aud-edit-desde" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:100%"/>
+  <div id="aud-edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:9999">
+    <div style="display:flex;width:100%;height:100%;align-items:center;justify-content:center">
+      <div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:20px 22px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.28)">
+        <div style="font-size:13px;font-weight:700;color:var(--color-text-primary);margin-bottom:14px">✏️ Editar Ausencia</div>
+        <input type="hidden" id="aud-edit-id"/>
+        <input type="hidden" id="aud-edit-fecha"/>
+        <input type="hidden" id="aud-edit-docente"/>
+        <input type="hidden" id="aud-edit-curso"/>
+        <input type="hidden" id="aud-edit-materia"/>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Motivo</label>
+            <select id="aud-edit-motivo" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+              <option value="Sin aviso">Sin aviso</option>
+              <option value="Enfermedad">Enfermedad</option>
+              <option value="Licencia médica">Licencia médica</option>
+              <option value="Licencia personal">Licencia personal</option>
+              <option value="Capacitación">Capacitación</option>
+              <option value="Paro/huelga">Paro / Huelga</option>
+              <option value="Otro">Otro</option>
+            </select>
           </div>
-          <div style="flex:1">
-            <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Hasta</label>
-            <input type="time" id="aud-edit-hasta" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:100%"/>
+          <div style="display:flex;gap:10px">
+            <div style="flex:1">
+              <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Desde</label>
+              <input type="date" id="aud-edit-desde" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:100%"/>
+            </div>
+            <div style="flex:1">
+              <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Hasta</label>
+              <input type="date" id="aud-edit-hasta" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:100%"/>
+            </div>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input type="checkbox" id="aud-edit-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
-          <label for="aud-edit-movimiento" style="font-size:12px;color:var(--color-text-secondary);cursor:pointer">Movimiento</label>
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Reemplazante</label>
-          <input type="text" id="aud-edit-reemplazante" placeholder="Apellido y nombre" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%"/>
-        </div>
-        <div id="aud-edit-feedback" style="display:none;font-size:12px;padding:6px 10px;border-radius:var(--border-radius-md)"></div>
-        <div style="display:flex;gap:10px;margin-top:4px">
-          <button onclick="audGuardarEdicion()" id="btn-aud-edit-guardar"
-            style="flex:1;padding:8px;background:#1a2744;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
-            Guardar
-          </button>
-          <button onclick="audCerrarModal()"
-            style="flex:1;padding:8px;background:var(--color-border-secondary);color:var(--color-text-primary);border:none;border-radius:var(--border-radius-md);font-size:13px;cursor:pointer;font-family:inherit">
-            Cancelar
-          </button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="aud-edit-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
+            <label for="aud-edit-movimiento" style="font-size:12px;color:var(--color-text-secondary);cursor:pointer">Movimiento</label>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Reemplazante</label>
+            <input type="text" id="aud-edit-reemplazante" placeholder="Apellido y nombre" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%"/>
+          </div>
+          <div id="aud-edit-feedback" style="display:none;font-size:12px;padding:6px 10px;border-radius:var(--border-radius-md)"></div>
+          <div style="display:flex;gap:10px;margin-top:4px">
+            <button onclick="audGuardarEdicion()" id="btn-aud-edit-guardar"
+              style="flex:1;padding:8px;background:#1a2744;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+              Guardar
+            </button>
+            <button onclick="audCerrarModal()"
+              style="flex:1;padding:8px;background:var(--color-border-secondary);color:var(--color-text-primary);border:none;border-radius:var(--border-radius-md);font-size:13px;cursor:pointer;font-family:inherit">
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2081,8 +2096,7 @@ function audGenerarReporteExcel() {
 }
 
 function audExportarExcel(registros, desde, hasta) {
-  // Construimos un HTML que Excel puede abrir con logo y formato
-  const LOGO_B64 = PM_LOGO; // data:image/png;base64,...
+  const LOGO_URL = 'https://secundarioperitomorenosecu.github.io/peritodigital/escudo.png';
 
   const filas = registros.map(r => `
     <tr>
@@ -2108,7 +2122,7 @@ function audExportarExcel(registros, desde, hasta) {
   <table style="margin-bottom:18px;border:none">
     <tr>
       <td style="border:none;vertical-align:middle;padding-right:14px">
-        <img src="${LOGO_B64}" style="height:70px;width:auto" alt="Logo"/>
+        <img src="${LOGO_URL}" style="height:70px;width:auto" alt="Logo"/>
       </td>
       <td style="border:none;vertical-align:middle">
         <div style="font-size:17px;font-weight:700;color:#1a2744">Colegio Perito Moreno</div>
@@ -2206,9 +2220,13 @@ function audVerificarCursosDocente() {
 }
 
 function audRegistrarTodos() {
-  const docente = document.getElementById('aud-sel-docente').value;
-  const fecha   = document.getElementById('aud-fecha-doc').value;
-  const motivo  = document.getElementById('aud-motivo-doc').value;
+  const docente      = document.getElementById('aud-sel-docente').value;
+  const fecha        = document.getElementById('aud-fecha-doc').value;
+  const motivo       = document.getElementById('aud-motivo-doc').value;
+  const desde        = document.getElementById('aud-doc-desde').value;
+  const hasta        = document.getElementById('aud-doc-hasta').value;
+  const movimiento   = document.getElementById('aud-doc-movimiento').checked;
+  const reemplazante = document.getElementById('aud-doc-reemplazante').value.trim();
   const fb      = document.getElementById('aud-feedback-doc');
   const mostrarFb = function(msg, ok) {
     fb.textContent = msg; fb.style.display = 'block';
@@ -2220,10 +2238,16 @@ function audRegistrarTodos() {
   const btn = document.getElementById('btn-registrar-todos');
   btn.disabled = true; btn.textContent = 'Registrando…';
   const p = fecha.split('-');
-  const fechaBack = p[2]+'/'+p[1]+'/'+p[0];
+  const fechaBack  = p[2]+'/'+p[1]+'/'+p[0];
+  const desdeBack  = desde ? desde.split('-').reverse().join('/') : '';
+  const hastaBack  = hasta ? hasta.split('-').reverse().join('/') : '';
   callWebApp({
     accion: 'registrarAusenciaDocenteTodos',
-    datos: JSON.stringify({ fecha: fechaBack, docente: docente, motivo: motivo, usuarioNombre: currentNombre, usuarioRol: currentRole })
+    datos: JSON.stringify({
+      fecha: fechaBack, docente, motivo,
+      desde: desdeBack, hasta: hastaBack, movimiento, reemplazante,
+      usuarioNombre: currentNombre, usuarioRol: currentRole
+    })
   }).then(function(res) {
     btn.disabled = false; btn.textContent = 'Registrar todos';
     if (res && res.ok) {
@@ -2231,6 +2255,10 @@ function audRegistrarTodos() {
         ? '✅ ' + res.registrados + ' ausencia' + (res.registrados>1?'s':'') + ' registrada' + (res.registrados>1?'s':'') + ': ' + res.detalles.join(', ') + (res.omitidos > 0 ? ' (' + res.omitidos + ' ya existían)' : '')
         : '⚠️ Todos los registros ya existían para esa fecha.';
       mostrarFb(msg, res.registrados > 0);
+      document.getElementById('aud-doc-desde').value = '';
+      document.getElementById('aud-doc-hasta').value = '';
+      document.getElementById('aud-doc-movimiento').checked = false;
+      document.getElementById('aud-doc-reemplazante').value = '';
       cargarHistorialAud();
     } else {
       mostrarFb('❌ ' + ((res && res.error) ? res.error : 'Error al registrar'), false);
@@ -3236,45 +3264,33 @@ function buildBottomNav(role) {
     items.push({ id: 'mis-notas',     icon: '📝', label: 'Mis Notas' });
     items.push({ id: 'mural',         icon: '📋', label: 'Mural' });
     items.push({ id: 'archivos',      icon: '📁', label: 'Mis Archivos' });
-  } else if (isPreceptor) {
-    items.push({ id: 'asistencia',         icon: '✅', label: 'Asistencia' });
-    items.push({ id: 'resumen-curso',      icon: '🏫', label: 'Resumen' });
-    items.push({ id: 'seguimiento-faltas', icon: '📋', label: 'Faltas' });
-    items.push({ id: 'banos',             icon: '🚽', label: 'Baños' });
-    items.push({ id: 'reportes',          icon: '📈', label: 'Reportes' });
-    items.push({ id: 'ausencias-docentes',icon: '🚫', label: 'Aus. Doc.' });
-    items.push({ id: 'informe-materias',  icon: '📊', label: 'x Materia' });
-    items.push({ id: 'mural',             icon: '📋', label: 'Mural' });
-    items.push({ id: 'comunicados',       icon: '📢', label: 'Comunicados' });
-    items.push({ id: 'mensajes',          icon: '💬', label: 'Mensajes' });
   } else {
     items.push({ id: 'asistencia',     icon: '✅', label: 'Asistencia' });
     items.push({ id: 'calificaciones', icon: '📝', label: 'Notas' });
     items.push({ id: 'mural',          icon: '📋', label: 'Mural' });
     items.push({ id: 'archivos',       icon: '📁', label: 'Archivos' });
-    if (isDocente)
+    if (isDocente || isPreceptor)
       items.push({ id: 'subir', icon: '☁️', label: 'Subir' });
     items.push({ id: 'comunicados', icon: '📢', label: 'Comunicados' });
-    if (isAdmin)
+    if (isAdmin || isPreceptor)
       items.push({ id: 'resumen-curso', icon: '🏫', label: 'Resumen' });
-    if (isAdmin)
+    if (isAdmin || isPreceptor)
       items.push({ id: 'banos', icon: '🚽', label: 'Baños' });
-    if (isAdmin)
+    if (isAdmin || isPreceptor)
       items.push({ id: 'seguimiento-faltas', icon: '📋', label: 'Faltas' });
-    if (isAdmin)
+    if (isAdmin || isPreceptor)
       items.push({ id: 'ausencias-docentes', icon: '🚫', label: 'Aus. Doc.' });
-    if (isAdmin)
+    if (isAdmin || isPreceptor)
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
-    if (isAdmin)
+    if (isAdmin || isPreceptor)
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
     if (!isAlumno)
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
-    if (isAdmin)
-      items.push({ id: 'reportes', icon: '📈', label: 'Reportes' });
     if (isAdmin) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
+      items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
       items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
       items.push({ id: 'agenda',     icon: '📓', label: 'Agenda' });
     }
