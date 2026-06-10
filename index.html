@@ -1713,6 +1713,22 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <option value="Otro">Otro</option>
           </select>
         </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
+          <input type="time" id="aud-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
+          <input type="time" id="aud-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px">
+          <input type="checkbox" id="aud-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
+          <label for="aud-movimiento" style="font-size:12px;color:var(--color-text-secondary);cursor:pointer;user-select:none">Movimiento</label>
+        </div>
+        <div id="aud-reemplazante-wrap">
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Reemplazante</label>
+          <input type="text" id="aud-reemplazante" placeholder="Apellido y nombre" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:180px"/>
+        </div>
         <button onclick="registrarAusenciaDocenteApp()" id="btn-registrar-aud"
           style="padding:7px 18px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
           Registrar
@@ -1760,6 +1776,25 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div id="aud-feedback-doc" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
     </div>
 
+    <!-- Panel reporte Excel -->
+    <div style="background:var(--color-background-primary);border:0.5px solid #1a9e5c;border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:#1a9e5c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📊 Reporte Excel</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
+          <input type="date" id="aud-rep-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"/>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
+          <input type="date" id="aud-rep-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"/>
+        </div>
+        <button onclick="audGenerarReporteExcel()" id="btn-aud-reporte"
+          style="padding:7px 18px;background:#1a2744;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
+          📥 Descargar Excel
+        </button>
+      </div>
+    </div>
+
     <!-- Filtros historial -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
       <span style="font-size:12px;color:var(--color-text-secondary)">Ver desde</span>
@@ -1796,6 +1831,8 @@ function inicializarAusenciasDocentes() {
   if (!document.getElementById('aud-fecha').value)       document.getElementById('aud-fecha').value = hoy;
   if (!document.getElementById('aud-filtro-desde').value) document.getElementById('aud-filtro-desde').value = hoy;
   if (!document.getElementById('aud-filtro-hasta').value) document.getElementById('aud-filtro-hasta').value = hoy;
+  if (!document.getElementById('aud-rep-desde').value)    document.getElementById('aud-rep-desde').value = hoy;
+  if (!document.getElementById('aud-rep-hasta').value)    document.getElementById('aud-rep-hasta').value = hoy;
   cargarHistorialAud();
 }
 
@@ -1819,11 +1856,14 @@ function cargarDocentesCursoAud() {
 }
 
 function registrarAusenciaDocenteApp() {
-  const fecha  = document.getElementById('aud-fecha').value;
-  const curso  = document.getElementById('aud-curso').value;
-  const dmVal  = document.getElementById('aud-docente-materia').value;
-  const motivo = document.getElementById('aud-motivo').value;
-  const fb     = document.getElementById('aud-feedback');
+  const fecha       = document.getElementById('aud-fecha').value;
+  const curso       = document.getElementById('aud-curso').value;
+  const dmVal       = document.getElementById('aud-docente-materia').value;
+  const motivo      = document.getElementById('aud-motivo').value;
+  const desde       = document.getElementById('aud-desde').value;
+  const hasta       = document.getElementById('aud-hasta').value;
+  const movimiento  = document.getElementById('aud-movimiento').checked;
+  const reemplazante= document.getElementById('aud-reemplazante').value.trim();
 
   if (!fecha || !curso || !dmVal) {
     audFeedback('⚠️ Completá fecha, curso y docente/materia.', false);
@@ -1840,6 +1880,7 @@ function registrarAusenciaDocenteApp() {
     accion: 'registrarAusenciaDocente',
     datos: JSON.stringify({
       fecha: fechaBack, docente, curso, materia, motivo,
+      desde, hasta, movimiento, reemplazante,
       usuarioNombre: currentNombre,
       usuarioRol:    currentRole
     })
@@ -1848,6 +1889,10 @@ function registrarAusenciaDocenteApp() {
     if (res.ok) {
       audFeedback('✅ Registrado: ' + docente + ' – ' + materia + ' el ' + fechaBack, true);
       document.getElementById('aud-docente-materia').value = '';
+      document.getElementById('aud-desde').value = '';
+      document.getElementById('aud-hasta').value = '';
+      document.getElementById('aud-movimiento').checked = false;
+      document.getElementById('aud-reemplazante').value = '';
       cargarHistorialAud();
     } else {
       audFeedback('⚠️ ' + (res.error || 'Error al registrar'), false);
@@ -1879,10 +1924,98 @@ function cargarHistorialAud() {
           <div style="flex:1;min-width:0">
             <div style="font-weight:600;font-size:13px;color:var(--color-text-primary)">${r.materia}</div>
             <div style="font-size:12px;color:var(--color-text-secondary);margin-top:2px">${r.docente}</div>
-            <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">${r.motivo} · Reg. por ${r.registradoPor}</div>
+            <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:2px">
+              ${r.motivo}
+              ${r.desde||r.hasta ? ' · ' + (r.desde||'') + (r.hasta?' – '+r.hasta:'') : ''}
+              ${r.movimiento==='Sí' ? ' · <b style="color:#1a9e5c">Movimiento</b>' : ''}
+              ${r.reemplazante ? ' · Reemplazante: ' + r.reemplazante : ''}
+              · Reg. por ${r.registradoPor}
+            </div>
           </div>
         </div>`).join('');
     }).catch(() => { lista.innerHTML = '<p style="color:#1a9e5c;font-size:13px;padding:20px">Error de conexión.</p>'; });
+}
+
+// ── Reporte Excel de ausencias docentes ──────────────────────────────
+function audGenerarReporteExcel() {
+  const desde = document.getElementById('aud-rep-desde').value;
+  const hasta = document.getElementById('aud-rep-hasta').value;
+  if (!desde || !hasta) { alert('Seleccioná fecha desde y hasta.'); return; }
+  const btn = document.getElementById('btn-aud-reporte');
+  btn.disabled = true; btn.textContent = 'Generando…';
+  const toBack = v => v.split('-').reverse().join('/');
+  callWebApp({ accion: 'generarReporteAusenciasDocentes', fechaDesde: toBack(desde), fechaHasta: toBack(hasta) })
+    .then(res => {
+      btn.disabled = false; btn.textContent = '📥 Descargar Excel';
+      if (!res.ok) { alert('Error: ' + (res.error || 'No se pudo generar')); return; }
+      if (!res.registros || !res.registros.length) { alert('No hay registros en ese período.'); return; }
+      audExportarExcel(res.registros, toBack(desde), toBack(hasta));
+    }).catch(() => { btn.disabled=false; btn.textContent='📥 Descargar Excel'; alert('Error de conexión'); });
+}
+
+function audExportarExcel(registros, desde, hasta) {
+  // Construimos un HTML que Excel puede abrir con logo y formato
+  const LOGO_B64 = PM_LOGO; // data:image/png;base64,...
+
+  const filas = registros.map(r => `
+    <tr>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${r.fecha}</td>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${r.apellidoNombre}</td>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${r.desde}</td>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${r.hasta}</td>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px;text-align:center">${r.movimiento}</td>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${r.reemplazante}</td>
+      <td style="border:1px solid #ccc;padding:5px 8px;font-size:11px">${r.motivo}</td>
+    </tr>`).join('');
+
+  const html = `
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8">
+<style>
+  body { font-family: Calibri, Arial, sans-serif; }
+  table { border-collapse: collapse; width: 100%; }
+  th { background:#1a2744; color:#fff; font-size:11px; padding:6px 8px; border:1px solid #888; text-align:left; }
+</style>
+</head>
+<body>
+  <table style="margin-bottom:18px;border:none">
+    <tr>
+      <td style="border:none;vertical-align:middle;padding-right:14px">
+        <img src="${LOGO_B64}" style="height:70px;width:auto" alt="Logo"/>
+      </td>
+      <td style="border:none;vertical-align:middle">
+        <div style="font-size:17px;font-weight:700;color:#1a2744">Colegio Perito Moreno</div>
+        <div style="font-size:10px;color:#555">CUE 0611877-00 · Tomás Valle 5662, González Catán</div>
+        <div style="font-size:12px;color:#333;margin-top:4px">Reporte de Ausencias Docentes · Período: ${desde} al ${hasta}</div>
+        <div style="font-size:10px;color:#888">Total registros: ${registros.length}</div>
+      </td>
+    </tr>
+  </table>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Apellido y Nombre</th>
+        <th>Desde</th>
+        <th>Hasta</th>
+        <th>Movimiento</th>
+        <th>Reemplazante</th>
+        <th>Motivo</th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+  </table>
+</body></html>`;
+
+  const blob = new Blob(['\uFEFF' + html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'Ausencias_Docentes_' + desde.replace(/\//g,'-') + '_al_' + hasta.replace(/\//g,'-') + '.xls';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function audFeedback(msg, ok) {
