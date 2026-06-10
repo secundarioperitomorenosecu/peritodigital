@@ -3257,9 +3257,10 @@ function buildBottomNav(role) {
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'reportes', icon: '📈', label: 'Reportes' });
     if (isAdmin) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
-      items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
       items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
       items.push({ id: 'agenda',     icon: '📓', label: 'Agenda' });
     }
