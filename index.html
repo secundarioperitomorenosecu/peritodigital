@@ -1415,6 +1415,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
                 <option value="familiar">👨‍👩‍👧 Situación familiar</option>
                 <option value="salud">🏥 Salud / Discapacidad</option>
                 <option value="conducta">⚠️ Conducta</option>
+                <option value="cud">♿ CUD / Terapia</option>
                 <option value="otro">📌 Otro</option>
               </select>
             </div>
@@ -1446,6 +1447,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <option value="familiar">Familiar</option>
             <option value="salud">Salud</option>
             <option value="conducta">Conducta</option>
+            <option value="cud">CUD / Terapia</option>
             <option value="otro">Otro</option>
           </select>
           <select id="eoe-filtro-anio" onchange="cargarLegajosEOE()" style="padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
@@ -1835,8 +1837,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
   <!-- Modal edición ausencia -->
   <div id="aud-edit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:9999">
     <div style="display:flex;width:100%;height:100%;align-items:center;justify-content:center">
-      <div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);padding:20px 22px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.28)">
-        <div style="font-size:13px;font-weight:700;color:var(--color-text-primary);margin-bottom:14px">✏️ Editar Ausencia</div>
+      <div style="background:#ffffff;border-radius:12px;padding:20px 22px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,0.28)">
+        <div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:14px">✏️ Editar Ausencia</div>
         <input type="hidden" id="aud-edit-id"/>
         <input type="hidden" id="aud-edit-fecha"/>
         <input type="hidden" id="aud-edit-docente"/>
@@ -1844,8 +1846,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <input type="hidden" id="aud-edit-materia"/>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div>
-            <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Motivo</label>
-            <select id="aud-edit-motivo" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+            <label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Motivo</label>
+            <select id="aud-edit-motivo" style="font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#1a1a1a;font-family:inherit;width:100%">
               <option value="Sin aviso">Sin aviso</option>
               <option value="Enfermedad">Enfermedad</option>
               <option value="Licencia médica">Licencia médica</option>
@@ -1857,30 +1859,30 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           </div>
           <div style="display:flex;gap:10px">
             <div style="flex:1">
-              <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Desde</label>
-              <input type="date" id="aud-edit-desde" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:100%"/>
+              <label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Desde</label>
+              <input type="date" id="aud-edit-desde" style="font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#1a1a1a;width:100%"/>
             </div>
             <div style="flex:1">
-              <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Hasta</label>
-              <input type="date" id="aud-edit-hasta" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);width:100%"/>
+              <label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Hasta</label>
+              <input type="date" id="aud-edit-hasta" style="font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#1a1a1a;width:100%"/>
             </div>
           </div>
           <div style="display:flex;align-items:center;gap:6px">
             <input type="checkbox" id="aud-edit-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
-            <label for="aud-edit-movimiento" style="font-size:12px;color:var(--color-text-secondary);cursor:pointer">Movimiento</label>
+            <label for="aud-edit-movimiento" style="font-size:12px;color:#555;cursor:pointer">Movimiento</label>
           </div>
           <div>
-            <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:3px">Reemplazante</label>
-            <input type="text" id="aud-edit-reemplazante" placeholder="Apellido y nombre" style="font-size:13px;padding:6px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%"/>
+            <label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Reemplazante</label>
+            <input type="text" id="aud-edit-reemplazante" placeholder="Apellido y nombre" style="font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid #ccc;background:#fff;color:#1a1a1a;font-family:inherit;width:100%"/>
           </div>
-          <div id="aud-edit-feedback" style="display:none;font-size:12px;padding:6px 10px;border-radius:var(--border-radius-md)"></div>
+          <div id="aud-edit-feedback" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px"></div>
           <div style="display:flex;gap:10px;margin-top:4px">
             <button onclick="audGuardarEdicion()" id="btn-aud-edit-guardar"
-              style="flex:1;padding:8px;background:#1a2744;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
+              style="flex:1;padding:8px;background:#1a2744;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">
               Guardar
             </button>
             <button onclick="audCerrarModal()"
-              style="flex:1;padding:8px;background:var(--color-border-secondary);color:var(--color-text-primary);border:none;border-radius:var(--border-radius-md);font-size:13px;cursor:pointer;font-family:inherit">
+              style="flex:1;padding:8px;background:#e5e7eb;color:#1a1a1a;border:none;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit">
               Cancelar
             </button>
           </div>
@@ -2121,9 +2123,6 @@ function audExportarExcel(registros, desde, hasta) {
 <body>
   <table style="margin-bottom:18px;border:none">
     <tr>
-      <td style="border:none;vertical-align:middle;padding-right:14px">
-        <img src="${LOGO_URL}" style="height:70px;width:auto" alt="Logo"/>
-      </td>
       <td style="border:none;vertical-align:middle">
         <div style="font-size:17px;font-weight:700;color:#1a2744">Colegio Perito Moreno</div>
         <div style="font-size:10px;color:#555">CUE 0611877-00 · Tomás Valle 5662, González Catán</div>
@@ -2132,8 +2131,6 @@ function audExportarExcel(registros, desde, hasta) {
       </td>
     </tr>
   </table>
-  <table>
-    <thead>
       <tr>
         <th>Fecha</th>
         <th>Apellido y Nombre</th>
@@ -3606,7 +3603,7 @@ function cargarLegajosEOE() {
       lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">📋 Sin legajos registrados</div>';
       return;
     }
-    const TIPO_LABEL = { convivencia:'🤝 Convivencia', academica:'📚 Académica', familiar:'👨‍👩‍👧 Familiar', salud:'🏥 Salud', conducta:'⚠️ Conducta', otro:'📌 Otro' };
+    const TIPO_LABEL = { convivencia:'🤝 Convivencia', academica:'📚 Académica', familiar:'👨‍👩‍👧 Familiar', salud:'🏥 Salud', conducta:'⚠️ Conducta', cud:'♿ CUD/Terapia', otro:'📌 Otro' };
     const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
     const TIPO_BORDER = { convivencia:'#90caf9', academica:'#ffcc80', familiar:'#ce93d8', salud:'#a5d6a7', conducta:'#ef9a9a', otro:'#e0e0e0' };
 
@@ -3669,7 +3666,7 @@ function exportarHistorialEOE(legajosStr, alumno, curso) {
   try { legajos = JSON.parse(legajosStr); } catch(e) { showToast('Error al generar PDF','❌'); return; }
   legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
 
-  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', otro:'Otro' };
+  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', cud:'CUD / Terapia', otro:'Otro' };
   const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
   const TIPO_BORDER = { convivencia:'#90caf9', academica:'#ffcc80', familiar:'#ce93d8', salud:'#a5d6a7', conducta:'#ef9a9a', otro:'#e0e0e0' };
 
@@ -3732,7 +3729,7 @@ function exportarHistorialEOE(legajosStr, alumno, curso) {
 }
 
 function exportarPDFLegajoEOE(l) {
-  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', otro:'Otro' };
+  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', cud:'CUD / Terapia', otro:'Otro' };
   const fechaStr = l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
   <style>
