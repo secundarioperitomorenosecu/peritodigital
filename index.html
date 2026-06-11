@@ -1808,7 +1808,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
         <button onclick="audGenerarReporteExcel()" id="btn-aud-reporte"
           style="padding:7px 18px;background:#1a2744;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">
-          📥 Descargar CSV
+          📥 Descargar Excel
         </button>
       </div>
     </div>
@@ -2098,31 +2098,64 @@ function audGenerarReporteExcel() {
 }
 
 function audExportarExcel(registros, desde, hasta) {
-  // CSV con BOM para que Excel lo abra bien y respete columnas
-  const esc = v => {
-    const s = String(v || '');
-    return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g,'""') + '"' : s;
+  const esc = v => String(v || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const cel = (v, bold, bg) => {
+    const style = (bold || bg) ? ` ss:StyleID="${bold ? (bg ? 'hdr' : 'bold') : 'normal'}"` : '';
+    return `<Cell${style}><Data ss:Type="String">${esc(v)}</Data></Cell>`;
   };
 
-  const encabezado = [
-    'Colegio Perito Moreno',
-    'CUE 0611877-00 · Tomás Valle 5662 · González Catán',
-    'Reporte de Ausencias Docentes · Período: ' + desde + ' al ' + hasta,
-    'Total registros: ' + registros.length,
-    '',
-    ['Fecha','Apellido y Nombre','Desde','Hasta','Movimiento','Reemplazante','Motivo'].map(esc).join(',')
-  ].join('\n');
+  const filas = registros.map(r => `
+    <Row>
+      ${cel(r.fecha)}${cel(r.apellidoNombre)}${cel(r.desde)}${cel(r.hasta)}${cel(r.movimiento)}${cel(r.reemplazante)}${cel(r.motivo)}
+    </Row>`).join('');
 
-  const filas = registros.map(r =>
-    [r.fecha, r.apellidoNombre, r.desde, r.hasta, r.movimiento, r.reemplazante, r.motivo].map(esc).join(',')
-  ).join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="hdr">
+   <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#1a2744" ss:Pattern="Solid"/>
+   <Alignment ss:Horizontal="Left"/>
+  </Style>
+  <Style ss:ID="bold">
+   <Font ss:Bold="1"/>
+  </Style>
+  <Style ss:ID="title">
+   <Font ss:Bold="1" ss:Size="14" ss:Color="#1a2744"/>
+  </Style>
+  <Style ss:ID="normal">
+   <Alignment ss:Horizontal="Left"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Ausencias Docentes">
+  <Table>
+   <Column ss:Width="90"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="90"/>
+   <Column ss:Width="90"/>
+   <Column ss:Width="90"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="120"/>
+   <Row><Cell ss:StyleID="title"><Data ss:Type="String">Colegio Perito Moreno</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">CUE 0611877-00 · Tomás Valle 5662, González Catán</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">Reporte de Ausencias Docentes · Período: ${desde} al ${hasta}</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">Total registros: ${registros.length}</Data></Cell></Row>
+   <Row/>
+   <Row>
+    ${cel('Fecha',true,true)}${cel('Apellido y Nombre',true,true)}${cel('Desde',true,true)}${cel('Hasta',true,true)}${cel('Movimiento',true,true)}${cel('Reemplazante',true,true)}${cel('Motivo',true,true)}
+   </Row>
+   ${filas}
+  </Table>
+ </Worksheet>
+</Workbook>`;
 
-  const csv = '\uFEFF' + encabezado + '\n' + filas;
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = 'Ausencias_Docentes_' + desde.replace(/\//g,'-') + '_al_' + hasta.replace(/\//g,'-') + '.csv';
+  a.download = 'Ausencias_Docentes_' + desde.replace(/\//g,'-') + '_al_' + hasta.replace(/\//g,'-') + '.xls';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
