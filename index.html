@@ -2155,7 +2155,7 @@ function audExportarExcel(registros, desde, hasta) {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = 'Ausencias_Docentes_' + desde.replace(/\//g,'-') + '_al_' + hasta.replace(/\//g,'-') + '.xls';
+  a.download = 'Ausencias_Docentes_' + desde.replace(/\//g,'-') + '_al_' + hasta.replace(/\//g,'-') + '.xml';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
