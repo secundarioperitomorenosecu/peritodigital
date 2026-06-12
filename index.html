@@ -3528,12 +3528,12 @@ function showSection(id,el){
   const canUpload = (currentRole === 'admin' || currentRole === 'docente' || currentRole === 'preceptor' || currentRole === 'director' || currentRole === 'vicedirector' || currentRole === 'secretary' || currentRole === 'legal');
   if(id === 'banos' || id === 'seguimiento-faltas') {
     if(btnSubir) btnSubir.style.display = 'none';
-    if(topbar && id === 'banos') topbar.style.display = 'none';
-    if(mainContent && id === 'banos') mainContent.style.padding = '12px';
+    if(topbar) { topbar.style.display = 'none'; topbar.style.marginBottom = '0'; }
+    if(mainContent) mainContent.style.padding = '12px';
     if(id === 'banos') inicializarBanos();
   } else {
     if(btnSubir) btnSubir.style.display = canUpload ? '' : 'none';
-    if(topbar) topbar.style.display = '';
+    if(topbar) { topbar.style.display = ''; topbar.style.marginBottom = ''; }
     if(mainContent) mainContent.style.padding = '';
   }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
