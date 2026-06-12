@@ -138,6 +138,8 @@ body{font-family:'Outfit',sans-serif;background:var(--fondo);color:var(--texto);
 .stat-change{font-size:11px;margin-top:7px}
 .stat-change.up{color:#4CAF50}.stat-change.down{color:var(--rojo)}
 .section{display:none}.section.active{display:block}
+.main-content.modo-banos{padding-top:0 !important;padding:12px !important}
+.main-content.modo-banos #main-topbar{display:none !important;margin:0 !important;height:0 !important;overflow:hidden !important}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
 .panel{background:#ffffff;border:1px solid #e8d5c4;border-radius:15px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
@@ -3528,13 +3530,13 @@ function showSection(id,el){
   const canUpload = (currentRole === 'admin' || currentRole === 'docente' || currentRole === 'preceptor' || currentRole === 'director' || currentRole === 'vicedirector' || currentRole === 'secretary' || currentRole === 'legal');
   if(id === 'banos' || id === 'seguimiento-faltas') {
     if(btnSubir) btnSubir.style.display = 'none';
-    if(topbar) { topbar.style.display = 'none'; topbar.style.marginBottom = '0'; }
-    if(mainContent) mainContent.style.padding = '12px';
+    if(topbar) { topbar.style.display = 'none'; topbar.style.marginBottom = '0'; topbar.style.height = '0'; topbar.style.overflow = 'hidden'; }
+    if(mainContent) { mainContent.classList.add('modo-banos'); }
     if(id === 'banos') inicializarBanos();
   } else {
     if(btnSubir) btnSubir.style.display = canUpload ? '' : 'none';
-    if(topbar) { topbar.style.display = ''; topbar.style.marginBottom = ''; }
-    if(mainContent) mainContent.style.padding = '';
+    if(topbar) { topbar.style.display = ''; topbar.style.marginBottom = ''; topbar.style.height = ''; topbar.style.overflow = ''; }
+    if(mainContent) { mainContent.style.padding = ''; mainContent.classList.remove('modo-banos'); }
   }
   if(id === 'asistencia') cargarAsistenciaDesdeSheets();
   if(id === 'mi-asistencia') cargarMiAsistencia();
