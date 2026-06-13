@@ -1489,52 +1489,6 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando legajos...</div>
       </div>
 
-      <!-- ═══════════════════════════════════════════════════════════
-           PANEL CERTIFICADOS / ADJUNTOS — Supabase Storage
-      ═══════════════════════════════════════════════════════════ -->
-      <div class="panel" style="margin-top:22px" id="eoe-certificados-panel">
-        <div class="panel-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <h3>📎 Certificados y Documentos del Alumno</h3>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <select id="cert-filtro-curso" onchange="certCambiarCurso()" style="padding:7px 12px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:13px">
-              <option value="">— Seleccioná curso —</option>
-              <option value="1A">1°A</option><option value="1B">1°B</option>
-              <option value="2A">2°A</option><option value="2B">2°B</option>
-              <option value="3A">3°A</option><option value="3B">3°B</option>
-              <option value="4A">4°A</option><option value="4B">4°B</option>
-              <option value="5A">5°A</option><option value="5B">5°B</option>
-              <option value="6A">6°A</option><option value="6B">6°B</option>
-            </select>
-            <select id="cert-filtro-alumno" onchange="certCambiarAlumno()" style="padding:7px 12px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:13px;min-width:200px">
-              <option value="">— Primero seleccioná curso —</option>
-            </select>
-          </div>
-        </div>
-        <div class="panel-body">
-          <!-- Área de carga -->
-          <div id="cert-upload-area" style="display:none">
-            <div class="cert-upload-zone" id="cert-drop-zone"
-              onclick="document.getElementById('cert-file-input').click()"
-              ondragover="certDragOver(event)" ondragleave="certDragLeave(event)" ondrop="certDrop(event)">
-              <div class="up-icon">📎</div>
-              <div class="up-text">Hacé click o arrastrá el archivo aquí</div>
-              <div class="up-sub">Imágenes (JPG, PNG), PDF — máx. 10MB</div>
-            </div>
-            <input type="file" id="cert-file-input" accept="image/*,.pdf" style="display:none" onchange="certSubirArchivo(this.files[0])">
-            <div class="cert-progress" id="cert-progress">
-              <div class="cert-progress-bar" id="cert-progress-bar"></div>
-            </div>
-            <div id="cert-upload-status" style="font-size:12px;color:#888;margin-top:6px;min-height:18px"></div>
-          </div>
-
-          <!-- Lista de archivos del alumno -->
-          <div id="cert-lista">
-            <div style="text-align:center;padding:24px;color:#bbb;font-size:13px">
-              🔒 Seleccioná un alumno para ver sus documentos
-            </div>
-          </div>
-        </div>
-      </div>
     </div><!-- fin sec-eoe -->
 
   <div id="sec-banos" class="section">
@@ -3668,21 +3622,20 @@ function cargarLegajosEOE() {
   const lista = document.getElementById('eoe-lista');
   if (!lista) return;
 
-  // Inicializar selector de año si está vacío
   const selAnioEOE = document.getElementById('eoe-filtro-anio');
   if (selAnioEOE && selAnioEOE.options.length <= 1) {
     const anioActual = new Date().getFullYear();
     for (let a = anioActual; a >= anioActual - 5; a--) {
       const opt = document.createElement('option');
-      opt.value = a;
-      opt.textContent = a;
+      opt.value = a; opt.textContent = a;
       selAnioEOE.appendChild(opt);
     }
   }
   const anio = selAnioEOE?.value || '';
 
   lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando...</div>';
-  callWebApp({ accion:'obtenerLegajosEOE', curso, tipo, anio }).then(res => {
+
+  callWebApp({ accion:'obtenerLegajosEOE', curso, tipo, anio }).then(async res => {
     if (!res?.ok || !res.legajos?.length) {
       lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">📋 Sin legajos registrados</div>';
       return;
@@ -3691,75 +3644,168 @@ function cargarLegajosEOE() {
     const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
     const TIPO_BORDER = { convivencia:'#90caf9', academica:'#ffcc80', familiar:'#ce93d8', salud:'#a5d6a7', conducta:'#ef9a9a', otro:'#e0e0e0' };
 
-    // Agrupar por alumno (clave: alumno+curso)
+    // Agrupar por alumno
     const porAlumno = {};
     res.legajos.forEach(l => {
       const key = (l.alumno + '|' + l.curso).toUpperCase();
       if (!porAlumno[key]) porAlumno[key] = { alumno: l.alumno, curso: l.curso, legajos: [] };
       porAlumno[key].legajos.push(l);
     });
-
-    // Ordenar legajos de cada alumno por fecha ascendente
-    Object.values(porAlumno).forEach(g => {
-      g.legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
-    });
-
-    // Ordenar alumnos alfabéticamente
+    Object.values(porAlumno).forEach(g => g.legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||'')));
     const grupos = Object.values(porAlumno).sort((a,b) => a.alumno.localeCompare(b.alumno));
 
-    lista.innerHTML = grupos.map(g => {
-      const n = g.legajos.length;
-      const legajosHTML = g.legajos.map((l, idx) => `
-        <div style="position:relative;padding:12px 12px 12px 18px;background:#fff;border-radius:8px;border:1px solid #e8d5c4;margin-bottom:8px">
-          <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${TIPO_BORDER[l.tipo]||'#e0e0e0'};border-radius:4px 0 0 4px"></div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-            <span style="font-size:11px;font-weight:700;color:#888">#${idx+1}</span>
-            <span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'};color:#555">${TIPO_LABEL[l.tipo]||l.tipo}</span>
-            <span style="font-size:11px;color:#aaa;margin-left:auto">${l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</span>
-          </div>
-          <div style="font-size:13px;color:#333;line-height:1.6;white-space:pre-wrap">${l.descripcion}</div>
-          <div style="margin-top:6px;font-size:10px;color:#bbb">Registrado por: ${l.autorNombre||l.autor||'—'}</div>
-        </div>`).join('');
+    // Cargar archivos de Supabase para todos los alumnos en paralelo
+    const sanitize = s => s.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚüÜñÑ _-]/g,'').trim();
+    const archivosMap = {};
+    await Promise.all(grupos.map(async g => {
+      const prefix = `${sanitize(g.curso)}/${sanitize(g.alumno)}/`;
+      try {
+        const { data } = await getSupa().storage.from(SUPA_BUCKET).list(prefix, { limit:100, sortBy:{column:'created_at',order:'asc'} });
+        archivosMap[g.alumno.toUpperCase()] = (data||[]).map(f => ({
+          nombre: f.name,
+          nombreLimpio: f.name.replace(/^\d+_/,''),
+          fecha: f.created_at ? f.created_at.slice(0,10) : '',
+          path: prefix + f.name,
+          _tipo: 'adjunto'
+        }));
+      } catch(e) { archivosMap[g.alumno.toUpperCase()] = []; }
+    }));
 
-      // Serializar legajos para el botón PDF (escape seguro)
+    lista.innerHTML = grupos.map(g => {
+      const archivos = archivosMap[g.alumno.toUpperCase()] || [];
+      const totalAdj = archivos.length;
+      const n = g.legajos.length;
+
+      // Línea de tiempo unificada ordenada por fecha
+      const items = [
+        ...g.legajos.map(l => ({ ...l, _tipo:'legajo' })),
+        ...archivos
+      ].sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+
+      let legajoIdx = 0;
+      const timelineHTML = items.map(item => {
+        if (item._tipo === 'legajo') {
+          legajoIdx++;
+          const border = TIPO_BORDER[item.tipo]||'#e0e0e0';
+          const bg     = TIPO_COLOR[item.tipo]||'#fafafa';
+          const label  = TIPO_LABEL[item.tipo]||item.tipo;
+          const fechaStr = item.fecha ? new Date(item.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+          return `<div style="position:relative;padding:12px 12px 12px 18px;background:#fff;border-radius:8px;border:1px solid #e8d5c4;margin-bottom:8px">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${border};border-radius:4px 0 0 4px"></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+              <span style="font-size:11px;font-weight:700;color:#888">#${legajoIdx}</span>
+              <span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;background:${bg};color:#555">${label}</span>
+              <span style="font-size:11px;color:#aaa;margin-left:auto">${fechaStr}</span>
+            </div>
+            <div style="font-size:13px;color:#333;line-height:1.6;white-space:pre-wrap">${item.descripcion}</div>
+            <div style="margin-top:6px;font-size:10px;color:#bbb">Registrado por: ${item.autorNombre||item.autor||'—'}</div>
+          </div>`;
+        } else {
+          const ext = (item.nombre||'').split('.').pop().toLowerCase();
+          const icon = ['jpg','jpeg','png','webp'].includes(ext) ? '🖼️' : '📄';
+          const fechaStr = item.fecha ? new Date(item.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+          const pathEnc = item.path.replace(/\\/g,'__SLASH__');
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0faf4;border-radius:8px;border:1px solid #c8e6d4;margin-bottom:8px" data-path="${item.path}">
+            <span style="font-size:20px">${icon}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.nombreLimpio}</div>
+              <div style="font-size:11px;color:#888;margin-top:2px">📎 Documento adjunto · ${fechaStr}</div>
+            </div>
+            <button onclick="certVerArchivoPorPath(this)" data-path="${item.path}" style="padding:5px 12px;border-radius:7px;border:none;background:#1a9e5c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">👁 Ver</button>
+            <button onclick="certEliminarYRecargar(this)" data-path="${item.path}" data-nombre="${item.nombreLimpio}" style="padding:5px 10px;border-radius:7px;border:none;background:rgba(244,67,54,.1);color:#e53935;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🗑</button>
+          </div>`;
+        }
+      }).join('');
+
+      const alumnoEnc  = encodeURIComponent(g.alumno);
+      const cursoEnc   = encodeURIComponent(g.curso);
       const legajosJson = encodeURIComponent(JSON.stringify(g.legajos));
+      const archivosJson = encodeURIComponent(JSON.stringify(archivos));
 
       return `
       <div class="panel" style="margin-bottom:16px;border-left:4px solid #1a9e5c">
         <div class="panel-body">
-          <!-- Cabecera del alumno -->
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
             <div style="flex:1">
               <div style="font-weight:700;font-size:15px;color:#1a1a1a">${g.alumno}</div>
-              <div style="font-size:12px;color:#888;margin-top:2px">${g.curso} · <strong>${n} registro${n!==1?'s':''}</strong></div>
+              <div style="font-size:12px;color:#888;margin-top:2px">${g.curso} · <strong>${n} registro${n!==1?'s':''}</strong>${totalAdj ? ` · <span style="color:#1a9e5c;font-weight:600">📎 ${totalAdj} adjunto${totalAdj!==1?'s':''}</span>` : ''}</div>
             </div>
-            <button onclick="exportarHistorialEOE(decodeURIComponent('${legajosJson}'), '${g.alumno}', '${g.curso}')"
-              style="padding:6px 14px;font-size:12px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">
-              📋 Exportar historial completo
-            </button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <label style="padding:6px 13px;font-size:12px;border-radius:8px;border:1px solid #c8e6d4;background:#f0faf4;color:#1a9e5c;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:5px">
+                📎 Adjuntar
+                <input type="file" accept="image/*,.pdf" style="display:none" data-alumno="${g.alumno}" data-curso="${g.curso}" onchange="certSubirDesdeHistorial(this)">
+              </label>
+              <button onclick="exportarHistorialEOE(decodeURIComponent('${legajosJson}'),decodeURIComponent('${alumnoEnc}'),decodeURIComponent('${cursoEnc}'),decodeURIComponent('${archivosJson}'))"
+                style="padding:6px 13px;font-size:12px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">
+                📋 Exportar historial
+              </button>
+            </div>
           </div>
-          <!-- Legajos del alumno -->
-          <div>${legajosHTML}</div>
+          <div>${timelineHTML}</div>
         </div>
       </div>`;
     }).join('');
   });
 }
-function exportarHistorialEOE(legajosStr, alumno, curso) {
-  let legajos;
+
+// Subir adjunto desde la tarjeta del alumno
+async function certSubirDesdeHistorial(input) {
+  const archivo = input.files[0];
+  const alumno  = input.dataset.alumno;
+  const curso   = input.dataset.curso;
+  if (!archivo || !alumno || !curso) return;
+  if (archivo.size > 10*1024*1024) { showToast('El archivo supera los 10MB','❌'); return; }
+  const ext = archivo.name.split('.').pop().toLowerCase();
+  if (!['jpg','jpeg','png','webp','gif','pdf'].includes(ext)) { showToast('Formato no permitido','❌'); return; }
+  showToast('Subiendo archivo...','⏳');
+  const path = certNombreArchivo(alumno, curso, archivo);
+  try {
+    const { error } = await getSupa().storage.from(SUPA_BUCKET).upload(path, archivo, { cacheControl:'3600', upsert:false });
+    if (error) throw error;
+    showToast('Adjunto guardado ✓','✅');
+    input.value = '';
+    cargarLegajosEOE();
+  } catch(err) { showToast('Error: '+(err.message||err),'❌'); }
+}
+
+// Ver archivo por path (desde data attribute)
+async function certVerArchivoPorPath(btn) {
+  const path = btn.dataset.path;
+  if (!path) return;
+  try {
+    const { data, error } = await getSupa().storage.from(SUPA_BUCKET).createSignedUrl(path, 3600);
+    if (error) throw error;
+    window.open(data.signedUrl, '_blank');
+  } catch(err) { showToast('No se pudo abrir el archivo','❌'); }
+}
+
+// Eliminar archivo y recargar
+async function certEliminarYRecargar(btn) {
+  const path   = btn.dataset.path;
+  const nombre = btn.dataset.nombre;
+  if (!confirm(`¿Eliminar "${nombre}"?\nEsta acción no se puede deshacer.`)) return;
+  try {
+    const { error } = await getSupa().storage.from(SUPA_BUCKET).remove([path]);
+    if (error) throw error;
+    showToast('Archivo eliminado','🗑️');
+    cargarLegajosEOE();
+  } catch(err) { showToast('Error al eliminar','❌'); }
+}
+
+async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
+  let legajos, archivos;
   try { legajos = JSON.parse(legajosStr); } catch(e) { showToast('Error al generar PDF','❌'); return; }
+  try { archivos = archivosStr ? JSON.parse(archivosStr) : []; } catch(e) { archivos = []; }
   legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
 
-  const TIPO_LABEL = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', cud:'CUD / Terapia', otro:'Otro' };
-  const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
+  const TIPO_LABEL  = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', cud:'CUD / Terapia', otro:'Otro' };
+  const TIPO_COLOR  = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
   const TIPO_BORDER = { convivencia:'#90caf9', academica:'#ffcc80', familiar:'#ce93d8', salud:'#a5d6a7', conducta:'#ef9a9a', otro:'#e0e0e0' };
-
   const anio = legajos[0]?.anio || new Date().getFullYear();
 
   const registrosHTML = legajos.map((l, i) => {
     const fechaStr = l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
-    return `
-    <div style="margin-bottom:18px;padding:14px 14px 14px 18px;border:1px solid #e0e0e0;border-radius:8px;position:relative;page-break-inside:avoid">
+    return `<div style="margin-bottom:18px;padding:14px 14px 14px 18px;border:1px solid #e0e0e0;border-radius:8px;position:relative;page-break-inside:avoid">
       <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:${TIPO_BORDER[l.tipo]||'#e0e0e0'};border-radius:4px 0 0 4px"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">
         <div>
@@ -3773,11 +3819,50 @@ function exportarHistorialEOE(legajosStr, alumno, curso) {
     </div>`;
   }).join('');
 
+  // Generar URLs firmadas 7 días para cada adjunto
+  const SIETE_DIAS = 7 * 24 * 3600;
+  const archivosConUrl = await Promise.all(archivos.map(async (a, i) => {
+    try {
+      const { data, error } = await getSupa().storage.from(SUPA_BUCKET).createSignedUrl(a.path, SIETE_DIAS);
+      return { ...a, signedUrl: error ? null : data.signedUrl };
+    } catch(e) { return { ...a, signedUrl: null }; }
+  }));
+
+  // Fecha de expiración legible
+  const fechaExpira = new Date(Date.now() + SIETE_DIAS * 1000).toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Sección de adjuntos en el PDF
+  const adjuntosHTML = archivosConUrl.length ? `
+    <div style="margin-top:24px;page-break-inside:avoid">
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #eee">
+        Documentos adjuntos digitales (${archivosConUrl.length})
+      </div>
+      ${archivosConUrl.map((a,i) => {
+        const ext = (a.nombre||'').split('.').pop().toLowerCase();
+        const icon = ['jpg','jpeg','png','webp'].includes(ext) ? '🖼️' : '📄';
+        const fechaStr = a.fecha ? new Date(a.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+        const linkHTML = a.signedUrl
+          ? `<a href="${a.signedUrl}" style="display:inline-block;margin-top:4px;font-size:10px;color:#1a9e5c;font-weight:600;word-break:break-all;">⬇ Descargar documento</a>`
+          : `<span style="font-size:10px;color:#aaa">Link no disponible</span>`;
+        return `<div style="padding:10px 12px;background:#f0faf4;border-radius:6px;border:1px solid #c8e6d4;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span>${icon}</span>
+            <div style="font-size:11px;font-weight:600;color:#1a1a1a">${a.nombreLimpio}</div>
+            <span style="margin-left:auto;font-size:10px;font-weight:700;color:#1a9e5c">DOC ${i+1}</span>
+          </div>
+          <div style="font-size:10px;color:#888;margin-bottom:4px">Adjuntado el ${fechaStr}</div>
+          ${linkHTML}
+        </div>`;
+      }).join('')}
+      <div style="margin-top:8px;padding:7px 10px;background:#fff8e1;border-radius:5px;border:1px solid #ffe082">
+        <span style="font-size:9px;color:#f57f17;font-weight:600">⚠️ Los links de descarga expiran el ${fechaExpira}. Pasada esa fecha deberá generarse un nuevo informe para acceder a los documentos.</span>
+      </div>
+    </div>` : '';
+
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
   <style>
     body{font-family:Arial,sans-serif;margin:0;padding:28px;color:#1a1a1a;font-size:12px}
     ${PM_HEADER_CSS}
-    .badge{background:#1a9e5c;color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700}
     .alumno-box{background:#fdf8f3;border:1px solid #e8d5c4;border-radius:8px;padding:14px 18px;margin-bottom:20px;display:flex;gap:24px;flex-wrap:wrap}
     .alumno-field label{font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
     .alumno-field .val{font-size:14px;font-weight:700;color:#1a1a1a}
@@ -3790,24 +3875,23 @@ function exportarHistorialEOE(legajosStr, alumno, curso) {
     <div class="alumno-field"><label>Alumno/a</label><div class="val">${alumno}</div></div>
     <div class="alumno-field"><label>Curso</label><div class="val">${curso}</div></div>
     <div class="alumno-field"><label>Total de registros</label><div class="val">${legajos.length} situación${legajos.length!==1?'es':''}</div></div>
+    <div class="alumno-field"><label>Documentos adjuntos</label><div class="val">${archivos.length > 0 ? archivos.length + ' archivo' + (archivos.length!==1?'s':'') : 'Ninguno'}</div></div>
     <div class="alumno-field"><label>Período</label><div class="val">${legajos[0]?.fecha ? new Date(legajos[0].fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : '—'} – ${legajos[legajos.length-1]?.fecha ? new Date(legajos[legajos.length-1].fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</div></div>
   </div>
   <div class="section-title">Cronología de intervenciones</div>
   ${registrosHTML}
+  ${adjuntosHTML}
   <div class="footer">
     Documento generado el ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'})} · 
     Portal Perito Digital · Uso exclusivo institucional · No distribuir sin autorización
   </div>
-  </html>`;
+  </body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `Historial_EOE_${alumno.replace(/\s+/g,'_')}_${anio}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `Historial_EOE_${alumno.replace(/\s+/g,'_')}_${anio}.html`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   showToast('Historial exportado correctamente','✅');
 }
