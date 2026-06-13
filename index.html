@@ -1919,8 +1919,28 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
   </div>
 
+  <!-- Panel semáforo ausentismo -->
+  <div id="aud-semaforo-panel" style="padding:0 16px 14px;display:none">
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px 16px">
+      <div style="font-size:11px;font-weight:600;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">🚦 Semáforo de ausentismo docente — año en curso</div>
+      <div id="aud-semaforo-lista" style="display:flex;flex-direction:column;gap:8px">
+        <p style="font-size:12px;color:var(--color-text-tertiary);text-align:center;padding:10px 0">Hacé click en "Ver semáforo" para calcular.</p>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="font-size:11px;color:var(--color-text-tertiary)">Referencias:</span>
+        <span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#4caf50;vertical-align:middle;margin-right:4px"></span>1–2 ausencias</span>
+        <span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ff9800;vertical-align:middle;margin-right:4px"></span>3–5 ausencias</span>
+        <span style="font-size:11px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f44336;vertical-align:middle;margin-right:4px"></span>6 o más ausencias</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Lista historial -->
   <div style="padding:0 16px 16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <span style="font-size:12px;font-weight:600;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px">Historial</span>
+      <button onclick="audMostrarSemaforo()" style="font-size:12px;padding:5px 13px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);cursor:pointer;font-family:inherit;font-weight:500">🚦 Ver semáforo</button>
+    </div>
     <div id="aud-historial-lista">
       <p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:30px 0">Seleccioná un rango de fechas para ver los registros.</p>
     </div>
@@ -3686,19 +3706,30 @@ function cargarLegajosEOE() {
       const timelineHTML = items.map(item => {
         if (item._tipo === 'legajo') {
           legajoIdx++;
-          const border = TIPO_BORDER[item.tipo]||'#e0e0e0';
-          const bg     = TIPO_COLOR[item.tipo]||'#fafafa';
-          const label  = TIPO_LABEL[item.tipo]||item.tipo;
-          const fechaStr = item.fecha ? new Date(item.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-          return `<div style="position:relative;padding:12px 12px 12px 18px;background:#fff;border-radius:8px;border:1px solid #e8d5c4;margin-bottom:8px">
-            <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${border};border-radius:4px 0 0 4px"></div>
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
-              <span style="font-size:11px;font-weight:700;color:#888">#${legajoIdx}</span>
-              <span style="padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;background:${bg};color:#555">${label}</span>
-              <span style="font-size:11px;color:#aaa;margin-left:auto">${fechaStr}</span>
+          const bg    = TIPO_COLOR[item.tipo]||'#fafafa';
+          const label = TIPO_LABEL[item.tipo]||item.tipo;
+          const fechaObj = item.fecha ? new Date(item.fecha+'T12:00:00') : null;
+          const fechaStr = fechaObj ? fechaObj.toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : '—';
+          const mesAnio  = fechaObj ? fechaObj.toLocaleDateString('es-AR',{month:'long',year:'numeric'}) : '';
+          // Separador de mes (comparar con anterior)
+          const esPrimerDeEsteMes = (() => {
+            const mesKey = item.fecha ? item.fecha.slice(0,7) : '';
+            if (!mesKey) return false;
+            const counted = items.filter(x => (x.fecha||'').startsWith(mesKey) && items.indexOf(x) < items.indexOf(item));
+            return counted.length === 0;
+          })();
+          const separador = (esPrimerDeEsteMes && mesAnio) ? `<div style="display:flex;justify-content:center;margin:10px 0 8px"><span style="font-size:11px;color:#888;background:#f5f5f5;padding:3px 12px;border-radius:99px;border:0.5px solid #e0e0e0">${mesAnio}</span></div>` : '';
+          return separador + `<div style="display:flex;justify-content:flex-start;margin-bottom:8px;padding-left:4px">
+            <div style="max-width:90%;background:#fff;border:0.5px solid #e0e0e0;border-radius:0 12px 12px 12px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
+                <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${bg};color:#555;font-weight:600">${label}</span>
+              </div>
+              <div style="font-size:13px;color:#222;line-height:1.6;white-space:pre-wrap">${item.descripcion}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:8px;flex-wrap:wrap">
+                <span style="font-size:10px;color:#aaa">${item.autorNombre||item.autor||'—'}</span>
+                <span style="font-size:10px;color:#bbb">${fechaStr}</span>
+              </div>
             </div>
-            <div style="font-size:13px;color:#333;line-height:1.6;white-space:pre-wrap">${item.descripcion}</div>
-            <div style="margin-top:6px;font-size:10px;color:#bbb">Registrado por: ${item.autorNombre||item.autor||'—'}</div>
           </div>`;
         } else {
           const ext = (item.nombre||'').split('.').pop().toLowerCase();
@@ -9048,6 +9079,67 @@ function generarReporteImprimibleAgenda(eventos) {
 }
 
 // Cerrar modal al hacer click fuera — manejado dentro de crearSeccionAgenda()
+
+
+// ── SEMÁFORO DE AUSENTISMO DOCENTE ──────────────────────────────────
+// Nueva función — no toca ningún código existente
+function audMostrarSemaforo() {
+  const panel = document.getElementById('aud-semaforo-panel');
+  const lista  = document.getElementById('aud-semaforo-lista');
+  if (!panel || !lista) return;
+
+  const estaVisible = panel.style.display !== 'none';
+  if (estaVisible) { panel.style.display = 'none'; return; }
+
+  panel.style.display = 'block';
+  lista.innerHTML = '<p style="font-size:12px;color:var(--color-text-tertiary);text-align:center;padding:10px 0"><span class="cert-spinner"></span> Calculando...</p>';
+
+  // Consultar todo el año en curso
+  const anio = new Date().getFullYear();
+  const desde = `01/01/${anio}`;
+  const hasta  = `31/12/${anio}`;
+
+  callWebApp({ accion:'obtenerAusenciasDocentes', fechaDesde:desde, fechaHasta:hasta, curso:'' })
+    .then(res => {
+      if (!res.ok || !res.registros?.length) {
+        lista.innerHTML = '<p style="font-size:12px;color:var(--color-text-tertiary);text-align:center;padding:10px 0">Sin datos para el año en curso.</p>';
+        return;
+      }
+
+      // Contar ausencias por docente
+      const conteo = {};
+      res.registros.forEach(r => {
+        const key = r.docente;
+        if (!conteo[key]) conteo[key] = { nombre: r.docente, total: 0, motivos: {} };
+        conteo[key].total++;
+        conteo[key].motivos[r.motivo] = (conteo[key].motivos[r.motivo]||0) + 1;
+      });
+
+      // Ordenar por total descendente
+      const docentes = Object.values(conteo).sort((a,b) => b.total - a.total);
+
+      lista.innerHTML = docentes.map(d => {
+        const color = d.total >= 6 ? '#f44336' : d.total >= 3 ? '#ff9800' : '#4caf50';
+        const bgColor = d.total >= 6 ? '#ffebee' : d.total >= 3 ? '#fff3e0' : '#e8f5e9';
+        const nivel   = d.total >= 6 ? 'Alto' : d.total >= 3 ? 'Medio' : 'Normal';
+        const motivoTop = Object.entries(d.motivos).sort((a,b)=>b[1]-a[1])[0];
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:${bgColor};border-radius:8px;border:0.5px solid ${color}30">
+          <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${color};flex-shrink:0"></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nombre}</div>
+            <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Motivo más frecuente: ${motivoTop ? motivoTop[0] : '—'}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:16px;font-weight:500;color:${color}">${d.total}</div>
+            <div style="font-size:10px;color:${color};font-weight:500">${nivel}</div>
+          </div>
+        </div>`;
+      }).join('');
+    })
+    .catch(() => {
+      lista.innerHTML = '<p style="font-size:12px;color:#f44336;text-align:center;padding:10px 0">Error al cargar datos.</p>';
+    });
+}
 
 // ═══════════════════════════════════════════════════════════════════════
 //  SUPABASE — CERTIFICADOS EOE
