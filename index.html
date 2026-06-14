@@ -2393,12 +2393,26 @@ function audRegistrarTodos() {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
         <div>
           <h3 style="font-size:15px;font-weight:600;margin:0 0 2px 0">🏆 Mejores Promedios Generales</h3>
-          <p style="font-size:12px;color:var(--color-text-secondary);margin:0">Top 15 por curso y combinado · Excluye Robótica y Técnicas de Estudio · Solo materias con ambos cuatrimestres ≥ 7</p>
+          <p style="font-size:12px;color:var(--color-text-secondary);margin:0">Ranking por curso · Excluye Robótica y Técnicas de Estudio · Solo materias con ambos cuatrimestres ≥ 7</p>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button onclick="generarMejoresPromedios('5A','5B')" style="padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📊 5° A y 5° B</button>
-          <button onclick="generarMejoresPromedios('6A','6B')" style="padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📊 6° A y 6° B</button>
-          <button id="btn-imprimir-promedios" onclick="imprimirMejoresPromedios()" style="display:none;padding:7px 12px;border:1px solid #c8e6d4;border-radius:var(--border-radius-md);background:#e8f4ed;color:#1a9e5c;font-size:13px;cursor:pointer;font-family:inherit">🖨️ Imprimir</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;font-weight:600;color:#888;margin-right:2px">5° y 6°:</span>
+          <button onclick="generarMejoresPromedios('5A','5B')" style="padding:6px 12px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📊 5°A + 5°B</button>
+          <button onclick="generarMejoresPromedios('6A','6B')" style="padding:6px 12px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📊 6°A + 6°B</button>
+          <button onclick="generarPromediosCurso('5A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">5°A</button>
+          <button onclick="generarPromediosCurso('5B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">5°B</button>
+          <button onclick="generarPromediosCurso('6A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">6°A</button>
+          <button onclick="generarPromediosCurso('6B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">6°B</button>
+          <span style="font-size:11px;font-weight:600;color:#888;margin-left:4px;margin-right:2px">1° a 4°:</span>
+          <button onclick="generarPromediosCurso('1A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">1°A</button>
+          <button onclick="generarPromediosCurso('1B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">1°B</button>
+          <button onclick="generarPromediosCurso('2A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">2°A</button>
+          <button onclick="generarPromediosCurso('2B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">2°B</button>
+          <button onclick="generarPromediosCurso('3A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">3°A</button>
+          <button onclick="generarPromediosCurso('3B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">3°B</button>
+          <button onclick="generarPromediosCurso('4A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">4°A</button>
+          <button onclick="generarPromediosCurso('4B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">4°B</button>
+          <button id="btn-imprimir-promedios" onclick="imprimirMejoresPromedios()" style="display:none;padding:6px 12px;border:1px solid #c8e6d4;border-radius:var(--border-radius-md);background:#e8f4ed;color:#1a9e5c;font-size:12px;cursor:pointer;font-family:inherit">🖨️ Imprimir</button>
         </div>
       </div>
       <div id="mejores-promedios-loading" style="display:none;text-align:center;padding:24px;color:#888;font-size:13px">Calculando promedios...</div>
@@ -9944,6 +9958,93 @@ function imprimirInformeSolicitudes() {
 
 let _mejoresPromData = null;
 let _mejoresCursosActual = [];
+
+function generarPromediosCurso(curso) {
+  const loading = document.getElementById('mejores-promedios-loading');
+  const cont    = document.getElementById('mejores-promedios-contenido');
+  const btnImp  = document.getElementById('btn-imprimir-promedios');
+  loading.style.display = 'block';
+  cont.innerHTML = '';
+  btnImp.style.display = 'none';
+  _mejoresCursosActual = [curso];
+
+  callWebApp({ accion: 'obtenerMejoresPromedios', cursos: JSON.stringify([curso]) })
+    .then(res => {
+      loading.style.display = 'none';
+      if (!res.ok) { cont.innerHTML = '<p style="color:#c0392b;font-size:13px">Error: ' + (res.error || '') + '</p>'; return; }
+      _mejoresPromData = res.alumnos || [];
+      renderPromediosCurso(_mejoresPromData, curso);
+      btnImp.style.display = 'inline-flex';
+    })
+    .catch(() => {
+      loading.style.display = 'none';
+      cont.innerHTML = '<p style="color:#c0392b;font-size:13px">Error de conexión.</p>';
+    });
+}
+
+function renderPromediosCurso(alumnos, curso) {
+  const cont = document.getElementById('mejores-promedios-contenido');
+  const cursoLabel = curso.replace(/([0-9]+)([A-Z]+)/, '$1° $2');
+
+  if (!alumnos.length) {
+    cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Sin datos suficientes para ' + cursoLabel + '.</p>';
+    return;
+  }
+
+  const filas = alumnos.map((a, idx) => {
+    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1);
+    const bg = idx % 2 === 0 ? '#fff' : '#f7faf8';
+    const detId = 'det-curso-' + idx;
+    return `
+      <tr style="background:${bg}">
+        <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1a9e5c">${medal}</td>
+        <td style="padding:7px 10px;font-weight:500">${a.nombre}</td>
+        <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1a9e5c;font-size:14px">${a.promedioGeneral.toFixed(2)}</td>
+        <td style="padding:7px 10px;text-align:center;color:#888;font-size:12px">${a.cantMaterias} mat.</td>
+        <td style="padding:7px 10px;text-align:center">
+          <button onclick="toggleDetallePromedio('${detId}')" style="padding:3px 8px;border:1px solid #c8e6d4;border-radius:6px;background:#e8f4ed;color:#1a9e5c;font-size:11px;cursor:pointer">Ver</button>
+        </td>
+      </tr>
+      <tr id="${detId}" style="display:none;background:#f0faf5">
+        <td colspan="5" style="padding:8px 16px">
+          <table style="width:100%;font-size:12px;border-collapse:collapse">
+            <tr style="color:#888;font-weight:600">
+              <th style="padding:4px 8px;text-align:left">Materia</th>
+              <th style="padding:4px 8px;text-align:center">1° Cuat.</th>
+              <th style="padding:4px 8px;text-align:center">2° Cuat.</th>
+              <th style="padding:4px 8px;text-align:center">Promedio</th>
+            </tr>
+            ${a.detalles.map(d => `
+              <tr style="border-top:1px solid #e0f2e9">
+                <td style="padding:4px 8px">${d.materia}</td>
+                <td style="padding:4px 8px;text-align:center">${d.c1 !== '' ? d.c1 : '—'}</td>
+                <td style="padding:4px 8px;text-align:center">${d.c2 !== '' ? d.c2 : '—'}</td>
+                <td style="padding:4px 8px;text-align:center;font-weight:700;color:${d.promedio !== null ? '#1a9e5c' : '#aaa'}">${d.promedio !== null ? d.promedio.toFixed(2) : '—'}</td>
+              </tr>`).join('')}
+            <tr style="border-top:2px solid #1a9e5c;background:#e8f4ed">
+              <td colspan="3" style="padding:5px 8px;font-weight:700;font-size:12px">Promedio General</td>
+              <td style="padding:5px 8px;text-align:center;font-weight:700;color:#1a9e5c;font-size:13px">${a.promedioGeneral.toFixed(2)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <h4 style="font-size:14px;font-weight:700;color:#1a1a1a;margin:0 0 10px 0">📋 Ranking ${cursoLabel} — ${alumnos.length} alumno(s) con promedio calculado</h4>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:#1a9e5c;color:#fff">
+          <th style="padding:7px 10px;text-align:center;width:36px">#</th>
+          <th style="padding:7px 10px;text-align:left">Apellido y Nombre</th>
+          <th style="padding:7px 10px;text-align:center;width:100px">Prom. General</th>
+          <th style="padding:7px 10px;text-align:center;width:70px">Materias</th>
+          <th style="padding:7px 10px;text-align:center;width:60px">Detalle</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
 
 function generarMejoresPromedios(cursoA, cursoB) {
   const loading  = document.getElementById('mejores-promedios-loading');
