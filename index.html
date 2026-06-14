@@ -9567,8 +9567,8 @@ let _solFechasCalif   = [];
 let _solDocentesLista = [];
 
 function initSolicitudesDocentes() {
-  const usuario = window.currentUser || '';
-  const rol     = window.currentRole || '';
+  const usuario = currentUser || '';
+  const rol     = currentRole || '';
   document.getElementById('sol-loading').style.display = 'block';
   document.getElementById('sol-lista').style.display   = 'none';
   document.getElementById('sol-empty').style.display   = 'none';
@@ -9594,7 +9594,7 @@ function initSolicitudesDocentes() {
 }
 
 function renderSolicitudes(lista) {
-  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes((window.currentRole || '').toLowerCase());
+  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes((currentRole || '').toLowerCase());
   const filtradas = _solFiltroActivo === 'todos' ? lista : lista.filter(s => {
     const est = isAdmin
       ? (s.vencidos > 0 ? 'Vencido' : s.pendientes > 0 ? 'Pendiente' : 'Entregado')
@@ -9747,9 +9747,9 @@ function guardarSolicitud() {
 
   const datos = {
     tipo, descripcion, fechaVencimiento, destinatarios,
-    creadoPor:      window.currentUser     || '',
-    creadoPorNombre: window.currentUserName || '',
-    creadoPorRol:   window.currentRole     || ''
+    creadoPor:      currentUser     || '',
+    creadoPorNombre: currentUserName || '',
+    creadoPorRol:   currentRole     || ''
   };
 
   const btnG = document.querySelector('#modal-nueva-solicitud button[onclick="guardarSolicitud()"]');
@@ -9803,20 +9803,20 @@ function abrirDetalleSolicitud(solId) {
 function toggleCumplimiento(cumpId, solId, marcarEntregado) {
   const datos = {
     cumpId, estado: marcarEntregado ? 'Entregado' : 'Pendiente',
-    marcadoPor: window.currentUser || '', marcadoPorRol: window.currentRole || ''
+    marcadoPor: currentUser || '', marcadoPorRol: currentRole || ''
   };
   callWebApp({ accion: 'marcarCumplimientoSolicitud', datos: JSON.stringify(datos) })
     .then(res => {
       if (!res.ok) { showToast(res.error || 'Error', '❌'); return; }
       showToast(marcarEntregado ? 'Marcado como entregado' : 'Revertido a pendiente', '✅');
-      callWebApp({ accion: 'obtenerSolicitudesDocentes', usuario: window.currentUser, rol: window.currentRole })
+      callWebApp({ accion: 'obtenerSolicitudesDocentes', usuario: currentUser, rol: currentRole })
         .then(r => { if (r.ok) { _solDatos = r.solicitudes || []; renderSolicitudes(_solDatos); abrirDetalleSolicitud(solId); } });
     });
 }
 
 function confirmarEliminarSolicitud(id) {
   if (!confirm('¿Eliminar esta solicitud y todos sus registros de cumplimiento?')) return;
-  callWebApp({ accion: 'eliminarSolicitudDocente', id, usuario: window.currentUser, rol: window.currentRole })
+  callWebApp({ accion: 'eliminarSolicitudDocente', id, usuario: currentUser, rol: currentRole })
     .then(res => {
       if (!res.ok) { showToast(res.error || 'Error al eliminar', '❌'); return; }
       showToast('Solicitud eliminada', '🗑️');
@@ -9848,7 +9848,7 @@ function guardarConfigFechas() {
     const desc = document.getElementById('cfg-desc-' + i).value.trim() || ('Entrega ' + (i + 1));
     fechas.push({ entrega: i + 1, fecha, descripcion: desc });
   }
-  callWebApp({ accion: 'guardarFechasCalificaciones', fechas: JSON.stringify(fechas), usuario: window.currentUser, rol: window.currentRole })
+  callWebApp({ accion: 'guardarFechasCalificaciones', fechas: JSON.stringify(fechas), usuario: currentUser, rol: currentRole })
     .then(res => {
       if (!res.ok) { showToast(res.error || 'Error', '❌'); return; }
       _solFechasCalif = fechas;
