@@ -9594,7 +9594,7 @@ function initSolicitudesDocentes() {
 }
 
 function renderSolicitudes(lista) {
-  const isAdmin = !!(window.currentRole || '').match(/director|vicedirector|secretario/i);
+  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes((window.currentRole || '').toLowerCase());
   const filtradas = _solFiltroActivo === 'todos' ? lista : lista.filter(s => {
     const est = isAdmin
       ? (s.vencidos > 0 ? 'Vencido' : s.pendientes > 0 ? 'Pendiente' : 'Entregado')
