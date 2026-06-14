@@ -548,6 +548,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
+      <div class="nav-item" id="nav-solicitudes-docentes" onclick="showSection('solicitudes-docentes',this);initSolicitudesDocentes()" style="display:none"><span class="nav-icon">📝</span> Solicitudes Docentes</div>
       <div class="nav-item" id="nav-agenda" onclick="crearSeccionAgenda();showSection('agenda',this)" style="display:none"><span class="nav-icon">📓</span> Agenda Directiva</div>
     </div>
     <div class="sidebar-footer">
@@ -2600,6 +2601,131 @@ function infExportarPDF() {
 </script>
 
 
+<div id="sec-solicitudes-docentes" class="section">
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>📝 Solicitudes Docentes</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-sm" id="btn-nueva-solicitud" onclick="abrirFormSolicitud()" style="display:none">+ Nueva Solicitud</button>
+        <button class="btn btn-sm" id="btn-config-fechas-calif" onclick="abrirConfigFechasCalif()" style="display:none;background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c">⚙️ Fechas Planillas</button>
+        <button class="btn btn-sm" id="btn-informe-solicitudes" onclick="abrirInformeSolicitudes()" style="display:none;background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c">📄 Informe por Docente</button>
+        <button class="btn btn-sm" onclick="initSolicitudesDocentes()" style="background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c">🔄 Actualizar</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px 0">
+      <button class="sol-filtro-btn active" onclick="filtrarSolicitudes('todos',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #c8e6d4;background:#e8f4ed;color:#1a9e5c;font-size:12px;font-weight:600;cursor:pointer">Todas</button>
+      <button class="sol-filtro-btn" onclick="filtrarSolicitudes('Pendiente',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #f0c040;background:#fffbe6;color:#b8860b;font-size:12px;font-weight:600;cursor:pointer">⏳ Pendientes</button>
+      <button class="sol-filtro-btn" onclick="filtrarSolicitudes('Vencido',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #f5c6c6;background:#fef0f0;color:#c0392b;font-size:12px;font-weight:600;cursor:pointer">🔴 Vencidas</button>
+      <button class="sol-filtro-btn" onclick="filtrarSolicitudes('Entregado',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #b7e4c7;background:#d8f3dc;color:#1a7a44;font-size:12px;font-weight:600;cursor:pointer">✅ Entregadas</button>
+    </div>
+    <div id="sol-loading" style="text-align:center;padding:32px;color:#888;font-size:14px">Cargando...</div>
+    <div id="sol-lista" style="display:none"></div>
+    <div id="sol-empty" style="display:none;text-align:center;padding:32px;color:#aaa;font-size:14px">Sin solicitudes para mostrar.</div>
+  </div>
+</div>
+
+<!-- Modal: Nueva Solicitud -->
+<div id="modal-nueva-solicitud" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:min(540px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0;font-size:16px;color:#1a1a1a">Nueva Solicitud</h3>
+      <button onclick="cerrarModalSolicitud()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Tipo de solicitud *</label>
+    <select id="sol-tipo" onchange="onChangeTipoSolicitud(this.value)" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">
+      <option value="">— Seleccionar —</option>
+      <option value="Declaración de incompatibilidad">Declaración de incompatibilidad</option>
+      <option value="Planificación anual">Planificación anual</option>
+      <option value="Actividades de continuidad pedagógica">Actividades de continuidad pedagógica</option>
+      <option value="Actividades de continuidad pedagógica (casos especiales)">Actividades de continuidad pedagógica (casos especiales)</option>
+      <option value="Preparación de actos escolares">Preparación de actos escolares</option>
+      <option value="Proyectos">Proyectos</option>
+      <option value="Otras">Otras (a especificar)</option>
+      <option value="Copia de DNI actualizado">Copia de DNI actualizado</option>
+      <option value="Psicofísico actualizado">Psicofísico actualizado</option>
+      <option value="Planillas de Calificaciones">Planillas de Calificaciones</option>
+      <option value="Entrega de certificados en caso de ausencia">Entrega de certificados en caso de ausencia</option>
+    </select>
+    <div id="sol-desc-wrap" style="display:none;margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Especificar *</label>
+      <input id="sol-descripcion" type="text" placeholder="Describir la solicitud..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+    </div>
+    <div id="sol-planilla-wrap" style="display:none;margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha de entrega (Planillas) *</label>
+      <select id="sol-planilla-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        <option value="">— Seleccionar entrega —</option>
+      </select>
+    </div>
+    <div id="sol-venc-wrap" style="margin-bottom:12px">
+      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha de vencimiento *</label>
+      <input id="sol-vencimiento" type="date" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+    </div>
+    <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Destinatarios *</label>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
+        <input type="radio" name="sol-dest-tipo" value="todos" checked onchange="onChangeDestTipo(this.value)"> Todos los docentes
+      </label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
+        <input type="radio" name="sol-dest-tipo" value="seleccion" onchange="onChangeDestTipo(this.value)"> Seleccionar docentes
+      </label>
+    </div>
+    <div id="sol-dest-lista" style="display:none;max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px;margin-bottom:12px;font-size:13px">
+      <div style="color:#aaa;text-align:center;padding:8px">Cargando docentes...</div>
+    </div>
+    <div id="sol-modal-error" style="display:none;background:#fef0f0;border:1px solid #f5c6c6;border-radius:8px;padding:8px 12px;font-size:12px;color:#c0392b;margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+      <button onclick="cerrarModalSolicitud()" style="padding:8px 18px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer">Cancelar</button>
+      <button onclick="guardarSolicitud()" style="padding:8px 18px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Crear Solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Detalle cumplimientos (admin) -->
+<div id="modal-detalle-solicitud" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:min(640px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 id="modal-det-titulo" style="margin:0;font-size:15px;color:#1a1a1a">Detalle de Solicitud</h3>
+      <button onclick="document.getElementById('modal-detalle-solicitud').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div id="modal-det-info" style="font-size:13px;color:#555;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #eee"></div>
+    <div id="modal-det-lista" style="font-size:13px"></div>
+  </div>
+</div>
+
+<!-- Modal: Config fechas Planillas -->
+<div id="modal-config-fechas" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:min(520px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0;font-size:15px">⚙️ Fechas de entrega — Planillas de Calificaciones</h3>
+      <button onclick="document.getElementById('modal-config-fechas').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <p style="font-size:12px;color:#777;margin:0 0 14px 0">Configurá las 6 fechas de entrega de planillas al inicio de cada año.</p>
+    <div id="config-fechas-campos"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button onclick="document.getElementById('modal-config-fechas').style.display='none'" style="padding:8px 18px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer">Cancelar</button>
+      <button onclick="guardarConfigFechas()" style="padding:8px 18px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Guardar Fechas</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Informe por docente -->
+<div id="modal-informe-sol" style="display:none;position:fixed;inset:0;z-index:9300;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:14px;width:min(600px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:15px">📄 Informe por Docente</h3>
+      <button onclick="document.getElementById('modal-informe-sol').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <select id="informe-sol-docente" style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        <option value="">— Seleccionar docente —</option>
+      </select>
+      <button onclick="generarInformeSolicitudes()" style="padding:8px 16px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Ver</button>
+      <button onclick="imprimirInformeSolicitudes()" style="padding:8px 12px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:13px;cursor:pointer">🖨️</button>
+    </div>
+    <div id="informe-sol-contenido"></div>
+  </div>
+</div>
+
 <div id="sec-dias-no-lectivos" class="section">
   <div style="padding:16px 16px 0">
     <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">📅 Días No Lectivos</h2>
@@ -3448,6 +3574,8 @@ function doLogin(name, role, usuario, res){
   setTimeout(function(){ if(typeof actualizarBadgeMensajes==='function') actualizarBadgeMensajes(); }, 1500);
   const navAg = document.getElementById('nav-agenda');
   if (navAg) navAg.style.display = isAdmin ? 'flex' : 'none';
+  const navSolDoc = document.getElementById('nav-solicitudes-docentes');
+  if (navSolDoc) navSolDoc.style.display = (isAdmin || isDocente) ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -9427,6 +9555,368 @@ async function certEliminarArchivo(path, nombreMostrado) {
     showToast('Error al eliminar el archivo', '❌');
     console.error('[CERT] Error eliminando:', err);
   }
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  MÓDULO SOLICITUDES DOCENTES
+// ════════════════════════════════════════════════════════════════════
+
+let _solDatos         = [];
+let _solFiltroActivo  = 'todos';
+let _solFechasCalif   = [];
+let _solDocentesLista = [];
+
+function initSolicitudesDocentes() {
+  const usuario = window.currentUser || '';
+  const rol     = window.currentRole || '';
+  document.getElementById('sol-loading').style.display = 'block';
+  document.getElementById('sol-lista').style.display   = 'none';
+  document.getElementById('sol-empty').style.display   = 'none';
+
+  callWebApp({ accion: 'obtenerSolicitudesDocentes', usuario, rol })
+    .then(res => {
+      document.getElementById('sol-loading').style.display = 'none';
+      if (!res.ok) { showToast('Error al cargar solicitudes', '❌'); return; }
+      _solDatos = res.solicitudes || [];
+      renderSolicitudes(_solDatos);
+      const isAdmin = res.esAdmin;
+      const btnN = document.getElementById('btn-nueva-solicitud');
+      const btnC = document.getElementById('btn-config-fechas-calif');
+      const btnI = document.getElementById('btn-informe-solicitudes');
+      if (btnN) btnN.style.display = isAdmin ? 'inline-flex' : 'none';
+      if (btnC) btnC.style.display = isAdmin ? 'inline-flex' : 'none';
+      if (btnI) btnI.style.display = isAdmin ? 'inline-flex' : 'none';
+    })
+    .catch(() => {
+      document.getElementById('sol-loading').style.display = 'none';
+      showToast('Error de conexión', '❌');
+    });
+}
+
+function renderSolicitudes(lista) {
+  const isAdmin = !!(window.currentRole || '').match(/director|vicedirector|secretario/i);
+  const filtradas = _solFiltroActivo === 'todos' ? lista : lista.filter(s => {
+    const est = isAdmin
+      ? (s.vencidos > 0 ? 'Vencido' : s.pendientes > 0 ? 'Pendiente' : 'Entregado')
+      : s.miEstado;
+    return est === _solFiltroActivo;
+  });
+
+  const contenedor = document.getElementById('sol-lista');
+  const vacio      = document.getElementById('sol-empty');
+  if (!filtradas.length) {
+    contenedor.style.display = 'none';
+    vacio.style.display = 'block';
+    return;
+  }
+  vacio.style.display = 'none';
+  contenedor.style.display = 'block';
+
+  contenedor.innerHTML = filtradas.map(s => {
+    const semaforo = isAdmin
+      ? (s.vencidos > 0 ? '🔴' : s.pendientes > 0 ? '⏳' : '✅')
+      : s.semaforo;
+    const colorSem = semaforo === '✅' ? '#1a9e5c' : semaforo === '🔴' ? '#c0392b' : '#b8860b';
+    const bgSem    = semaforo === '✅' ? '#d8f3dc' : semaforo === '🔴' ? '#fef0f0' : '#fffbe6';
+    const tipoLabel = s.tipo === 'Otras' && s.descripcion ? s.descripcion : s.tipo;
+    const estadoLabel = isAdmin
+      ? (s.entregados + '/' + s.totalDestinatarios + ' entregados')
+      : (s.miEstado || 'Pendiente');
+    return `
+      <div style="border:1px solid #e8e8e8;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;background:#fafafa">
+        <div style="font-size:22px;min-width:34px;text-align:center;margin-top:2px">${semaforo}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;color:#1a1a1a;margin-bottom:2px">${tipoLabel}</div>
+          <div style="font-size:12px;color:#777;margin-bottom:6px">Vence: <b>${s.fechaVencimiento || '—'}</b> · Creado por: ${s.creadoPorNombre || s.creadoPor}</div>
+          <div style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${bgSem};color:${colorSem}">${estadoLabel}</div>
+          ${isAdmin ? `<div style="margin-top:6px;font-size:11px;color:#aaa">Destinatarios: ${s.destinatarios === 'TODOS' ? 'Todos los docentes' : s.destinatarios.split(',').length + ' docente(s)'}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:80px;align-items:flex-end">
+          ${isAdmin ? `<button onclick="abrirDetalleSolicitud('${s.id}')" style="padding:5px 10px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:11px;cursor:pointer;white-space:nowrap">Ver detalle</button>` : ''}
+          ${isAdmin ? `<button onclick="confirmarEliminarSolicitud('${s.id}')" style="padding:5px 10px;border:1px solid #f5c6c6;border-radius:8px;background:#fef0f0;color:#c0392b;font-size:11px;cursor:pointer">Eliminar</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filtrarSolicitudes(estado, btn) {
+  _solFiltroActivo = estado;
+  document.querySelectorAll('.sol-filtro-btn').forEach(b => b.style.opacity = '0.7');
+  btn.style.opacity = '1';
+  renderSolicitudes(_solDatos);
+}
+
+function abrirFormSolicitud() {
+  document.getElementById('sol-tipo').value = '';
+  document.getElementById('sol-desc-wrap').style.display     = 'none';
+  document.getElementById('sol-venc-wrap').style.display     = 'block';
+  document.getElementById('sol-planilla-wrap').style.display = 'none';
+  document.getElementById('sol-vencimiento').value = '';
+  document.getElementById('sol-modal-error').style.display   = 'none';
+  document.querySelector('input[name="sol-dest-tipo"][value="todos"]').checked = true;
+  document.getElementById('sol-dest-lista').style.display    = 'none';
+  document.getElementById('modal-nueva-solicitud').style.display = 'flex';
+
+  if (!_solDocentesLista.length) {
+    callWebApp({ accion: 'listarDocentes' }).then(res => {
+      if (res.ok) { _solDocentesLista = (res.usuarios || []).filter(u => u.activo); _renderDocentesSelector(); }
+    });
+  } else {
+    _renderDocentesSelector();
+  }
+  if (!_solFechasCalif.length) {
+    callWebApp({ accion: 'obtenerFechasCalificaciones' }).then(res => {
+      if (res.ok) _solFechasCalif = res.fechas || [];
+    });
+  }
+}
+
+function _renderDocentesSelector() {
+  const cont = document.getElementById('sol-dest-lista');
+  if (!_solDocentesLista.length) {
+    cont.innerHTML = '<div style="color:#aaa;text-align:center;padding:8px">No hay docentes activos.</div>';
+    return;
+  }
+  cont.innerHTML = _solDocentesLista.map(d =>
+    `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer">
+      <input type="checkbox" class="sol-dest-check" value="${d.usuario}"> ${d.nombre}
+    </label>`
+  ).join('');
+}
+
+function onChangeDestTipo(val) {
+  document.getElementById('sol-dest-lista').style.display = val === 'seleccion' ? 'block' : 'none';
+}
+
+function onChangeTipoSolicitud(val) {
+  document.getElementById('sol-desc-wrap').style.display     = val === 'Otras' ? 'block' : 'none';
+  document.getElementById('sol-venc-wrap').style.display     = val === 'Planillas de Calificaciones' ? 'none' : 'block';
+  document.getElementById('sol-planilla-wrap').style.display = val === 'Planillas de Calificaciones' ? 'block' : 'none';
+  if (val === 'Planillas de Calificaciones') {
+    const sel = document.getElementById('sol-planilla-fecha');
+    sel.innerHTML = '<option value="">— Seleccionar entrega —</option>';
+    if (_solFechasCalif.length) {
+      _solFechasCalif.forEach(f => {
+        const label = f.descripcion || ('Entrega ' + f.entrega);
+        sel.innerHTML += `<option value="${f.fecha}|${label}">${label}${f.fecha ? ' (' + f.fecha + ')' : ''}</option>`;
+      });
+    } else {
+      sel.innerHTML = '<option value="">⚠️ Configurá las fechas primero</option>';
+    }
+  }
+}
+
+function cerrarModalSolicitud() {
+  document.getElementById('modal-nueva-solicitud').style.display = 'none';
+}
+
+function guardarSolicitud() {
+  const errEl = document.getElementById('sol-modal-error');
+  errEl.style.display = 'none';
+  const tipo = document.getElementById('sol-tipo').value;
+  if (!tipo) { errEl.textContent = 'Seleccioná el tipo de solicitud.'; errEl.style.display = 'block'; return; }
+
+  let descripcion = '';
+  if (tipo === 'Otras') {
+    descripcion = document.getElementById('sol-descripcion').value.trim();
+    if (!descripcion) { errEl.textContent = 'Especificá la solicitud.'; errEl.style.display = 'block'; return; }
+  }
+
+  let fechaVencimiento = '';
+  if (tipo === 'Planillas de Calificaciones') {
+    const selVal = document.getElementById('sol-planilla-fecha').value;
+    if (!selVal) { errEl.textContent = 'Seleccioná la fecha de entrega.'; errEl.style.display = 'block'; return; }
+    const partes = selVal.split('|');
+    fechaVencimiento = partes[0];
+    if (!descripcion) descripcion = partes[1] || tipo;
+  } else {
+    const raw = document.getElementById('sol-vencimiento').value;
+    if (!raw) { errEl.textContent = 'Indicá la fecha de vencimiento.'; errEl.style.display = 'block'; return; }
+    const p = raw.split('-');
+    fechaVencimiento = p[2] + '/' + p[1] + '/' + p[0];
+  }
+
+  const destTipo = document.querySelector('input[name="sol-dest-tipo"]:checked').value;
+  let destinatarios;
+  if (destTipo === 'todos') {
+    destinatarios = ['TODOS'];
+  } else {
+    destinatarios = [...document.querySelectorAll('.sol-dest-check:checked')].map(c => c.value);
+    if (!destinatarios.length) { errEl.textContent = 'Seleccioná al menos un docente.'; errEl.style.display = 'block'; return; }
+  }
+
+  const datos = {
+    tipo, descripcion, fechaVencimiento, destinatarios,
+    creadoPor:      window.currentUser     || '',
+    creadoPorNombre: window.currentUserName || '',
+    creadoPorRol:   window.currentRole     || ''
+  };
+
+  const btnG = document.querySelector('#modal-nueva-solicitud button[onclick="guardarSolicitud()"]');
+  if (btnG) { btnG.disabled = true; btnG.textContent = 'Creando...'; }
+
+  callWebApp({ accion: 'crearSolicitudDocente', datos: JSON.stringify(datos) })
+    .then(res => {
+      if (btnG) { btnG.disabled = false; btnG.textContent = 'Crear Solicitud'; }
+      if (!res.ok) { errEl.textContent = res.error || 'Error al crear.'; errEl.style.display = 'block'; return; }
+      cerrarModalSolicitud();
+      showToast('Solicitud creada para ' + res.destinatariosCount + ' docente(s)', '✅');
+      initSolicitudesDocentes();
+    })
+    .catch(() => {
+      if (btnG) { btnG.disabled = false; btnG.textContent = 'Crear Solicitud'; }
+      errEl.textContent = 'Error de conexión.'; errEl.style.display = 'block';
+    });
+}
+
+function abrirDetalleSolicitud(solId) {
+  const sol = _solDatos.find(s => s.id === solId);
+  if (!sol) return;
+  const tipoLabel = sol.tipo === 'Otras' && sol.descripcion ? sol.descripcion : sol.tipo;
+  document.getElementById('modal-det-titulo').textContent = tipoLabel;
+  document.getElementById('modal-det-info').innerHTML =
+    `<b>Vencimiento:</b> ${sol.fechaVencimiento || '—'} &nbsp;·&nbsp; <b>Creado:</b> ${sol.timestamp || '—'} por ${sol.creadoPorNombre || sol.creadoPor} &nbsp;·&nbsp; <b>Progreso:</b> ${sol.entregados}/${sol.totalDestinatarios} entregados`;
+
+  const lista = sol.cumplimientos || [];
+  document.getElementById('modal-det-lista').innerHTML = !lista.length
+    ? '<p style="color:#aaa;font-size:13px">Sin destinatarios registrados.</p>'
+    : lista.map(c => {
+        const sem   = c.estado === 'Entregado' ? '✅' : c.estado === 'Vencido' ? '🔴' : '⏳';
+        const bg    = c.estado === 'Entregado' ? '#d8f3dc' : c.estado === 'Vencido' ? '#fef0f0' : '#fffbe6';
+        const color = c.estado === 'Entregado' ? '#1a7a44' : c.estado === 'Vencido' ? '#c0392b' : '#b8860b';
+        return `
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid #eee;border-radius:8px;margin-bottom:6px;background:#fafafa">
+            <span style="font-size:18px">${sem}</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:13px">${c.apellido}, ${c.nombre}</div>
+              <div style="font-size:11px;color:#aaa">${c.email}</div>
+            </div>
+            <span style="padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;background:${bg};color:${color}">${c.estado}</span>
+            ${c.estado !== 'Entregado'
+              ? `<button onclick="toggleCumplimiento('${c.cumpId}','${solId}',true)" style="padding:4px 10px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:11px;cursor:pointer">✅ Marcar entregado</button>`
+              : `<button onclick="toggleCumplimiento('${c.cumpId}','${solId}',false)" style="padding:4px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#777;font-size:11px;cursor:pointer">Revertir</button>`}
+          </div>`;
+      }).join('');
+  document.getElementById('modal-detalle-solicitud').style.display = 'flex';
+}
+
+function toggleCumplimiento(cumpId, solId, marcarEntregado) {
+  const datos = {
+    cumpId, estado: marcarEntregado ? 'Entregado' : 'Pendiente',
+    marcadoPor: window.currentUser || '', marcadoPorRol: window.currentRole || ''
+  };
+  callWebApp({ accion: 'marcarCumplimientoSolicitud', datos: JSON.stringify(datos) })
+    .then(res => {
+      if (!res.ok) { showToast(res.error || 'Error', '❌'); return; }
+      showToast(marcarEntregado ? 'Marcado como entregado' : 'Revertido a pendiente', '✅');
+      callWebApp({ accion: 'obtenerSolicitudesDocentes', usuario: window.currentUser, rol: window.currentRole })
+        .then(r => { if (r.ok) { _solDatos = r.solicitudes || []; renderSolicitudes(_solDatos); abrirDetalleSolicitud(solId); } });
+    });
+}
+
+function confirmarEliminarSolicitud(id) {
+  if (!confirm('¿Eliminar esta solicitud y todos sus registros de cumplimiento?')) return;
+  callWebApp({ accion: 'eliminarSolicitudDocente', id, usuario: window.currentUser, rol: window.currentRole })
+    .then(res => {
+      if (!res.ok) { showToast(res.error || 'Error al eliminar', '❌'); return; }
+      showToast('Solicitud eliminada', '🗑️');
+      initSolicitudesDocentes();
+    });
+}
+
+function abrirConfigFechasCalif() {
+  callWebApp({ accion: 'obtenerFechasCalificaciones' }).then(res => {
+    _solFechasCalif = res.ok ? (res.fechas || []) : [];
+    while (_solFechasCalif.length < 6) _solFechasCalif.push({ entrega: _solFechasCalif.length + 1, fecha: '', descripcion: '' });
+    const campos = document.getElementById('config-fechas-campos');
+    campos.innerHTML = _solFechasCalif.slice(0, 6).map((f, i) => `
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:600;min-width:60px;color:#555">Entrega ${i + 1}</span>
+        <input type="date" id="cfg-fecha-${i}" value="${f.fecha || ''}" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        <input type="text" id="cfg-desc-${i}" value="${f.descripcion || ''}" placeholder="Ej: 1° bimestre" style="flex:2;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+      </div>`).join('');
+    document.getElementById('modal-config-fechas').style.display = 'flex';
+  });
+}
+
+function guardarConfigFechas() {
+  const fechas = [];
+  for (let i = 0; i < 6; i++) {
+    const raw  = document.getElementById('cfg-fecha-' + i).value;
+    let fecha  = '';
+    if (raw) { const p = raw.split('-'); fecha = p[2] + '/' + p[1] + '/' + p[0]; }
+    const desc = document.getElementById('cfg-desc-' + i).value.trim() || ('Entrega ' + (i + 1));
+    fechas.push({ entrega: i + 1, fecha, descripcion: desc });
+  }
+  callWebApp({ accion: 'guardarFechasCalificaciones', fechas: JSON.stringify(fechas), usuario: window.currentUser, rol: window.currentRole })
+    .then(res => {
+      if (!res.ok) { showToast(res.error || 'Error', '❌'); return; }
+      _solFechasCalif = fechas;
+      document.getElementById('modal-config-fechas').style.display = 'none';
+      showToast('Fechas guardadas', '✅');
+    });
+}
+
+function abrirInformeSolicitudes() {
+  const sel = document.getElementById('informe-sol-docente');
+  sel.innerHTML = '<option value="">— Seleccionar docente —</option>';
+  document.getElementById('informe-sol-contenido').innerHTML = '';
+  const cargarYAbrir = () => {
+    _solDocentesLista.forEach(d => {
+      sel.innerHTML += `<option value="${d.usuario}">${d.nombre}</option>`;
+    });
+    document.getElementById('modal-informe-sol').style.display = 'flex';
+  };
+  if (!_solDocentesLista.length) {
+    callWebApp({ accion: 'listarDocentes' }).then(res => {
+      if (res.ok) _solDocentesLista = (res.usuarios || []).filter(u => u.activo);
+      cargarYAbrir();
+    });
+  } else {
+    cargarYAbrir();
+  }
+}
+
+function generarInformeSolicitudes() {
+  const usuario = document.getElementById('informe-sol-docente').value;
+  if (!usuario) { showToast('Seleccioná un docente', '⚠️'); return; }
+  document.getElementById('informe-sol-contenido').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center">Cargando...</p>';
+  callWebApp({ accion: 'informeSolicitudesDocente', docenteUsuario: usuario })
+    .then(res => {
+      if (!res.ok) { document.getElementById('informe-sol-contenido').innerHTML = '<p style="color:#c0392b">Error: ' + (res.error || '') + '</p>'; return; }
+      const items = res.items || [];
+      if (!items.length) { document.getElementById('informe-sol-contenido').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center">Sin solicitudes para este docente.</p>'; return; }
+      const estadoColor = { 'Entregado': '#1a7a44', 'Vencido': '#c0392b', 'Pendiente': '#b8860b' };
+      const estadoBg    = { 'Entregado': '#d8f3dc', 'Vencido': '#fef0f0', 'Pendiente': '#fffbe6' };
+      const semaforo    = { 'Entregado': '✅', 'Vencido': '🔴', 'Pendiente': '⏳' };
+      document.getElementById('informe-sol-contenido').innerHTML =
+        `<p style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:10px">Docente: ${res.docente}</p>` +
+        items.map(it => `
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid #eee;border-radius:8px;margin-bottom:6px">
+            <span>${semaforo[it.estado] || '⏳'}</span>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:13px">${it.tipo}</div>
+              ${it.descripcion && it.descripcion !== it.tipo ? `<div style="font-size:11px;color:#777">${it.descripcion}</div>` : ''}
+              <div style="font-size:11px;color:#aaa">Vence: ${it.fechaVencimiento} · Entregado: ${it.fechaCumplimiento}</div>
+            </div>
+            <span style="padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;background:${estadoBg[it.estado] || '#fffbe6'};color:${estadoColor[it.estado] || '#b8860b'}">${it.estado}</span>
+          </div>`).join('');
+    });
+}
+
+function imprimirInformeSolicitudes() {
+  const cont = document.getElementById('informe-sol-contenido').innerHTML;
+  if (!cont || cont.includes('Cargando')) { showToast('Generá el informe primero', '⚠️'); return; }
+  const ventana = window.open('', '_blank');
+  ventana.document.write(`
+    <html><head><title>Informe Solicitudes</title>
+    <style>body{font-family:Arial,sans-serif;font-size:13px;padding:20px}h2{color:#1a9e5c}</style>
+    </head><body>
+    <h2>Colegio Perito Moreno — Informe de Solicitudes</h2>
+    ${cont}
+    </body></html>`);
+  ventana.document.close();
+  ventana.print();
 }
 
 // ── Al entrar a la sección EOE, asegurar que el panel se inicialice ──
