@@ -10236,8 +10236,12 @@ function ejecutarBusquedaGlobal() {
           const colorProm = ambos ? '#1a9e5c' : '#aaa';
           return `<tr style="border-top:1px solid #eee;font-size:12px">
             <td style="padding:4px 8px">${m.materia}</td>
+            <td style="padding:4px 8px;text-align:center">${m.bim1 || '—'}</td>
             <td style="padding:4px 8px;text-align:center">${m.cuat1 || '—'}</td>
+            <td style="padding:4px 8px;text-align:center">${m.bim3 || '—'}</td>
             <td style="padding:4px 8px;text-align:center">${m.cuat2 || '—'}</td>
+            <td style="padding:4px 8px;text-align:center">${m.dic || '—'}</td>
+            <td style="padding:4px 8px;text-align:center">${m.feb || '—'}</td>
             <td style="padding:4px 8px;text-align:center;font-weight:700;color:${colorProm}">${prom}</td>
             <td style="padding:4px 8px;text-align:center;font-size:11px;color:#777">${m.estadoFinal || '—'}</td>
           </tr>`;
@@ -10265,8 +10269,12 @@ function ejecutarBusquedaGlobal() {
                 <table style="width:100%;border-collapse:collapse">
                   <tr style="background:#f0f0f0;font-size:11px;font-weight:600;color:#555">
                     <th style="padding:5px 8px;text-align:left">Materia</th>
+                    <th style="padding:5px 8px;text-align:center">1°Bim</th>
                     <th style="padding:5px 8px;text-align:center">1°C</th>
+                    <th style="padding:5px 8px;text-align:center">3°Bim</th>
                     <th style="padding:5px 8px;text-align:center">2°C</th>
+                    <th style="padding:5px 8px;text-align:center">Dic</th>
+                    <th style="padding:5px 8px;text-align:center">Feb</th>
                     <th style="padding:5px 8px;text-align:center">Prom.</th>
                     <th style="padding:5px 8px;text-align:center">Estado</th>
                   </tr>
