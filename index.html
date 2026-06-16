@@ -545,6 +545,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
+      <div class="nav-item" id="nav-exportar-asistencia" onclick="showSection('exportar-asistencia',this)" style="display:none"><span class="nav-icon">📋</span> Exportar Asistencia</div>
+      <div class="nav-item" id="nav-estadisticas" onclick="showSection('estadisticas',this);initEstadisticas()" style="display:none"><span class="nav-icon">📈</span> Estadísticas</div>
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
@@ -2759,6 +2761,79 @@ function infExportarPDF() {
   </div>
 </div>
 
+<div id="sec-exportar-asistencia" class="section">
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header">
+      <h3>📋 Exportar Asistencia</h3>
+    </div>
+
+    <!-- Filtros -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px;border-bottom:1px solid #eee">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Curso *</label>
+        <select id="ea-curso" onchange="eaCursoChange()" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+          <option value="">— Seleccionar —</option>
+          <option value="1A">1° A</option><option value="1B">1° B</option>
+          <option value="2A">2° A</option><option value="2B">2° B</option>
+          <option value="3A">3° A</option><option value="3B">3° B</option>
+          <option value="4A">4° A</option><option value="4B">4° B</option>
+          <option value="5A">5° A</option><option value="5B">5° B</option>
+          <option value="6A">6° A</option><option value="6B">6° B</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Alumno (opcional)</label>
+        <select id="ea-alumno" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+          <option value="">Todos los alumnos</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha desde *</label>
+        <input type="date" id="ea-desde" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha hasta *</label>
+        <input type="date" id="ea-hasta" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
+      </div>
+    </div>
+    <div style="padding:12px 16px;display:flex;gap:8px;align-items:center">
+      <button onclick="generarExportAsistencia()" style="padding:8px 20px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Generar informe</button>
+      <button id="ea-btn-imprimir" onclick="imprimirExportAsistencia()" style="display:none;padding:8px 14px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:13px;cursor:pointer;font-family:inherit">🖨️ Imprimir / PDF</button>
+      <span id="ea-error" style="font-size:12px;color:#c0392b;display:none"></span>
+    </div>
+
+    <div id="ea-loading" style="display:none;text-align:center;padding:32px;color:#888;font-size:13px">Generando informe...</div>
+    <div id="ea-contenido" style="padding:0 16px 24px"></div>
+  </div>
+</div>
+
+<div id="sec-estadisticas" class="section">
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header" style="justify-content:space-between">
+      <h3>📈 Panel de Estadísticas</h3>
+      <div style="display:flex;gap:8px">
+        <button onclick="initEstadisticas()" style="padding:6px 14px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:12px;cursor:pointer">🔄 Actualizar</button>
+        <button onclick="imprimirEstadisticas()" style="padding:6px 14px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:12px;cursor:pointer">🖨️ Imprimir</button>
+      </div>
+    </div>
+
+    <!-- Pestañas -->
+    <div style="display:flex;gap:0;border-bottom:2px solid #e8e8e8;margin:0 0 0 0;padding:0 16px">
+      <button class="estad-tab active" onclick="switchEstadTab('asistencia',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#1a9e5c;border-bottom:2px solid #1a9e5c;margin-bottom:-2px;cursor:pointer;font-family:inherit">📅 Asistencia</button>
+      <button class="estad-tab" onclick="switchEstadTab('notas',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">📚 Notas por Materia</button>
+      <button class="estad-tab" onclick="switchEstadTab('evolucion',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">📈 Evolución</button>
+      <button class="estad-tab" onclick="switchEstadTab('riesgo',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">⚠️ Alumnos en Riesgo</button>
+    </div>
+
+    <div id="estad-loading" style="display:none;text-align:center;padding:48px;color:#888;font-size:13px">Calculando estadísticas...</div>
+
+    <div id="estad-tab-asistencia" style="padding:20px 16px"></div>
+    <div id="estad-tab-notas"      style="padding:20px 16px;display:none"></div>
+    <div id="estad-tab-evolucion"  style="padding:20px 16px;display:none"></div>
+    <div id="estad-tab-riesgo"     style="padding:20px 16px;display:none"></div>
+  </div>
+</div>
+
 <div id="sec-dias-no-lectivos" class="section">
   <div style="padding:16px 16px 0">
     <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">📅 Días No Lectivos</h2>
@@ -3598,6 +3673,10 @@ function doLogin(name, role, usuario, res){
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navInf = document.getElementById('nav-informe-materias');
   if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navExpAsist = document.getElementById('nav-exportar-asistencia');
+  if (navExpAsist) navExpAsist.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navEstad = document.getElementById('nav-estadisticas');
+  if (navEstad) navEstad.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navDnl = document.getElementById('nav-dias-no-lectivos');
   if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navBib = document.getElementById('nav-biblioteca');
@@ -10288,6 +10367,434 @@ function ejecutarBusquedaGlobal() {
       loading.style.display = 'none';
       cont.innerHTML = '<p style="color:#c0392b;font-size:13px;padding:8px">Error de conexión.</p>';
     });
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  EXPORTAR ASISTENCIA
+// ════════════════════════════════════════════════════════════════════
+
+let _eaDatos = null;
+
+function eaCursoChange() {
+  const curso = document.getElementById('ea-curso').value;
+  const selAlu = document.getElementById('ea-alumno');
+  selAlu.innerHTML = '<option value="">Todos los alumnos</option>';
+  if (!curso) return;
+  callWebApp({ accion: 'obtenerResumenAsistenciaCurso', curso })
+    .then(res => {
+      if (!res.ok) return;
+      (res.alumnos || []).sort((a,b) => a.nombre.localeCompare(b.nombre,'es'))
+        .forEach(a => {
+          selAlu.innerHTML += `<option value="${a.legajo}">${a.nombre}</option>`;
+        });
+    });
+}
+
+function generarExportAsistencia() {
+  const curso   = document.getElementById('ea-curso').value;
+  const legajo  = document.getElementById('ea-alumno').value;
+  const desdeRaw = document.getElementById('ea-desde').value;
+  const hastaRaw = document.getElementById('ea-hasta').value;
+  const errEl   = document.getElementById('ea-error');
+  errEl.style.display = 'none';
+
+  if (!curso) { errEl.textContent = 'Seleccioná un curso.'; errEl.style.display='block'; return; }
+  if (!desdeRaw || !hastaRaw) { errEl.textContent = 'Indicá el rango de fechas.'; errEl.style.display='block'; return; }
+
+  // Convertir a dd/MM/yyyy
+  const toArg = raw => { const p = raw.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+  const fechaDesde = toArg(desdeRaw);
+  const fechaHasta = toArg(hastaRaw);
+
+  document.getElementById('ea-loading').style.display = 'block';
+  document.getElementById('ea-contenido').innerHTML = '';
+  document.getElementById('ea-btn-imprimir').style.display = 'none';
+
+  callWebApp({ accion: 'exportarAsistencia', curso, legajo: legajo || '', fechaDesde, fechaHasta })
+    .then(res => {
+      document.getElementById('ea-loading').style.display = 'none';
+      if (!res.ok) { errEl.textContent = res.error || 'Error al generar.'; errEl.style.display='block'; return; }
+      _eaDatos = res;
+      renderExportAsistencia(res);
+      document.getElementById('ea-btn-imprimir').style.display = 'inline-flex';
+    })
+    .catch(() => {
+      document.getElementById('ea-loading').style.display = 'none';
+      errEl.textContent = 'Error de conexión.'; errEl.style.display='block';
+    });
+}
+
+function renderExportAsistencia(res) {
+  const cont = document.getElementById('ea-contenido');
+  const cursoLabel = res.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
+
+  if (!res.alumnos.length) {
+    cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:24px">Sin datos para el rango seleccionado.</p>';
+    return;
+  }
+
+  const estadoLabel = e => {
+    if (e === 'P')  return '<span style="color:#1a9e5c;font-weight:700">P</span>';
+    if (e === 'A' || e === 'AP') return '<span style="color:#c0392b;font-weight:700">A</span>';
+    if (e === 'T')  return '<span style="color:#b8860b;font-weight:700">T</span>';
+    if (e === 'R')  return '<span style="color:#7d3c98;font-weight:700">R</span>';
+    return '<span style="color:#aaa">—</span>';
+  };
+
+  const bloques = res.alumnos.map(a => {
+    const filas = a.registros.map(r =>
+      `<tr style="border-top:1px solid #eee;font-size:12px">
+        <td style="padding:5px 10px">${r.fecha}</td>
+        <td style="padding:5px 10px;text-align:center">${estadoLabel(r.estado)}</td>
+        <td style="padding:5px 10px;text-align:center;color:#777;font-size:11px">${r.hora || '—'}</td>
+      </tr>`
+    ).join('');
+
+    const pctColor = a.pct >= 85 ? '#1a9e5c' : a.pct >= 70 ? '#b8860b' : '#c0392b';
+
+    return `
+      <div style="border:1px solid #e8e8e8;border-radius:10px;margin-bottom:16px;overflow:hidden">
+        <div style="background:#f0faf5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:#1a1a1a">${a.nombre}</div>
+            <div style="font-size:12px;color:#777">Legajo: ${a.legajo} · Curso: ${cursoLabel}</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:12px">✅ <b>${a.presentes}</b> presentes</span>
+            <span style="font-size:12px">❌ <b>${a.ausentes}</b> ausentes</span>
+            <span style="font-size:12px">⏳ <b>${a.tardanzas}</b> tardanzas</span>
+            <span style="font-size:12px">🚪 <b>${a.retiros}</b> retiros</span>
+            <span style="font-size:13px;font-weight:700;color:${pctColor}">${a.pct}% asistencia</span>
+            <span style="font-size:12px;color:#888">${a.diasHabiles} días hábiles</span>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#f7f7f7;font-size:11px;font-weight:600;color:#555">
+              <th style="padding:6px 10px;text-align:left">Fecha</th>
+              <th style="padding:6px 10px;text-align:center">Estado</th>
+              <th style="padding:6px 10px;text-align:center">Hora llegada</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <div style="margin-bottom:14px;padding:10px 14px;background:#e8f4ed;border-radius:8px;font-size:13px;color:#1a7a44">
+      <b>Curso ${cursoLabel}</b> · Del ${res.fechaDesde} al ${res.fechaHasta} · ${res.diasHabiles} días hábiles · ${res.alumnos.length} alumno(s)
+    </div>
+    ${bloques}`;
+}
+
+function imprimirExportAsistencia() {
+  if (!_eaDatos) return;
+  const cursoLabel = _eaDatos.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
+  const cont = document.getElementById('ea-contenido').innerHTML;
+  const ventana = window.open('', '_blank');
+  ventana.document.write(`
+    <html><head><title>Asistencia ${cursoLabel}</title>
+    <style>
+      body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#1a1a1a}
+      h2{color:#1a9e5c;margin-bottom:4px}
+      table{width:100%;border-collapse:collapse;margin-bottom:4px}
+      th{background:#1a9e5c;color:#fff;padding:5px 8px;font-size:11px}
+      td{padding:4px 8px;border-bottom:1px solid #eee}
+      .bloque{border:1px solid #ddd;border-radius:6px;margin-bottom:14px;overflow:hidden;page-break-inside:avoid}
+      .bloque-header{background:#f0faf5;padding:8px 12px}
+      .resumen{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-top:4px}
+      @media print{button{display:none}}
+    </style>
+    </head><body>
+    <h2>Colegio Perito Moreno — Informe de Asistencia</h2>
+    <p style="font-size:11px;color:#777;margin:0 0 14px 0">
+      Curso: <b>${cursoLabel}</b> · Período: ${_eaDatos.fechaDesde} al ${_eaDatos.fechaHasta} · 
+      Días hábiles: ${_eaDatos.diasHabiles} · Generado: ${new Date().toLocaleDateString('es-AR')}
+    </p>
+    ${cont}
+    </body></html>`);
+  ventana.document.close();
+  ventana.print();
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  PANEL DE ESTADÍSTICAS
+// ════════════════════════════════════════════════════════════════════
+
+let _estadDatos = null;
+let _estadTabActiva = 'asistencia';
+
+function initEstadisticas() {
+  document.getElementById('estad-loading').style.display = 'block';
+  ['asistencia','notas','evolucion','riesgo'].forEach(t =>
+    document.getElementById('estad-tab-'+t).style.display = 'none'
+  );
+  callWebApp({ accion: 'obtenerEstadisticas' })
+    .then(res => {
+      document.getElementById('estad-loading').style.display = 'none';
+      if (!res.ok) { showToast('Error al cargar estadísticas', '❌'); return; }
+      _estadDatos = res;
+      renderEstadTab(_estadTabActiva);
+      document.getElementById('estad-tab-'+_estadTabActiva).style.display = 'block';
+    })
+    .catch(() => {
+      document.getElementById('estad-loading').style.display = 'none';
+      showToast('Error de conexión', '❌');
+    });
+}
+
+function switchEstadTab(tab, btn) {
+  _estadTabActiva = tab;
+  document.querySelectorAll('.estad-tab').forEach(b => {
+    b.style.color = '#888'; b.style.borderBottomColor = 'transparent';
+  });
+  btn.style.color = '#1a9e5c'; btn.style.borderBottomColor = '#1a9e5c';
+  ['asistencia','notas','evolucion','riesgo'].forEach(t =>
+    document.getElementById('estad-tab-'+t).style.display = t === tab ? 'block' : 'none'
+  );
+  if (_estadDatos) renderEstadTab(tab);
+}
+
+function renderEstadTab(tab) {
+  if (!_estadDatos) return;
+  if (tab === 'asistencia') renderEstadAsistencia();
+  else if (tab === 'notas') renderEstadNotas();
+  else if (tab === 'evolucion') renderEstadEvolucion();
+  else if (tab === 'riesgo') renderEstadRiesgo();
+}
+
+// ── Tab Asistencia ────────────────────────────────────────────────
+function renderEstadAsistencia() {
+  const cont = document.getElementById('estad-tab-asistencia');
+  const data = _estadDatos.asistenciaPorCurso || [];
+  if (!data.length) { cont.innerHTML = '<p style="color:#aaa;font-size:13px">Sin datos.</p>'; return; }
+
+  const barras = data.map(c => {
+    const pct   = c.promedioAsistencia;
+    const color = pct >= 85 ? '#1a9e5c' : pct >= 70 ? '#f0a500' : '#c0392b';
+    const label = c.curso.replace(/([0-9]+)([A-Z]+)/,'$1°$2');
+    return `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span style="font-weight:600">${label}</span>
+          <span style="color:${color};font-weight:700">${pct}%</span>
+        </div>
+        <div style="background:#eee;border-radius:6px;height:14px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${color};border-radius:6px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:11px;color:#888;margin-top:2px">
+          ${c.totalAlumnos} alumnos · ⚠️ ${c.enRiesgo} en riesgo · 🔴 ${c.criticos} críticos
+        </div>
+      </div>`;
+  }).join('');
+
+  // Totales
+  const totalAlumnos = data.reduce((s,c) => s+c.totalAlumnos, 0);
+  const totalRiesgo  = data.reduce((s,c) => s+c.enRiesgo, 0);
+  const totalCritic  = data.reduce((s,c) => s+c.criticos, 0);
+  const promGlobal   = data.length ? Math.round(data.reduce((s,c)=>s+c.promedioAsistencia,0)/data.length) : 0;
+
+  cont.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px">
+      <div style="background:#e8f4ed;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#1a9e5c">${promGlobal}%</div>
+        <div style="font-size:11px;color:#555;margin-top:4px">Asistencia global</div>
+      </div>
+      <div style="background:#fff3e0;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#f0a500">${totalRiesgo}</div>
+        <div style="font-size:11px;color:#555;margin-top:4px">Alumnos en riesgo</div>
+      </div>
+      <div style="background:#fef0f0;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#c0392b">${totalCritic}</div>
+        <div style="font-size:11px;color:#555;margin-top:4px">Casos críticos</div>
+      </div>
+      <div style="background:#f0f4ff;border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:24px;font-weight:700;color:#2d7dd2">${totalAlumnos}</div>
+        <div style="font-size:11px;color:#555;margin-top:4px">Total alumnos</div>
+      </div>
+    </div>
+    <h4 style="font-size:13px;font-weight:700;margin:0 0 14px 0">% Asistencia promedio por curso</h4>
+    <div style="max-width:600px">${barras}</div>`;
+}
+
+// ── Tab Notas por Materia ─────────────────────────────────────────
+function renderEstadNotas() {
+  const cont  = document.getElementById('estad-tab-notas');
+  const datos = _estadDatos.notasPorCurso || {};
+  const CURSOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+
+  let html = `
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+      ${CURSOS.filter(c => datos[c]).map(c =>
+        `<button onclick="filtrarEstadNotas('${c}')" class="estad-notas-btn" style="padding:5px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${c.replace(/([0-9]+)([A-Z]+)/,'$1°$2')}</button>`
+      ).join('')}
+    </div>
+    <div id="estad-notas-detalle"></div>`;
+  cont.innerHTML = html;
+
+  // Mostrar el primero por defecto
+  const primero = CURSOS.find(c => datos[c]);
+  if (primero) filtrarEstadNotas(primero);
+}
+
+function filtrarEstadNotas(curso) {
+  document.querySelectorAll('.estad-notas-btn').forEach(b => {
+    const lbl = b.textContent.replace('°','').replace(' ','');
+    b.style.background = lbl === curso ? '#1a9e5c' : '#fff';
+    b.style.color = lbl === curso ? '#fff' : '#333';
+    b.style.borderColor = lbl === curso ? '#1a9e5c' : '#ddd';
+  });
+  const materias = (_estadDatos.notasPorCurso || {})[curso] || [];
+  const label = curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
+  const filas = materias.map(m => {
+    const total = m.aprobados + m.reprobados;
+    const color = m.pctAprobados >= 70 ? '#1a9e5c' : m.pctAprobados >= 50 ? '#f0a500' : '#c0392b';
+    const barW  = m.pctAprobados || 0;
+    return `<tr style="border-top:1px solid #eee">
+      <td style="padding:8px 10px;font-size:13px">${m.materia}</td>
+      <td style="padding:8px 10px;text-align:center;color:#1a9e5c;font-weight:700">${m.aprobados}</td>
+      <td style="padding:8px 10px;text-align:center;color:#c0392b;font-weight:700">${m.reprobados}</td>
+      <td style="padding:8px 10px;text-align:center;color:#aaa">${m.sinDatos}</td>
+      <td style="padding:8px 10px;min-width:120px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;background:#eee;border-radius:4px;height:10px">
+            <div style="width:${barW}%;height:100%;background:${color};border-radius:4px"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:${color};min-width:36px">${barW}%</span>
+        </div>
+      </td>
+      <td style="padding:8px 10px;text-align:center;font-size:12px;color:#555">${m.promMat !== null ? m.promMat.toFixed(2) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('estad-notas-detalle').innerHTML = `
+    <h4 style="font-size:13px;font-weight:700;margin:0 0 10px 0">Curso ${label}</h4>
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:#1a9e5c;color:#fff;font-size:12px">
+          <th style="padding:8px 10px;text-align:left">Materia</th>
+          <th style="padding:8px 10px;text-align:center">Aprobados</th>
+          <th style="padding:8px 10px;text-align:center">Reprobados</th>
+          <th style="padding:8px 10px;text-align:center">Sin datos</th>
+          <th style="padding:8px 10px;text-align:left">% Aprobados</th>
+          <th style="padding:8px 10px;text-align:center">Prom. mat.</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
+
+// ── Tab Evolución bimestral ───────────────────────────────────────
+function renderEstadEvolucion() {
+  const cont = document.getElementById('estad-tab-evolucion');
+  const evol = _estadDatos.evolucion || {};
+  const CURSOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B']
+    .filter(c => evol[c]);
+
+  if (!CURSOS.length) { cont.innerHTML = '<p style="color:#aaa;font-size:13px">Sin datos suficientes.</p>'; return; }
+
+  const filas = CURSOS.map(c => {
+    const d = evol[c];
+    const label = c.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
+    const vals = [d.bim1, d.cuat1, d.bim3, d.cuat2];
+    const color = v => !v ? '#aaa' : v >= 7 ? '#1a9e5c' : v >= 5 ? '#f0a500' : '#c0392b';
+    return `<tr style="border-top:1px solid #eee">
+      <td style="padding:8px 10px;font-weight:600">${label}</td>
+      ${vals.map(v => `<td style="padding:8px 10px;text-align:center;font-weight:700;color:${color(v)}">${v !== null ? v.toFixed(2) : '—'}</td>`).join('')}
+    </tr>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <p style="font-size:12px;color:#777;margin:0 0 14px 0">Promedio grupal por período — excluye Robótica y Técnicas de Estudio</p>
+    <table style="width:100%;border-collapse:collapse;max-width:600px">
+      <thead>
+        <tr style="background:#1a9e5c;color:#fff;font-size:12px">
+          <th style="padding:8px 10px;text-align:left">Curso</th>
+          <th style="padding:8px 10px;text-align:center">1° Bim.</th>
+          <th style="padding:8px 10px;text-align:center">1° Cuat.</th>
+          <th style="padding:8px 10px;text-align:center">3° Bim.</th>
+          <th style="padding:8px 10px;text-align:center">2° Cuat.</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`;
+}
+
+// ── Tab Alumnos en Riesgo ─────────────────────────────────────────
+function renderEstadRiesgo() {
+  const cont  = document.getElementById('estad-tab-riesgo');
+  const asist = _estadDatos.asistenciaPorCurso || [];
+  const academ = _estadDatos.alumnosRiesgoAcad || [];
+
+  // Riesgo asistencia: traer de obtenerAlertasInasistencias (ya existe)
+  // Acá mostramos los dos: asistencia y académico
+  let htmlAcad = '';
+  if (!academ.length) {
+    htmlAcad = '<p style="color:#1a9e5c;font-size:13px">✅ Sin alumnos en riesgo académico.</p>';
+  } else {
+    const filas = academ.map(a => {
+      const label = a.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
+      return `<tr style="border-top:1px solid #eee;font-size:13px">
+        <td style="padding:7px 10px;font-weight:500">${a.nombre}</td>
+        <td style="padding:7px 10px;text-align:center">${label}</td>
+        <td style="padding:7px 10px;text-align:center;color:#c0392b;font-weight:700">${a.materiasAprobadas}/${a.totalMaterias}</td>
+        <td style="padding:7px 10px;text-align:center;color:#555">${a.promGen !== null ? a.promGen.toFixed(2) : '—'}</td>
+      </tr>`;
+    }).join('');
+    htmlAcad = `
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:#c0392b;color:#fff;font-size:12px">
+            <th style="padding:7px 10px;text-align:left">Alumno</th>
+            <th style="padding:7px 10px;text-align:center">Curso</th>
+            <th style="padding:7px 10px;text-align:center">Mat. aprobadas</th>
+            <th style="padding:7px 10px;text-align:center">Prom. general</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  }
+
+  cont.innerHTML = `
+    <div style="margin-bottom:24px">
+      <h4 style="font-size:13px;font-weight:700;margin:0 0 10px 0;color:#c0392b">⚠️ Riesgo Académico — menos del 50% de materias aprobadas</h4>
+      ${htmlAcad}
+    </div>
+    <div>
+      <h4 style="font-size:13px;font-weight:700;margin:0 0 10px 0;color:#f0a500">📅 Riesgo por Asistencia</h4>
+      <p style="font-size:12px;color:#777;margin:0 0 10px 0">Ver sección <b>Seguimiento de Faltas</b> para el detalle completo de inasistencias.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+        ${asist.filter(c => c.enRiesgo > 0).map(c => {
+          const label = c.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
+          return `<div style="border:1px solid #f5c6c6;border-radius:8px;padding:10px;background:#fef9f0">
+            <div style="font-weight:700;font-size:13px">${label}</div>
+            <div style="font-size:12px;color:#f0a500;margin-top:4px">⚠️ ${c.enRiesgo} en riesgo</div>
+            <div style="font-size:12px;color:#c0392b">🔴 ${c.criticos} críticos</div>
+          </div>`;
+        }).join('') || '<p style="color:#1a9e5c;font-size:13px">✅ Sin alumnos en riesgo por asistencia.</p>'}
+      </div>
+    </div>`;
+}
+
+function imprimirEstadisticas() {
+  if (!_estadDatos) { showToast('Cargá las estadísticas primero', '⚠️'); return; }
+  const cont = document.getElementById('estad-tab-' + _estadTabActiva).innerHTML;
+  const ventana = window.open('', '_blank');
+  ventana.document.write(`
+    <html><head><title>Estadísticas ${_estadDatos.anio}</title>
+    <style>
+      body{font-family:Arial,sans-serif;font-size:12px;padding:20px}
+      h2{color:#1a9e5c}table{width:100%;border-collapse:collapse;margin-bottom:14px}
+      th{background:#1a9e5c;color:#fff;padding:6px 8px}td{padding:5px 8px;border-bottom:1px solid #eee}
+      @media print{button{display:none}}
+    </style>
+    </head><body>
+    <h2>Colegio Perito Moreno — Estadísticas ${_estadDatos.anio}</h2>
+    ${cont}
+    </body></html>`);
+  ventana.document.close();
+  ventana.print();
 }
 
 // ── Al entrar a la sección EOE, asegurar que el panel se inicialice ──
