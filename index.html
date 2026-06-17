@@ -10530,7 +10530,7 @@ function initEstadisticas() {
   ['asistencia','notas','evolucion','riesgo'].forEach(t =>
     document.getElementById('estad-tab-'+t).style.display = 'none'
   );
-  callWebApp({ accion: 'obtenerEstadisticas' })
+  callWebApp({ accion: 'obtenerPanelEstadisticas' })
     .then(res => {
       document.getElementById('estad-loading').style.display = 'none';
       if (!res.ok) { showToast('Error al cargar estadísticas', '❌'); return; }
