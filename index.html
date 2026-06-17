@@ -10697,17 +10697,22 @@ function renderEstadEvolucion() {
   const filas = CURSOS.map(c => {
     const d = evol[c];
     const label = c.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-    const vals = [d.bim1, d.cuat1, d.bim3, d.cuat2];
-    const color = v => !v ? '#aaa' : v >= 7 ? '#1a9e5c' : v >= 5 ? '#f0a500' : '#c0392b';
+    const colorPct  = v => v === null ? '#aaa' : v >= 70 ? '#1a9e5c' : v >= 50 ? '#f0a500' : '#c0392b';
+    const colorNota = v => v === null ? '#aaa' : v >= 7 ? '#1a9e5c' : v >= 5 ? '#f0a500' : '#c0392b';
+    const fmtPct  = v => v !== null ? v + '% TEA' : '—';
+    const fmtNota = v => v !== null ? v.toFixed(2) : '—';
     return `<tr style="border-top:1px solid #eee">
       <td style="padding:8px 10px;font-weight:600">${label}</td>
-      ${vals.map(v => `<td style="padding:8px 10px;text-align:center;font-weight:700;color:${color(v)}">${v !== null ? v.toFixed(2) : '—'}</td>`).join('')}
+      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorPct(d.bim1)}">${fmtPct(d.bim1)}</td>
+      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorNota(d.cuat1)}">${fmtNota(d.cuat1)}</td>
+      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorPct(d.bim3)}">${fmtPct(d.bim3)}</td>
+      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorNota(d.cuat2)}">${fmtNota(d.cuat2)}</td>
     </tr>`;
   }).join('');
 
   cont.innerHTML = `
-    <p style="font-size:12px;color:#777;margin:0 0 14px 0">Promedio grupal por período — excluye Robótica y Técnicas de Estudio</p>
-    <table style="width:100%;border-collapse:collapse;max-width:600px">
+    <p style="font-size:12px;color:#777;margin:0 0 14px 0">Bimestres: % de alumnos con TEA (Trayectoria Educativa Aprobada) · Cuatrimestres: promedio numérico · Excluye Robótica y Técnicas de Estudio</p>
+    <table style="width:100%;border-collapse:collapse;max-width:650px">
       <thead>
         <tr style="background:#1a9e5c;color:#fff;font-size:12px">
           <th style="padding:8px 10px;text-align:left">Curso</th>
