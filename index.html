@@ -3381,6 +3381,31 @@ function callWebApp(params) {
       });
     });
 }
+
+// callWebAppPost: igual que callWebApp pero envía los datos por POST (body),
+// para evitar el límite de longitud de URL en GET con payloads grandes
+// (ej: guardar seguimiento de faltas de cursos con muchos alumnos).
+function callWebAppPost(params) {
+  const timeoutMs = 60000;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(BACKEND_URL, {
+    method: 'POST',
+    redirect: 'follow',
+    signal: controller.signal,
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS en Apps Script
+    body: JSON.stringify(params)
+  })
+    .then(res => { clearTimeout(timer); return res.json(); })
+    .catch(err => {
+      clearTimeout(timer);
+      if (err && err.name === 'AbortError') {
+        return { ok: false, error: 'La operación tardó más de lo esperado. Los datos pueden haberse guardado igual — verificá antes de reintentar.' };
+      }
+      return { ok: false, error: 'Error de conexión al guardar.' };
+    });
+}
 // ─────────────────────────────────────────────────────────────────────
 
 const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
@@ -7474,7 +7499,7 @@ function generarCitacion() {
 // ============================================================
 function guardarSeguimiento() {
   const curso = document.getElementById('seg-curso').value;
-  callWebApp({ accion: 'guardarSeguimientoFaltas', curso, datos: _segDatos }).then(res => {
+  callWebAppPost({ accion: 'guardarSeguimientoFaltas', curso, datos: _segDatos }).then(res => {
     if (res.ok) showToast('Seguimiento guardado correctamente', '✅');
     else showToast('Error al guardar: ' + res.error, '❌');
   });
