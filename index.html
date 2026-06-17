@@ -3568,6 +3568,10 @@ function buildBottomNav(role) {
     if (isAdmin || isPreceptor)
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
     if (isAdmin || isPreceptor)
+      items.push({ id: 'exportar-asistencia', icon: '📋', label: 'Exp. Asist.' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'estadisticas', icon: '📈', label: 'Estadíst.' });
+    if (isAdmin || isPreceptor)
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
     if (!isAlumno)
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
@@ -3586,7 +3590,7 @@ function buildBottomNav(role) {
   const inner = document.getElementById('bottom-nav-inner');
   if (!inner) return;
   inner.innerHTML = items.map(item => `
-    <button class="bn-item" id="bn-${item.id}" onclick="${item.id==='agenda'?'crearSeccionAgenda();':''}showSection('${item.id}',null);syncBottomNav('${item.id}')">
+    <button class="bn-item" id="bn-${item.id}" onclick="${item.id==='agenda'?'crearSeccionAgenda();':''}${item.id==='estadisticas'?'initEstadisticas();':''}showSection('${item.id}',null);syncBottomNav('${item.id}')">
       <div class="bn-icon">${item.icon}</div>
       <div class="bn-label">${item.label}</div>
     </button>`).join('');
