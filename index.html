@@ -4287,7 +4287,7 @@ function cargarDashboard() {
 
   // Dashboard alumno: cargar datos de asistencia
   if (isAlumno && currentCursoAlumno) {
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
       if (!res || !res.ok) return;
       const registros = res.registros || [];
       const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'J' || r.estado === 'AM').length;
