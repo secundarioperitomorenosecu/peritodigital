@@ -10864,12 +10864,15 @@ function descargarInformeAlumno() {
 
     // ── Asistencia ──
     const presentes = registros.filter(r => r.estado === 'P').length;
-    const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP').length;
+    const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP' || r.estado === 'J' || r.estado === 'AM').length;
     const tardes    = registros.filter(r => r.estado === 'T').length;
     const retiros   = registros.filter(r => r.estado === 'R').length;
     const diasHab   = registros.length;
-    const presentesTotal = presentes + tardes + retiros; // igual que la app: tardanzas y retiros cuentan como presente
-    const pct       = diasHab > 0 ? Math.round(presentesTotal / diasHab * 100) : 100;
+    const presentesTotal = presentes + tardes + retiros;
+    // Fórmula idéntica al dashboard del alumno
+    const total   = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
+    const inasist = ausentes + (tardes * 0.25) + (retiros * 0.5);
+    const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
     const pctColor  = pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
 
     const novedades = registros.filter(r => r.estado !== 'P');
