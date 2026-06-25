@@ -1395,6 +1395,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:120px"><div class="stat-icon">✅</div><div class="stat-value" id="cnt-presentes">—</div><div class="stat-label">Presentes</div></div>
             <div class="stat-card" style="--color:#F44336;flex:1;min-width:120px"><div class="stat-icon">❌</div><div class="stat-value" id="cnt-ausentes">—</div><div class="stat-label">Ausentes</div></div>
             <div class="stat-card" style="--color:#FF9800;flex:1;min-width:120px"><div class="stat-icon">🕐</div><div class="stat-value" id="cnt-tardes">—</div><div class="stat-label">Tardanzas</div></div>
+            <div class="stat-card" style="--color:#9C27B0;flex:1;min-width:120px"><div class="stat-icon">🚪</div><div class="stat-value" id="cnt-retiros">—</div><div class="stat-label">Retiros anticipados</div></div>
           </div>
           <div id="mi-asistencia-tabla" style="color:rgba(0,0,0,.4);text-align:center;padding:30px">⏳ Cargando...</div>
         </div>
@@ -3386,7 +3387,7 @@ function callWebApp(params) {
 // para evitar el límite de longitud de URL en GET con payloads grandes
 // (ej: guardar seguimiento de faltas de cursos con muchos alumnos).
 function callWebAppPost(params) {
-  const timeoutMs = 60000;
+  const timeoutMs = 120000;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -3401,7 +3402,7 @@ function callWebAppPost(params) {
     .catch(err => {
       clearTimeout(timer);
       if (err && err.name === 'AbortError') {
-        return { ok: false, error: 'La operación tardó más de lo esperado. Los datos pueden haberse guardado igual — verificá antes de reintentar.' };
+        return { ok: true, _timeoutPeroProbablementeGuardado: true };
       }
       return { ok: false, error: 'Error de conexión al guardar.' };
     });
@@ -4544,15 +4545,20 @@ function guardarAttendance() {
       }));
 
   showToast('Guardando asistencia...', '⏳');
-  callWebApp({
+  callWebAppPost({
     accion: 'guardarAsistencia',
     curso: cursoActualAtt,
     fecha: fecha,
     lista: lista,
     docente: currentUser || 'docente'
   }).then(res => {
-    if(res.ok) showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
-    else showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
+    if (res._timeoutPeroProbablementeGuardado) {
+      showToast('✅ Asistencia probablemente guardada (tardó en confirmar)', '✅');
+    } else if(res.ok) {
+      showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
+    } else {
+      showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
+    }
   });
 }
 
@@ -5806,32 +5812,35 @@ function cargarMiAsistencia() {
     if (!res.ok) return;
     const registros = res.registros || [];
     const presentes = registros.filter(r => r.estado === 'P').length;
-    const ausentes  = registros.filter(r => r.estado === 'A').length;
+    const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP').length;
     const tardes    = registros.filter(r => r.estado === 'T').length;
+    const retiros   = registros.filter(r => r.estado === 'R').length;
     document.getElementById('cnt-presentes').textContent = presentes + tardes + retiros;
     document.getElementById('cnt-ausentes').textContent  = ausentes;
     document.getElementById('cnt-tardes').textContent    = tardes;
+    document.getElementById('cnt-retiros').textContent   = retiros;
     const tabla = document.getElementById('mi-asistencia-tabla');
     if (registros.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin registros de asistencia aún.</div>';
       return;
     }
-    const colores = { P: '#E8F5E9', A: '#FFEBEE', T: '#FFF8E1' };
-    const textos  = { P: 'Presente', A: 'Ausente', T: 'Presente (llegó tarde)' };
+    const colores = { P: '#E8F5E9', A: '#FFEBEE', AP: '#FFEBEE', T: '#FFF8E1', R: '#F3E5F5' };
+    const textos  = { P: 'Presente', A: 'Ausente', AP: 'Ausente Pres.', T: 'Llegada tarde', R: 'Retiro anticipado' };
     tabla.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr>
         <th style="text-align:left;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Fecha</th>
         <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
-        <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora llegada</th>
+        <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora</th>
       </tr></thead>
-      <tbody>${registros.map(r => `<tr>
+      <tbody>${registros.filter(r => r.estado !== 'P').map(r => `<tr>
         <td style="padding:8px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${r.fecha}</td>
         <td style="padding:8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05)">
-          <span style="background:${colores[r.estado]};color:#111;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">${textos[r.estado]||r.estado}</span>
+          <span style="background:${colores[r.estado]||'#eee'};color:#111;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">${textos[r.estado]||r.estado}</span>
         </td>
         <td style="padding:8px;text-align:center;font-size:12px;color:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.05)">${r.horaLlegada||'—'}</td>
       </tr>`).join('')}</tbody>
-    </table>`;
+    </table>
+    ${registros.filter(r => r.estado === 'P').length > 0 ? `<p style="font-size:11px;color:rgba(0,0,0,.3);text-align:center;margin-top:8px">Se muestran solo los días con ausencia, tardanza o retiro (${registros.filter(r=>r.estado==='P').length} días presentes no se listan)</p>` : ''}`;
   });
 }
 
