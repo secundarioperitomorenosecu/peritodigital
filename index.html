@@ -5808,7 +5808,7 @@ let currentCursoAlumno = '';
 
 function cargarMiAsistencia() {
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
+  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
     if (!res.ok) return;
     const registros = res.registros || [];
     const presentes = registros.filter(r => r.estado === 'P').length;
@@ -6004,7 +6004,7 @@ function imprimirInforme() {
 
 function cargarMisNotas() {
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
+  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
     const tabla = document.getElementById('mis-notas-tabla');
     if (!res.ok || !res.materias || res.materias.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin calificaciones cargadas aún.</div>';
