@@ -1405,7 +1405,10 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     <!-- MIS NOTAS (alumno) -->
     <div id="sec-mis-notas" class="section">
       <div class="panel">
-        <div class="panel-header"><h3>📊 Mis Notas</h3></div>
+        <div class="panel-header" style="justify-content:space-between">
+          <h3>📊 Mis Notas</h3>
+          <button onclick="descargarInformeAlumno()" style="padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📄 Descargar Informe</button>
+        </div>
         <div class="panel-body">
           <div id="mis-notas-tabla" style="color:rgba(0,0,0,.4);text-align:center;padding:30px">⏳ Cargando...</div>
         </div>
@@ -10838,6 +10841,172 @@ function imprimirEstadisticas() {
     </body></html>`);
   ventana.document.close();
   ventana.print();
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  INFORME ALUMNO — NOTAS + ASISTENCIA (descargable como HTML/PDF)
+// ════════════════════════════════════════════════════════════════════
+
+function descargarInformeAlumno() {
+  const nombre  = currentNombre || currentUser;
+  const curso   = currentCursoAlumno || '—';
+  const hoy     = new Date().toLocaleDateString('es-AR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const logoUrl = 'https://secundarioperitomorenosecu.github.io/peritodigital/logo.png';
+
+  showToast('Generando informe...', '⏳');
+
+  Promise.all([
+    callWebApp({ accion: 'obtenerNotasAlumno',      legajo: currentUser, curso, nombre }),
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre })
+  ]).then(([resNotas, resAsist]) => {
+    const materias  = resNotas.materias  || [];
+    const registros = resAsist.registros || [];
+
+    // ── Asistencia ──
+    const presentes = registros.filter(r => r.estado === 'P').length;
+    const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP').length;
+    const tardes    = registros.filter(r => r.estado === 'T').length;
+    const retiros   = registros.filter(r => r.estado === 'R').length;
+    const diasHab   = registros.length;
+    const pct       = diasHab > 0 ? Math.round((presentes + tardes + retiros) / diasHab * 100) : 100;
+    const pctColor  = pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
+
+    const novedades = registros.filter(r => r.estado !== 'P');
+    const estadoLabel = { A:'Ausente', AP:'Ausente Pres.', T:'Llegada tarde', R:'Retiro anticipado' };
+    const estadoColor = { A:'#c0392b', AP:'#c0392b', T:'#b8860b', R:'#7d3c98' };
+
+    const filasAsist = novedades.length
+      ? novedades.map(r => `
+          <tr>
+            <td>${r.fecha}</td>
+            <td style="color:${estadoColor[r.estado]||'#333'};font-weight:700">${estadoLabel[r.estado]||r.estado}</td>
+            <td>${r.horaLlegada || '—'}</td>
+          </tr>`).join('')
+      : '<tr><td colspan="3" style="text-align:center;color:#aaa">Sin novedades de asistencia</td></tr>';
+
+    // ── Notas ──
+    const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
+    const esBim    = [true, false, true, false, false, false];
+    const colPer   = ['#1565C0','#2E7D32','#6A1B9A','#C0131A','#E65100','#E65100'];
+
+    const expandTEA = v => {
+      if (v === 'TEA') return '<span style="color:#2E7D32;font-weight:700">TEA</span>';
+      if (v === 'TEP') return '<span style="color:#F57F17;font-weight:700">TEP</span>';
+      if (v === 'TED') return '<span style="color:#c0392b;font-weight:700">TED</span>';
+      return v || '—';
+    };
+
+    const filasNotas = materias.length
+      ? materias.map(m => {
+          const vals = [m.bim1, m.cuat1, m.bim3, m.cuat2, m.dic, m.feb];
+          const estColor = m.estadoFinal === 'Promovido' ? '#2E7D32' : m.estadoFinal === 'Adeuda' ? '#c0392b' : '#b8860b';
+          return `<tr>
+            <td style="font-weight:600;text-align:left;padding:7px 10px">${m.materia}</td>
+            ${vals.map((v,i) => `<td style="text-align:center;padding:7px 6px">${esBim[i] ? expandTEA(v) : (v||'—')}</td>`).join('')}
+            <td style="text-align:center;color:${estColor};font-weight:700;padding:7px 10px">${m.estadoFinal||'—'}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:16px">Sin calificaciones cargadas aún</td></tr>';
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Informe de ${nombre}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 24px; max-width: 800px; margin: 0 auto; }
+  .header { display: flex; align-items: center; gap: 16px; border-bottom: 3px solid #1a9e5c; padding-bottom: 16px; margin-bottom: 20px; }
+  .header img { width: 70px; height: 70px; object-fit: contain; }
+  .header-text h1 { font-size: 16px; color: #1a9e5c; margin-bottom: 2px; }
+  .header-text p { font-size: 12px; color: #777; }
+  .alumno-info { background: #f0faf5; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; gap: 24px; flex-wrap: wrap; }
+  .alumno-info div { font-size: 13px; } .alumno-info strong { color: #1a9e5c; }
+  h2 { font-size: 14px; color: #1a9e5c; margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #e0f2e9; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  th { background: #1a9e5c; color: #fff; padding: 7px 8px; font-size: 11px; text-align: center; }
+  th:first-child { text-align: left; }
+  td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 12px; text-align: center; }
+  td:first-child { text-align: left; }
+  tr:nth-child(even) { background: #f7faf8; }
+  .resumen-asist { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .badge { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; min-width: 80px; }
+  .ref { font-size: 11px; color: #777; margin-top: 10px; padding: 10px; background: #f7faf8; border-left: 3px solid #1a9e5c; border-radius: 0 6px 6px 0; line-height: 1.8; }
+  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #eee; font-size: 11px; color: #aaa; text-align: center; }
+  @media print { body { padding: 12px; } button { display: none; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <img src="${logoUrl}" alt="Logo Colegio Perito Moreno" onerror="this.style.display='none'">
+    <div class="header-text">
+      <h1>Colegio Secundario "Perito Moreno"</h1>
+      <p>Informe académico y de asistencia — ${hoy}</p>
+    </div>
+  </div>
+
+  <div class="alumno-info">
+    <div><strong>Alumno/a:</strong> ${nombre}</div>
+    <div><strong>Curso:</strong> ${curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2')}</div>
+    <div><strong>% Asistencia:</strong> <span style="color:${pctColor};font-weight:700">${pct}%</span></div>
+  </div>
+
+  <h2>📊 Calificaciones</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Materia</th>
+        ${periodos.map((p,i) => `<th style="background:${colPer[i]}">${p}</th>`).join('')}
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>${filasNotas}</tbody>
+  </table>
+  <div class="ref">
+    <strong style="color:#1a9e5c">Referencia bimestral:</strong>
+    <span style="color:#2E7D32;font-weight:700">TEA</span> Trayecto Alcanzado &nbsp;|&nbsp;
+    <span style="color:#F57F17;font-weight:700">TEP</span> Trayecto en Proceso &nbsp;|&nbsp;
+    <span style="color:#c0392b;font-weight:700">TED</span> Trayecto Discontinuo
+  </div>
+
+  <h2>📅 Asistencia</h2>
+  <div class="resumen-asist">
+    <div class="badge" style="background:#d8f3dc;color:#1a7a44">✅ ${presentes}<br><span style="font-weight:400;font-size:10px">Presentes</span></div>
+    <div class="badge" style="background:#fef0f0;color:#c0392b">❌ ${ausentes}<br><span style="font-weight:400;font-size:10px">Ausentes</span></div>
+    <div class="badge" style="background:#fffbe6;color:#b8860b">🕐 ${tardes}<br><span style="font-weight:400;font-size:10px">Tardanzas</span></div>
+    <div class="badge" style="background:#f3e5f5;color:#7d3c98">🚪 ${retiros}<br><span style="font-weight:400;font-size:10px">Retiros</span></div>
+    <div class="badge" style="background:#e8e8e8;color:#555">📅 ${diasHab}<br><span style="font-weight:400;font-size:10px">Días hábiles</span></div>
+  </div>
+  <table>
+    <thead>
+      <tr><th style="text-align:left">Fecha</th><th>Estado</th><th>Hora</th></tr>
+    </thead>
+    <tbody>${filasAsist}</tbody>
+  </table>
+
+  <div class="footer">
+    Informe generado por Perito Digital · ${hoy} · Este documento es de carácter informativo
+  </div>
+
+  <div style="text-align:center;margin-top:16px">
+    <button onclick="window.print()" style="padding:10px 24px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">🖨️ Imprimir / Guardar como PDF</button>
+  </div>
+</body>
+</html>`;
+
+    // Descargar como archivo HTML
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `Informe_${nombre.replace(/[^a-zA-Z0-9]/g,'_')}_${curso}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast('Informe descargado', '✅');
+  }).catch(() => showToast('Error al generar el informe', '❌'));
 }
 
 // ── Al entrar a la sección EOE, asegurar que el panel se inicialice ──
