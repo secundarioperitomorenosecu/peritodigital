@@ -10868,7 +10868,8 @@ function descargarInformeAlumno() {
     const tardes    = registros.filter(r => r.estado === 'T').length;
     const retiros   = registros.filter(r => r.estado === 'R').length;
     const diasHab   = registros.length;
-    const pct       = diasHab > 0 ? Math.round((presentes + tardes + retiros) / diasHab * 100) : 100;
+    const presentesTotal = presentes + tardes + retiros; // igual que la app: tardanzas y retiros cuentan como presente
+    const pct       = diasHab > 0 ? Math.round(presentesTotal / diasHab * 100) : 100;
     const pctColor  = pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
 
     const novedades = registros.filter(r => r.estado !== 'P');
@@ -10972,7 +10973,7 @@ function descargarInformeAlumno() {
 
   <h2>📅 Asistencia</h2>
   <div class="resumen-asist">
-    <div class="badge" style="background:#d8f3dc;color:#1a7a44">✅ ${presentes}<br><span style="font-weight:400;font-size:10px">Presentes</span></div>
+    <div class="badge" style="background:#d8f3dc;color:#1a7a44">✅ ${presentesTotal}<br><span style="font-weight:400;font-size:10px">Presentes</span></div>
     <div class="badge" style="background:#fef0f0;color:#c0392b">❌ ${ausentes}<br><span style="font-weight:400;font-size:10px">Ausentes</span></div>
     <div class="badge" style="background:#fffbe6;color:#b8860b">🕐 ${tardes}<br><span style="font-weight:400;font-size:10px">Tardanzas</span></div>
     <div class="badge" style="background:#f3e5f5;color:#7d3c98">🚪 ${retiros}<br><span style="font-weight:400;font-size:10px">Retiros</span></div>
