@@ -4292,7 +4292,7 @@ function buildGrades(){
   if (!tb) return;
   const selPeriodo = document.getElementById('cal-periodo');
   const periodo = selPeriodo ? selPeriodo.value : '1BIM';
-  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a => a.nombre) : [];
+  const lista = alumnosCalificaciones.length > 0 ? alumnosCalificaciones.map(a => a.nombre) : [];
   if (lista.length === 0) {
     tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>';
     return;
