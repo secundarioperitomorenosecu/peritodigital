@@ -545,12 +545,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
-      <div class="nav-item" id="nav-exportar-asistencia" onclick="showSection('exportar-asistencia',this)" style="display:none"><span class="nav-icon">📋</span> Exportar Asistencia</div>
-      <div class="nav-item" id="nav-estadisticas" onclick="showSection('estadisticas',this);initEstadisticas()" style="display:none"><span class="nav-icon">📈</span> Estadísticas</div>
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
-      <div class="nav-item" id="nav-solicitudes-docentes" onclick="showSection('solicitudes-docentes',this);initSolicitudesDocentes()" style="display:none"><span class="nav-icon">📝</span> Solicitudes Docentes</div>
       <div class="nav-item" id="nav-agenda" onclick="crearSeccionAgenda();showSection('agenda',this)" style="display:none"><span class="nav-icon">📓</span> Agenda Directiva</div>
     </div>
     <div class="sidebar-footer">
@@ -1395,7 +1392,6 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:120px"><div class="stat-icon">✅</div><div class="stat-value" id="cnt-presentes">—</div><div class="stat-label">Presentes</div></div>
             <div class="stat-card" style="--color:#F44336;flex:1;min-width:120px"><div class="stat-icon">❌</div><div class="stat-value" id="cnt-ausentes">—</div><div class="stat-label">Ausentes</div></div>
             <div class="stat-card" style="--color:#FF9800;flex:1;min-width:120px"><div class="stat-icon">🕐</div><div class="stat-value" id="cnt-tardes">—</div><div class="stat-label">Tardanzas</div></div>
-            <div class="stat-card" style="--color:#9C27B0;flex:1;min-width:120px"><div class="stat-icon">🚪</div><div class="stat-value" id="cnt-retiros">—</div><div class="stat-label">Retiros anticipados</div></div>
           </div>
           <div id="mi-asistencia-tabla" style="color:rgba(0,0,0,.4);text-align:center;padding:30px">⏳ Cargando...</div>
         </div>
@@ -1405,10 +1401,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     <!-- MIS NOTAS (alumno) -->
     <div id="sec-mis-notas" class="section">
       <div class="panel">
-        <div class="panel-header" style="justify-content:space-between">
-          <h3>📊 Mis Notas</h3>
-          <button onclick="descargarInformeAlumno()" style="padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">📄 Descargar Informe</button>
-        </div>
+        <div class="panel-header"><h3>📊 Mis Notas</h3></div>
         <div class="panel-body">
           <div id="mis-notas-tabla" style="color:rgba(0,0,0,.4);text-align:center;padding:30px">⏳ Cargando...</div>
         </div>
@@ -2392,39 +2385,6 @@ function audRegistrarTodos() {
       Seleccioná un curso y un período para generar el informe.
     </p>
   </div>
-
-  <!-- ── Mejores Promedios ────────────────────────────────────────── -->
-  <div style="padding:0 16px 24px">
-    <div style="border-top:1px solid var(--color-border-secondary);padding-top:20px;margin-top:4px">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
-        <div>
-          <h3 style="font-size:15px;font-weight:600;margin:0 0 2px 0">🏆 Mejores Promedios Generales</h3>
-          <p style="font-size:12px;color:var(--color-text-secondary);margin:0">Ranking por curso · Excluye Robótica y Técnicas de Estudio · Solo materias con ambos cuatrimestres ≥ 7</p>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:11px;font-weight:600;color:#888;margin-right:2px">5° y 6°:</span>
-          <button onclick="generarMejoresPromedios('5A','5B')" style="padding:6px 12px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📊 5°A + 5°B</button>
-          <button onclick="generarMejoresPromedios('6A','6B')" style="padding:6px 12px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📊 6°A + 6°B</button>
-          <button onclick="generarPromediosCurso('5A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">5°A</button>
-          <button onclick="generarPromediosCurso('5B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">5°B</button>
-          <button onclick="generarPromediosCurso('6A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">6°A</button>
-          <button onclick="generarPromediosCurso('6B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">6°B</button>
-          <span style="font-size:11px;font-weight:600;color:#888;margin-left:4px;margin-right:2px">1° a 4°:</span>
-          <button onclick="generarPromediosCurso('1A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">1°A</button>
-          <button onclick="generarPromediosCurso('1B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">1°B</button>
-          <button onclick="generarPromediosCurso('2A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">2°A</button>
-          <button onclick="generarPromediosCurso('2B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">2°B</button>
-          <button onclick="generarPromediosCurso('3A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">3°A</button>
-          <button onclick="generarPromediosCurso('3B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">3°B</button>
-          <button onclick="generarPromediosCurso('4A')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">4°A</button>
-          <button onclick="generarPromediosCurso('4B')" style="padding:6px 12px;background:#2d7dd2;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">4°B</button>
-          <button id="btn-imprimir-promedios" onclick="imprimirMejoresPromedios()" style="display:none;padding:6px 12px;border:1px solid #c8e6d4;border-radius:var(--border-radius-md);background:#e8f4ed;color:#1a9e5c;font-size:12px;cursor:pointer;font-family:inherit">🖨️ Imprimir</button>
-        </div>
-      </div>
-      <div id="mejores-promedios-loading" style="display:none;text-align:center;padding:24px;color:#888;font-size:13px">Calculando promedios...</div>
-      <div id="mejores-promedios-contenido"></div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -2639,235 +2599,6 @@ function infExportarPDF() {
 }
 </script>
 
-
-<div id="sec-solicitudes-docentes" class="section">
-  <div class="panel" style="margin-bottom:16px">
-    <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <h3>📝 Solicitudes Docentes</h3>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <button class="btn btn-sm" id="btn-nueva-solicitud" onclick="abrirFormSolicitud()" style="display:none">+ Nueva Solicitud</button>
-        <button class="btn btn-sm" id="btn-config-fechas-calif" onclick="abrirConfigFechasCalif()" style="display:none;background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c">⚙️ Fechas Planillas</button>
-        <button class="btn btn-sm" id="btn-informe-solicitudes" onclick="abrirInformeSolicitudes()" style="display:none;background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c">📄 Informe por Docente</button>
-        <button class="btn btn-sm" onclick="initSolicitudesDocentes()" style="background:#e8f4ed;border:1px solid #c8e6d4;color:#1a9e5c">🔄 Actualizar</button>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px 0">
-      <button class="sol-filtro-btn active" onclick="filtrarSolicitudes('todos',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #c8e6d4;background:#e8f4ed;color:#1a9e5c;font-size:12px;font-weight:600;cursor:pointer">Todas</button>
-      <button class="sol-filtro-btn" onclick="filtrarSolicitudes('Pendiente',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #f0c040;background:#fffbe6;color:#b8860b;font-size:12px;font-weight:600;cursor:pointer">⏳ Pendientes</button>
-      <button class="sol-filtro-btn" onclick="filtrarSolicitudes('Vencido',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #f5c6c6;background:#fef0f0;color:#c0392b;font-size:12px;font-weight:600;cursor:pointer">🔴 Vencidas</button>
-      <button class="sol-filtro-btn" onclick="filtrarSolicitudes('Entregado',this)" style="padding:4px 14px;border-radius:20px;border:1px solid #b7e4c7;background:#d8f3dc;color:#1a7a44;font-size:12px;font-weight:600;cursor:pointer">✅ Entregadas</button>
-    </div>
-    <div id="sol-loading" style="text-align:center;padding:32px;color:#888;font-size:14px">Cargando...</div>
-    <div id="sol-lista" style="display:none"></div>
-    <div id="sol-empty" style="display:none;text-align:center;padding:32px;color:#aaa;font-size:14px">Sin solicitudes para mostrar.</div>
-  </div>
-</div>
-
-<!-- Modal: Nueva Solicitud -->
-<div id="modal-nueva-solicitud" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;width:min(540px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0;font-size:16px;color:#1a1a1a">Nueva Solicitud</h3>
-      <button onclick="cerrarModalSolicitud()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
-    </div>
-    <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Tipo de solicitud *</label>
-    <select id="sol-tipo" onchange="onChangeTipoSolicitud(this.value)" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">
-      <option value="">— Seleccionar —</option>
-      <option value="Declaración de incompatibilidad">Declaración de incompatibilidad</option>
-      <option value="Planificación anual">Planificación anual</option>
-      <option value="Actividades de continuidad pedagógica">Actividades de continuidad pedagógica</option>
-      <option value="Actividades de continuidad pedagógica (casos especiales)">Actividades de continuidad pedagógica (casos especiales)</option>
-      <option value="Preparación de actos escolares">Preparación de actos escolares</option>
-      <option value="Proyectos">Proyectos</option>
-      <option value="Otras">Otras (a especificar)</option>
-      <option value="Copia de DNI actualizado">Copia de DNI actualizado</option>
-      <option value="Psicofísico actualizado">Psicofísico actualizado</option>
-      <option value="Planillas de Calificaciones">Planillas de Calificaciones</option>
-      <option value="Entrega de certificados en caso de ausencia">Entrega de certificados en caso de ausencia</option>
-    </select>
-    <div id="sol-desc-wrap" style="display:none;margin-bottom:12px">
-      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Especificar *</label>
-      <input id="sol-descripcion" type="text" placeholder="Describir la solicitud..." style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
-    </div>
-    <div id="sol-planilla-wrap" style="display:none;margin-bottom:12px">
-      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha de entrega (Planillas) *</label>
-      <select id="sol-planilla-fecha" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-        <option value="">— Seleccionar entrega —</option>
-      </select>
-    </div>
-    <div id="sol-venc-wrap" style="margin-bottom:12px">
-      <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha de vencimiento *</label>
-      <input id="sol-vencimiento" type="date" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
-    </div>
-    <label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Destinatarios *</label>
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
-        <input type="radio" name="sol-dest-tipo" value="todos" checked onchange="onChangeDestTipo(this.value)"> Todos los docentes
-      </label>
-      <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
-        <input type="radio" name="sol-dest-tipo" value="seleccion" onchange="onChangeDestTipo(this.value)"> Seleccionar docentes
-      </label>
-    </div>
-    <div id="sol-dest-lista" style="display:none;max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;padding:8px;margin-bottom:12px;font-size:13px">
-      <div style="color:#aaa;text-align:center;padding:8px">Cargando docentes...</div>
-    </div>
-    <div id="sol-modal-error" style="display:none;background:#fef0f0;border:1px solid #f5c6c6;border-radius:8px;padding:8px 12px;font-size:12px;color:#c0392b;margin-bottom:10px"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-      <button onclick="cerrarModalSolicitud()" style="padding:8px 18px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer">Cancelar</button>
-      <button onclick="guardarSolicitud()" style="padding:8px 18px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Crear Solicitud</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Detalle cumplimientos (admin) -->
-<!-- Modal: Notificación RITE antes de descargar -->
-<div id="modal-notif-rite" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:16px;width:min(520px,94vw);padding:32px 28px;box-shadow:0 12px 50px rgba(0,0,0,.25);text-align:center">
-    <div style="font-size:48px;margin-bottom:12px">📋</div>
-    <h2 style="font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:16px">Notificación Institucional</h2>
-    <div style="background:#f0faf5;border:2px solid #1a9e5c;border-radius:12px;padding:20px 24px;margin-bottom:20px">
-      <p style="font-size:14px;color:#1a1a1a;line-height:1.7;font-weight:500">
-        A partir de este momento usted está notificado/a de las inasistencias y calificaciones de
-        <strong id="rite-nombre-alumno" style="color:#1a9e5c;font-size:15px"></strong>.
-      </p>
-      <p style="font-size:12px;color:#777;margin-top:12px;line-height:1.6">
-        Este registro quedará asentado en el sistema institucional del Colegio Secundario "Perito Moreno"
-        con fecha y hora de acceso.
-      </p>
-    </div>
-    <div style="margin-bottom:20px">
-      <div style="font-size:13px;color:#888;margin-bottom:8px">El informe se descargará en</div>
-      <div id="rite-countdown" style="font-size:42px;font-weight:700;color:#1a9e5c;line-height:1">30</div>
-      <div style="font-size:12px;color:#aaa;margin-top:4px">segundos</div>
-      <div style="margin-top:12px;background:#eee;border-radius:10px;height:8px;overflow:hidden">
-        <div id="rite-progress" style="height:100%;background:#1a9e5c;border-radius:10px;width:100%;transition:width 1s linear"></div>
-      </div>
-    </div>
-    <button onclick="saltarEsperaRITE()" style="padding:10px 28px;background:#1a9e5c;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
-      Entendido — Descargar ahora
-    </button>
-  </div>
-</div>
-
-<div id="modal-detalle-solicitud" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;width:min(640px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h3 id="modal-det-titulo" style="margin:0;font-size:15px;color:#1a1a1a">Detalle de Solicitud</h3>
-      <button onclick="document.getElementById('modal-detalle-solicitud').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
-    </div>
-    <div id="modal-det-info" style="font-size:13px;color:#555;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #eee"></div>
-    <div id="modal-det-lista" style="font-size:13px"></div>
-  </div>
-</div>
-
-<!-- Modal: Config fechas Planillas -->
-<div id="modal-config-fechas" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;width:min(520px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0;font-size:15px">⚙️ Fechas de entrega — Planillas de Calificaciones</h3>
-      <button onclick="document.getElementById('modal-config-fechas').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
-    </div>
-    <p style="font-size:12px;color:#777;margin:0 0 14px 0">Configurá las 6 fechas de entrega de planillas al inicio de cada año.</p>
-    <div id="config-fechas-campos"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-      <button onclick="document.getElementById('modal-config-fechas').style.display='none'" style="padding:8px 18px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:13px;cursor:pointer">Cancelar</button>
-      <button onclick="guardarConfigFechas()" style="padding:8px 18px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Guardar Fechas</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Informe por docente -->
-<div id="modal-informe-sol" style="display:none;position:fixed;inset:0;z-index:9300;background:rgba(0,0,0,.45);align-items:center;justify-content:center">
-  <div style="background:#fff;border-radius:14px;width:min(600px,96vw);max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.18)">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <h3 style="margin:0;font-size:15px">📄 Informe por Docente</h3>
-      <button onclick="document.getElementById('modal-informe-sol').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <select id="informe-sol-docente" style="flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-        <option value="">— Seleccionar docente —</option>
-      </select>
-      <button onclick="generarInformeSolicitudes()" style="padding:8px 16px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Ver</button>
-      <button onclick="imprimirInformeSolicitudes()" style="padding:8px 12px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:13px;cursor:pointer">🖨️</button>
-    </div>
-    <div id="informe-sol-contenido"></div>
-  </div>
-</div>
-
-<div id="sec-exportar-asistencia" class="section">
-  <div class="panel" style="margin-bottom:16px">
-    <div class="panel-header">
-      <h3>📋 Exportar Asistencia</h3>
-    </div>
-
-    <!-- Filtros -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;padding:16px;border-bottom:1px solid #eee">
-      <div>
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Curso *</label>
-        <select id="ea-curso" onchange="eaCursoChange()" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-          <option value="">— Seleccionar —</option>
-          <option value="1A">1° A</option><option value="1B">1° B</option>
-          <option value="2A">2° A</option><option value="2B">2° B</option>
-          <option value="3A">3° A</option><option value="3B">3° B</option>
-          <option value="4A">4° A</option><option value="4B">4° B</option>
-          <option value="5A">5° A</option><option value="5B">5° B</option>
-          <option value="6A">6° A</option><option value="6B">6° B</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Alumno (opcional)</label>
-        <select id="ea-alumno" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-          <option value="">Todos los alumnos</option>
-        </select>
-      </div>
-      <div>
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha desde *</label>
-        <input type="date" id="ea-desde" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
-      </div>
-      <div>
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha hasta *</label>
-        <input type="date" id="ea-hasta" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box">
-      </div>
-    </div>
-    <div style="padding:12px 16px;display:flex;gap:8px;align-items:center">
-      <button onclick="generarExportAsistencia()" style="padding:8px 20px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Generar informe</button>
-      <button id="ea-btn-imprimir" onclick="imprimirExportAsistencia()" style="display:none;padding:8px 14px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:13px;cursor:pointer;font-family:inherit">🖨️ Imprimir / PDF</button>
-      <span id="ea-error" style="font-size:12px;color:#c0392b;display:none"></span>
-    </div>
-
-    <div id="ea-loading" style="display:none;text-align:center;padding:32px;color:#888;font-size:13px">Generando informe...</div>
-    <div id="ea-contenido" style="padding:0 16px 24px"></div>
-  </div>
-</div>
-
-<div id="sec-estadisticas" class="section">
-  <div class="panel" style="margin-bottom:16px">
-    <div class="panel-header" style="justify-content:space-between">
-      <h3>📈 Panel de Estadísticas</h3>
-      <div style="display:flex;gap:8px">
-        <button onclick="initEstadisticas()" style="padding:6px 14px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:12px;cursor:pointer">🔄 Actualizar</button>
-        <button onclick="imprimirEstadisticas()" style="padding:6px 14px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:12px;cursor:pointer">🖨️ Imprimir</button>
-      </div>
-    </div>
-
-    <!-- Pestañas -->
-    <div style="display:flex;gap:0;border-bottom:2px solid #e8e8e8;margin:0 0 0 0;padding:0 16px">
-      <button class="estad-tab active" onclick="switchEstadTab('asistencia',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#1a9e5c;border-bottom:2px solid #1a9e5c;margin-bottom:-2px;cursor:pointer;font-family:inherit">📅 Asistencia</button>
-      <button class="estad-tab" onclick="switchEstadTab('notas',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">📚 Notas por Materia</button>
-      <button class="estad-tab" onclick="switchEstadTab('evolucion',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">📈 Evolución</button>
-      <button class="estad-tab" onclick="switchEstadTab('riesgo',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">⚠️ Alumnos en Riesgo</button>
-      <button class="estad-tab" onclick="switchEstadTab('descargas',this)" style="padding:10px 16px;border:none;background:none;font-size:13px;font-weight:600;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">📥 Descargas RITE</button>
-    </div>
-
-    <div id="estad-loading" style="display:none;text-align:center;padding:48px;color:#888;font-size:13px">Calculando estadísticas...</div>
-
-    <div id="estad-tab-asistencia" style="padding:20px 16px"></div>
-    <div id="estad-tab-notas"      style="padding:20px 16px;display:none"></div>
-    <div id="estad-tab-evolucion"  style="padding:20px 16px;display:none"></div>
-    <div id="estad-tab-riesgo"     style="padding:20px 16px;display:none"></div>
-    <div id="estad-tab-descargas"  style="padding:20px 16px;display:none"></div>
-  </div>
-</div>
 
 <div id="sec-dias-no-lectivos" class="section">
   <div style="padding:16px 16px 0">
@@ -3416,31 +3147,6 @@ function callWebApp(params) {
       });
     });
 }
-
-// callWebAppPost: igual que callWebApp pero envía los datos por POST (body),
-// para evitar el límite de longitud de URL en GET con payloads grandes
-// (ej: guardar seguimiento de faltas de cursos con muchos alumnos).
-function callWebAppPost(params) {
-  const timeoutMs = 120000;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  return fetch(BACKEND_URL, {
-    method: 'POST',
-    redirect: 'follow',
-    signal: controller.signal,
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS en Apps Script
-    body: JSON.stringify(params)
-  })
-    .then(res => { clearTimeout(timer); return res.json(); })
-    .catch(err => {
-      clearTimeout(timer);
-      if (err && err.name === 'AbortError') {
-        return { ok: true, _timeoutPeroProbablementeGuardado: true };
-      }
-      return { ok: false, error: 'Error de conexión al guardar.' };
-    });
-}
 // ─────────────────────────────────────────────────────────────────────
 
 const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
@@ -3628,10 +3334,6 @@ function buildBottomNav(role) {
     if (isAdmin || isPreceptor)
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
     if (isAdmin || isPreceptor)
-      items.push({ id: 'exportar-asistencia', icon: '📋', label: 'Exp. Asist.' });
-    if (isAdmin || isPreceptor)
-      items.push({ id: 'estadisticas', icon: '📈', label: 'Estadíst.' });
-    if (isAdmin || isPreceptor)
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
     if (!isAlumno)
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
@@ -3650,7 +3352,7 @@ function buildBottomNav(role) {
   const inner = document.getElementById('bottom-nav-inner');
   if (!inner) return;
   inner.innerHTML = items.map(item => `
-    <button class="bn-item" id="bn-${item.id}" onclick="${item.id==='agenda'?'crearSeccionAgenda();':''}${item.id==='estadisticas'?'initEstadisticas();':''}showSection('${item.id}',null);syncBottomNav('${item.id}')">
+    <button class="bn-item" id="bn-${item.id}" onclick="${item.id==='agenda'?'crearSeccionAgenda();':''}showSection('${item.id}',null);syncBottomNav('${item.id}')">
       <div class="bn-icon">${item.icon}</div>
       <div class="bn-label">${item.label}</div>
     </button>`).join('');
@@ -3737,10 +3439,6 @@ function doLogin(name, role, usuario, res){
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navInf = document.getElementById('nav-informe-materias');
   if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
-  const navExpAsist = document.getElementById('nav-exportar-asistencia');
-  if (navExpAsist) navExpAsist.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
-  const navEstad = document.getElementById('nav-estadisticas');
-  if (navEstad) navEstad.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navDnl = document.getElementById('nav-dias-no-lectivos');
   if (navDnl) navDnl.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navBib = document.getElementById('nav-biblioteca');
@@ -3750,10 +3448,6 @@ function doLogin(name, role, usuario, res){
   setTimeout(function(){ if(typeof actualizarBadgeMensajes==='function') actualizarBadgeMensajes(); }, 1500);
   const navAg = document.getElementById('nav-agenda');
   if (navAg) navAg.style.display = isAdmin ? 'flex' : 'none';
-  const navSolDoc = document.getElementById('nav-solicitudes-docentes');
-  if (navSolDoc) navSolDoc.style.display = (isAdmin || isDocente) ? 'flex' : 'none';
-  const btnBuscador = document.getElementById('buscador-global-btn');
-  if (btnBuscador) btnBuscador.style.display = (isAdmin || isDocente || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
   ['nav-mi-asistencia','nav-mis-notas'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'flex' : 'none');
@@ -4321,7 +4015,7 @@ function cargarDashboard() {
 
   // Dashboard alumno: cargar datos de asistencia
   if (isAlumno && currentCursoAlumno) {
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
       if (!res || !res.ok) return;
       const registros = res.registros || [];
       const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'J' || r.estado === 'AM').length;
@@ -4387,7 +4081,8 @@ function cargarDashboard() {
 
 let cursoActualAtt = '3°B';
 let tardyTimes = {};
-let alumnosActuales = []; // alumnos reales cargados desde Sheets
+let alumnosActuales = []; // alumnos reales para ASISTENCIA
+let alumnosCalificaciones = []; // alumnos reales para CALIFICACIONES (variable separada para no pisarse)
 
 function cambiarCursoAtt(el, curso) {
   document.querySelectorAll('#sec-asistencia .curso-chip').forEach(c => c.classList.remove('active'));
@@ -4579,20 +4274,15 @@ function guardarAttendance() {
       }));
 
   showToast('Guardando asistencia...', '⏳');
-  callWebAppPost({
+  callWebApp({
     accion: 'guardarAsistencia',
     curso: cursoActualAtt,
     fecha: fecha,
     lista: lista,
     docente: currentUser || 'docente'
   }).then(res => {
-    if (res._timeoutPeroProbablementeGuardado) {
-      showToast('✅ Asistencia probablemente guardada (tardó en confirmar)', '✅');
-    } else if(res.ok) {
-      showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
-    } else {
-      showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
-    }
+    if(res.ok) showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
+    else showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
   });
 }
 
@@ -4716,9 +4406,9 @@ function onCalFinalChange(i) {
 function cargarAlumnosCalificaciones() {
   const curso = document.getElementById('cal-curso').value;
   if (!curso) return;
-  alumnosActuales = [];
+  alumnosCalificaciones = [];
   callWebApp({ accion: 'obtenerAsistencia', curso, fecha: fechaHoy() }).then(res => {
-    if (res.ok && res.alumnos) { alumnosActuales = res.alumnos; }
+    if (res.ok && res.alumnos) { alumnosCalificaciones = res.alumnos; }
     buildGrades();
     cargarCalificacionesExistentes();
   });
@@ -4729,7 +4419,7 @@ function cargarCalificacionesExistentes() {
   const curso   = document.getElementById('cal-curso').value;
   const materia = document.getElementById('cal-materia').value;
   const periodo = document.getElementById('cal-periodo').value;
-  if (!curso || !materia || alumnosActuales.length === 0) return;
+  if (!curso || !materia || alumnosCalificaciones.length === 0) return;
 
   callWebApp({ accion: 'obtenerCalificaciones', curso, materia, anio: new Date().getFullYear() }).then(res => {
     if (!res || !res.ok || !res.calificaciones.length) return;
@@ -4742,7 +4432,7 @@ function cargarCalificacionesExistentes() {
       '2CUAT':'cuat2', 'DIC':'dic', 'FEB':'feb'
     }[periodo];
 
-    alumnosActuales.forEach((a, i) => {
+    alumnosCalificaciones.forEach((a, i) => {
       const datos = mapaNotas[a.legajo];
       if (!datos) return;
       const val = datos[colPeriodo];
@@ -4770,17 +4460,17 @@ function guardarCalificaciones() {
 
   if (!curso)   { showToast('Seleccioná un curso','⚠️'); return; }
   if (!materia) { showToast('Seleccioná la materia','⚠️'); return; }
-  if (alumnosActuales.length === 0) { showToast('No hay alumnos cargados','⚠️'); return; }
+  if (alumnosCalificaciones.length === 0) { showToast('No hay alumnos cargados','⚠️'); return; }
 
   // Validar que TEP/TED en DIC/FEB tengan Cal. Final numérica
   if (esDicFeb) {
-    for (let i = 0; i < alumnosActuales.length; i++) {
+    for (let i = 0; i < alumnosCalificaciones.length; i++) {
       const sel = document.getElementById('grade-' + i);
       const val = sel ? sel.value : '';
       if (val === 'TEP' || val === 'TED') {
         const cf = document.getElementById('cal-final-' + i);
         if (!cf || !cf.value || isNaN(parseFloat(cf.value))) {
-          showToast('⚠️ ' + alumnosActuales[i].nombre + ' tiene TEP/TED pero falta la Calificación Final numérica', '❌');
+          showToast('⚠️ ' + alumnosCalificaciones[i].nombre + ' tiene TEP/TED pero falta la Calificación Final numérica', '❌');
           return;
         }
       }
@@ -4788,7 +4478,7 @@ function guardarCalificaciones() {
   }
 
   // Armar bloque con todos los alumnos — UNA sola llamada al backend
-  const alumnosBloque = alumnosActuales.map((a, i) => {
+  const alumnosBloque = alumnosCalificaciones.map((a, i) => {
     const input = document.getElementById('grade-' + i);
     const val   = input ? input.value.trim() : '';
     let calFinal = '';
@@ -5307,7 +4997,7 @@ function setupCalificaciones() {
     // Al cambiar materia también cargar notas existentes
     const matSel = document.getElementById('cal-materia');
     if (matSel) matSel.addEventListener('change', function() {
-      if (alumnosActuales.length) cargarCalificacionesExistentes();
+      if (alumnosCalificaciones.length) cargarCalificacionesExistentes();
     });
   } else {
     buildMateriaField('cal-materia');
@@ -5842,39 +5532,36 @@ let currentCursoAlumno = '';
 
 function cargarMiAsistencia() {
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
+  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
     if (!res.ok) return;
     const registros = res.registros || [];
     const presentes = registros.filter(r => r.estado === 'P').length;
-    const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP').length;
+    const ausentes  = registros.filter(r => r.estado === 'A').length;
     const tardes    = registros.filter(r => r.estado === 'T').length;
-    const retiros   = registros.filter(r => r.estado === 'R').length;
     document.getElementById('cnt-presentes').textContent = presentes + tardes + retiros;
     document.getElementById('cnt-ausentes').textContent  = ausentes;
     document.getElementById('cnt-tardes').textContent    = tardes;
-    document.getElementById('cnt-retiros').textContent   = retiros;
     const tabla = document.getElementById('mi-asistencia-tabla');
     if (registros.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin registros de asistencia aún.</div>';
       return;
     }
-    const colores = { P: '#E8F5E9', A: '#FFEBEE', AP: '#FFEBEE', T: '#FFF8E1', R: '#F3E5F5' };
-    const textos  = { P: 'Presente', A: 'Ausente', AP: 'Ausente Pres.', T: 'Llegada tarde', R: 'Retiro anticipado' };
+    const colores = { P: '#E8F5E9', A: '#FFEBEE', T: '#FFF8E1' };
+    const textos  = { P: 'Presente', A: 'Ausente', T: 'Presente (llegó tarde)' };
     tabla.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr>
         <th style="text-align:left;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Fecha</th>
         <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Estado</th>
-        <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora</th>
+        <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Hora llegada</th>
       </tr></thead>
-      <tbody>${registros.filter(r => r.estado !== 'P').map(r => `<tr>
+      <tbody>${registros.map(r => `<tr>
         <td style="padding:8px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${r.fecha}</td>
         <td style="padding:8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05)">
-          <span style="background:${colores[r.estado]||'#eee'};color:#111;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">${textos[r.estado]||r.estado}</span>
+          <span style="background:${colores[r.estado]};color:#111;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:700">${textos[r.estado]||r.estado}</span>
         </td>
         <td style="padding:8px;text-align:center;font-size:12px;color:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.05)">${r.horaLlegada||'—'}</td>
       </tr>`).join('')}</tbody>
-    </table>
-    ${registros.filter(r => r.estado === 'P').length > 0 ? `<p style="font-size:11px;color:rgba(0,0,0,.3);text-align:center;margin-top:8px">Se muestran solo los días con ausencia, tardanza o retiro (${registros.filter(r=>r.estado==='P').length} días presentes no se listan)</p>` : ''}`;
+    </table>`;
   });
 }
 
@@ -6038,7 +5725,7 @@ function imprimirInforme() {
 
 function cargarMisNotas() {
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
+  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno }).then(res => {
     const tabla = document.getElementById('mis-notas-tabla');
     if (!res.ok || !res.materias || res.materias.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin calificaciones cargadas aún.</div>';
@@ -7542,7 +7229,7 @@ function generarCitacion() {
 // ============================================================
 function guardarSeguimiento() {
   const curso = document.getElementById('seg-curso').value;
-  callWebAppPost({ accion: 'guardarSeguimientoFaltas', curso, datos: _segDatos }).then(res => {
+  callWebApp({ accion: 'guardarSeguimientoFaltas', curso, datos: _segDatos }).then(res => {
     if (res.ok) showToast('Seguimiento guardado correctamente', '✅');
     else showToast('Error al guardar: ' + res.error, '❌');
   });
@@ -9743,1419 +9430,6 @@ async function certEliminarArchivo(path, nombreMostrado) {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════
-//  MÓDULO SOLICITUDES DOCENTES
-// ════════════════════════════════════════════════════════════════════
-
-let _solDatos         = [];
-let _solFiltroActivo  = 'todos';
-let _solFechasCalif   = [];
-let _solDocentesLista = [];
-
-function initSolicitudesDocentes() {
-  const usuario = currentUser || '';
-  const rol     = currentRole || '';
-  document.getElementById('sol-loading').style.display = 'block';
-  document.getElementById('sol-lista').style.display   = 'none';
-  document.getElementById('sol-empty').style.display   = 'none';
-
-  callWebApp({ accion: 'obtenerSolicitudesDocentes', usuario, rol })
-    .then(res => {
-      document.getElementById('sol-loading').style.display = 'none';
-      if (!res.ok) { showToast('Error al cargar solicitudes', '❌'); return; }
-      _solDatos = res.solicitudes || [];
-      renderSolicitudes(_solDatos);
-      const isAdmin = res.esAdmin;
-      const btnN = document.getElementById('btn-nueva-solicitud');
-      const btnC = document.getElementById('btn-config-fechas-calif');
-      const btnI = document.getElementById('btn-informe-solicitudes');
-      if (btnN) btnN.style.display = isAdmin ? 'inline-flex' : 'none';
-      if (btnC) btnC.style.display = isAdmin ? 'inline-flex' : 'none';
-      if (btnI) btnI.style.display = isAdmin ? 'inline-flex' : 'none';
-    })
-    .catch(() => {
-      document.getElementById('sol-loading').style.display = 'none';
-      showToast('Error de conexión', '❌');
-    });
-}
-
-function renderSolicitudes(lista) {
-  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes((currentRole || '').toLowerCase());
-  const filtradas = _solFiltroActivo === 'todos' ? lista : lista.filter(s => {
-    const est = isAdmin
-      ? (s.vencidos > 0 ? 'Vencido' : s.pendientes > 0 ? 'Pendiente' : 'Entregado')
-      : s.miEstado;
-    return est === _solFiltroActivo;
-  });
-
-  const contenedor = document.getElementById('sol-lista');
-  const vacio      = document.getElementById('sol-empty');
-  if (!filtradas.length) {
-    contenedor.style.display = 'none';
-    vacio.style.display = 'block';
-    return;
-  }
-  vacio.style.display = 'none';
-  contenedor.style.display = 'block';
-
-  contenedor.innerHTML = filtradas.map(s => {
-    const semaforo = isAdmin
-      ? (s.vencidos > 0 ? '🔴' : s.pendientes > 0 ? '⏳' : '✅')
-      : s.semaforo;
-    const colorSem = semaforo === '✅' ? '#1a9e5c' : semaforo === '🔴' ? '#c0392b' : '#b8860b';
-    const bgSem    = semaforo === '✅' ? '#d8f3dc' : semaforo === '🔴' ? '#fef0f0' : '#fffbe6';
-    const tipoLabel = s.tipo === 'Otras' && s.descripcion ? s.descripcion : s.tipo;
-    const estadoLabel = isAdmin
-      ? (s.entregados + '/' + s.totalDestinatarios + ' entregados')
-      : (s.miEstado || 'Pendiente');
-    return `
-      <div style="border:1px solid #e8e8e8;border-radius:10px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px;background:#fafafa">
-        <div style="font-size:22px;min-width:34px;text-align:center;margin-top:2px">${semaforo}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:14px;color:#1a1a1a;margin-bottom:2px">${tipoLabel}</div>
-          <div style="font-size:12px;color:#777;margin-bottom:6px">Vence: <b>${s.fechaVencimiento || '—'}</b> · Creado por: ${s.creadoPorNombre || s.creadoPor}</div>
-          <div style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;background:${bgSem};color:${colorSem}">${estadoLabel}</div>
-          ${isAdmin ? `<div style="margin-top:6px;font-size:11px;color:#aaa">Destinatarios: ${s.destinatarios === 'TODOS' ? 'Todos los docentes' : s.destinatarios.split(',').length + ' docente(s)'}</div>` : ''}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;min-width:80px;align-items:flex-end">
-          ${isAdmin ? `<button onclick="abrirDetalleSolicitud('${s.id}')" style="padding:5px 10px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:11px;cursor:pointer;white-space:nowrap">Ver detalle</button>` : ''}
-          ${isAdmin ? `<button onclick="confirmarEliminarSolicitud('${s.id}')" style="padding:5px 10px;border:1px solid #f5c6c6;border-radius:8px;background:#fef0f0;color:#c0392b;font-size:11px;cursor:pointer">Eliminar</button>` : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function filtrarSolicitudes(estado, btn) {
-  _solFiltroActivo = estado;
-  document.querySelectorAll('.sol-filtro-btn').forEach(b => b.style.opacity = '0.7');
-  btn.style.opacity = '1';
-  renderSolicitudes(_solDatos);
-}
-
-function abrirFormSolicitud() {
-  document.getElementById('sol-tipo').value = '';
-  document.getElementById('sol-desc-wrap').style.display     = 'none';
-  document.getElementById('sol-venc-wrap').style.display     = 'block';
-  document.getElementById('sol-planilla-wrap').style.display = 'none';
-  document.getElementById('sol-vencimiento').value = '';
-  document.getElementById('sol-modal-error').style.display   = 'none';
-  document.querySelector('input[name="sol-dest-tipo"][value="todos"]').checked = true;
-  document.getElementById('sol-dest-lista').style.display    = 'none';
-  document.getElementById('modal-nueva-solicitud').style.display = 'flex';
-
-  if (!_solDocentesLista.length) {
-    callWebApp({ accion: 'listarDocentes' }).then(res => {
-      if (res.ok) { _solDocentesLista = (res.usuarios || []).filter(u => u.activo); _renderDocentesSelector(); }
-    });
-  } else {
-    _renderDocentesSelector();
-  }
-  if (!_solFechasCalif.length) {
-    callWebApp({ accion: 'obtenerFechasCalificaciones' }).then(res => {
-      if (res.ok) _solFechasCalif = res.fechas || [];
-    });
-  }
-}
-
-function _renderDocentesSelector() {
-  const cont = document.getElementById('sol-dest-lista');
-  if (!_solDocentesLista.length) {
-    cont.innerHTML = '<div style="color:#aaa;text-align:center;padding:8px">No hay docentes activos.</div>';
-    return;
-  }
-  cont.innerHTML = _solDocentesLista.map(d =>
-    `<label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer">
-      <input type="checkbox" class="sol-dest-check" value="${d.usuario}"> ${d.nombre}
-    </label>`
-  ).join('');
-}
-
-function onChangeDestTipo(val) {
-  document.getElementById('sol-dest-lista').style.display = val === 'seleccion' ? 'block' : 'none';
-}
-
-function onChangeTipoSolicitud(val) {
-  document.getElementById('sol-desc-wrap').style.display     = val === 'Otras' ? 'block' : 'none';
-  document.getElementById('sol-venc-wrap').style.display     = val === 'Planillas de Calificaciones' ? 'none' : 'block';
-  document.getElementById('sol-planilla-wrap').style.display = val === 'Planillas de Calificaciones' ? 'block' : 'none';
-  if (val === 'Planillas de Calificaciones') {
-    const sel = document.getElementById('sol-planilla-fecha');
-    sel.innerHTML = '<option value="">— Seleccionar entrega —</option>';
-    if (_solFechasCalif.length) {
-      _solFechasCalif.forEach(f => {
-        const label = f.descripcion || ('Entrega ' + f.entrega);
-        sel.innerHTML += `<option value="${f.fecha}|${label}">${label}${f.fecha ? ' (' + f.fecha + ')' : ''}</option>`;
-      });
-    } else {
-      sel.innerHTML = '<option value="">⚠️ Configurá las fechas primero</option>';
-    }
-  }
-}
-
-function cerrarModalSolicitud() {
-  document.getElementById('modal-nueva-solicitud').style.display = 'none';
-}
-
-function guardarSolicitud() {
-  const errEl = document.getElementById('sol-modal-error');
-  errEl.style.display = 'none';
-  const tipo = document.getElementById('sol-tipo').value;
-  if (!tipo) { errEl.textContent = 'Seleccioná el tipo de solicitud.'; errEl.style.display = 'block'; return; }
-
-  let descripcion = '';
-  if (tipo === 'Otras') {
-    descripcion = document.getElementById('sol-descripcion').value.trim();
-    if (!descripcion) { errEl.textContent = 'Especificá la solicitud.'; errEl.style.display = 'block'; return; }
-  }
-
-  let fechaVencimiento = '';
-  if (tipo === 'Planillas de Calificaciones') {
-    const selVal = document.getElementById('sol-planilla-fecha').value;
-    if (!selVal) { errEl.textContent = 'Seleccioná la fecha de entrega.'; errEl.style.display = 'block'; return; }
-    const partes = selVal.split('|');
-    fechaVencimiento = partes[0];
-    if (!descripcion) descripcion = partes[1] || tipo;
-  } else {
-    const raw = document.getElementById('sol-vencimiento').value;
-    if (!raw) { errEl.textContent = 'Indicá la fecha de vencimiento.'; errEl.style.display = 'block'; return; }
-    const p = raw.split('-');
-    fechaVencimiento = p[2] + '/' + p[1] + '/' + p[0];
-  }
-
-  const destTipo = document.querySelector('input[name="sol-dest-tipo"]:checked').value;
-  let destinatarios;
-  if (destTipo === 'todos') {
-    destinatarios = ['TODOS'];
-  } else {
-    destinatarios = [...document.querySelectorAll('.sol-dest-check:checked')].map(c => c.value);
-    if (!destinatarios.length) { errEl.textContent = 'Seleccioná al menos un docente.'; errEl.style.display = 'block'; return; }
-  }
-
-  const datos = {
-    tipo, descripcion, fechaVencimiento, destinatarios,
-    creadoPor:      currentUser     || '',
-    creadoPorNombre: currentUserName || '',
-    creadoPorRol:   currentRole     || ''
-  };
-
-  const btnG = document.querySelector('#modal-nueva-solicitud button[onclick="guardarSolicitud()"]');
-  if (btnG) { btnG.disabled = true; btnG.textContent = 'Creando...'; }
-
-  callWebApp({ accion: 'crearSolicitudDocente', datos: JSON.stringify(datos) })
-    .then(res => {
-      if (btnG) { btnG.disabled = false; btnG.textContent = 'Crear Solicitud'; }
-      if (!res.ok) { errEl.textContent = res.error || 'Error al crear.'; errEl.style.display = 'block'; return; }
-      cerrarModalSolicitud();
-      showToast('Solicitud creada para ' + res.destinatariosCount + ' docente(s)', '✅');
-      initSolicitudesDocentes();
-    })
-    .catch(() => {
-      if (btnG) { btnG.disabled = false; btnG.textContent = 'Crear Solicitud'; }
-      errEl.textContent = 'Error de conexión.'; errEl.style.display = 'block';
-    });
-}
-
-function abrirDetalleSolicitud(solId) {
-  const sol = _solDatos.find(s => s.id === solId);
-  if (!sol) return;
-  const tipoLabel = sol.tipo === 'Otras' && sol.descripcion ? sol.descripcion : sol.tipo;
-  document.getElementById('modal-det-titulo').textContent = tipoLabel;
-  document.getElementById('modal-det-info').innerHTML =
-    `<b>Vencimiento:</b> ${sol.fechaVencimiento || '—'} &nbsp;·&nbsp; <b>Creado:</b> ${sol.timestamp || '—'} por ${sol.creadoPorNombre || sol.creadoPor} &nbsp;·&nbsp; <b>Progreso:</b> ${sol.entregados}/${sol.totalDestinatarios} entregados`;
-
-  const lista = sol.cumplimientos || [];
-  document.getElementById('modal-det-lista').innerHTML = !lista.length
-    ? '<p style="color:#aaa;font-size:13px">Sin destinatarios registrados.</p>'
-    : lista.map(c => {
-        const sem   = c.estado === 'Entregado' ? '✅' : c.estado === 'Vencido' ? '🔴' : '⏳';
-        const bg    = c.estado === 'Entregado' ? '#d8f3dc' : c.estado === 'Vencido' ? '#fef0f0' : '#fffbe6';
-        const color = c.estado === 'Entregado' ? '#1a7a44' : c.estado === 'Vencido' ? '#c0392b' : '#b8860b';
-        return `
-          <div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid #eee;border-radius:8px;margin-bottom:6px;background:#fafafa">
-            <span style="font-size:18px">${sem}</span>
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px">${c.apellido}, ${c.nombre}</div>
-              <div style="font-size:11px;color:#aaa">${c.email}</div>
-            </div>
-            <span style="padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;background:${bg};color:${color}">${c.estado}</span>
-            ${c.estado !== 'Entregado'
-              ? `<button onclick="toggleCumplimiento('${c.cumpId}','${solId}',true)" style="padding:4px 10px;border:none;border-radius:8px;background:#1a9e5c;color:#fff;font-size:11px;cursor:pointer">✅ Marcar entregado</button>`
-              : `<button onclick="toggleCumplimiento('${c.cumpId}','${solId}',false)" style="padding:4px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#777;font-size:11px;cursor:pointer">Revertir</button>`}
-          </div>`;
-      }).join('');
-  document.getElementById('modal-detalle-solicitud').style.display = 'flex';
-}
-
-function toggleCumplimiento(cumpId, solId, marcarEntregado) {
-  const datos = {
-    cumpId, estado: marcarEntregado ? 'Entregado' : 'Pendiente',
-    marcadoPor: currentUser || '', marcadoPorRol: currentRole || ''
-  };
-  callWebApp({ accion: 'marcarCumplimientoSolicitud', datos: JSON.stringify(datos) })
-    .then(res => {
-      if (!res.ok) { showToast(res.error || 'Error', '❌'); return; }
-      showToast(marcarEntregado ? 'Marcado como entregado' : 'Revertido a pendiente', '✅');
-      callWebApp({ accion: 'obtenerSolicitudesDocentes', usuario: currentUser, rol: currentRole })
-        .then(r => { if (r.ok) { _solDatos = r.solicitudes || []; renderSolicitudes(_solDatos); abrirDetalleSolicitud(solId); } });
-    });
-}
-
-function confirmarEliminarSolicitud(id) {
-  if (!confirm('¿Eliminar esta solicitud y todos sus registros de cumplimiento?')) return;
-  callWebApp({ accion: 'eliminarSolicitudDocente', id, usuario: currentUser, rol: currentRole })
-    .then(res => {
-      if (!res.ok) { showToast(res.error || 'Error al eliminar', '❌'); return; }
-      showToast('Solicitud eliminada', '🗑️');
-      initSolicitudesDocentes();
-    });
-}
-
-function abrirConfigFechasCalif() {
-  callWebApp({ accion: 'obtenerFechasCalificaciones' }).then(res => {
-    _solFechasCalif = res.ok ? (res.fechas || []) : [];
-    while (_solFechasCalif.length < 6) _solFechasCalif.push({ entrega: _solFechasCalif.length + 1, fecha: '', descripcion: '' });
-    const campos = document.getElementById('config-fechas-campos');
-    campos.innerHTML = _solFechasCalif.slice(0, 6).map((f, i) => `
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
-        <span style="font-size:12px;font-weight:600;min-width:60px;color:#555">Entrega ${i + 1}</span>
-        <input type="date" id="cfg-fecha-${i}" value="${f.fecha || ''}" style="flex:1;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-        <input type="text" id="cfg-desc-${i}" value="${f.descripcion || ''}" placeholder="Ej: 1° bimestre" style="flex:2;padding:7px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-      </div>`).join('');
-    document.getElementById('modal-config-fechas').style.display = 'flex';
-  });
-}
-
-function guardarConfigFechas() {
-  const fechas = [];
-  for (let i = 0; i < 6; i++) {
-    const raw  = document.getElementById('cfg-fecha-' + i).value;
-    let fecha  = '';
-    if (raw) { const p = raw.split('-'); fecha = p[2] + '/' + p[1] + '/' + p[0]; }
-    const desc = document.getElementById('cfg-desc-' + i).value.trim() || ('Entrega ' + (i + 1));
-    fechas.push({ entrega: i + 1, fecha, descripcion: desc });
-  }
-  callWebApp({ accion: 'guardarFechasCalificaciones', fechas: JSON.stringify(fechas), usuario: currentUser, rol: currentRole })
-    .then(res => {
-      if (!res.ok) { showToast(res.error || 'Error', '❌'); return; }
-      _solFechasCalif = fechas;
-      document.getElementById('modal-config-fechas').style.display = 'none';
-      showToast('Fechas guardadas', '✅');
-    });
-}
-
-function abrirInformeSolicitudes() {
-  const sel = document.getElementById('informe-sol-docente');
-  sel.innerHTML = '<option value="">— Seleccionar docente —</option>';
-  document.getElementById('informe-sol-contenido').innerHTML = '';
-  const cargarYAbrir = () => {
-    _solDocentesLista.forEach(d => {
-      sel.innerHTML += `<option value="${d.usuario}">${d.nombre}</option>`;
-    });
-    document.getElementById('modal-informe-sol').style.display = 'flex';
-  };
-  if (!_solDocentesLista.length) {
-    callWebApp({ accion: 'listarDocentes' }).then(res => {
-      if (res.ok) _solDocentesLista = (res.usuarios || []).filter(u => u.activo);
-      cargarYAbrir();
-    });
-  } else {
-    cargarYAbrir();
-  }
-}
-
-function generarInformeSolicitudes() {
-  const usuario = document.getElementById('informe-sol-docente').value;
-  if (!usuario) { showToast('Seleccioná un docente', '⚠️'); return; }
-  document.getElementById('informe-sol-contenido').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center">Cargando...</p>';
-  callWebApp({ accion: 'informeSolicitudesDocente', docenteUsuario: usuario })
-    .then(res => {
-      if (!res.ok) { document.getElementById('informe-sol-contenido').innerHTML = '<p style="color:#c0392b">Error: ' + (res.error || '') + '</p>'; return; }
-      const items = res.items || [];
-      if (!items.length) { document.getElementById('informe-sol-contenido').innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center">Sin solicitudes para este docente.</p>'; return; }
-      const estadoColor = { 'Entregado': '#1a7a44', 'Vencido': '#c0392b', 'Pendiente': '#b8860b' };
-      const estadoBg    = { 'Entregado': '#d8f3dc', 'Vencido': '#fef0f0', 'Pendiente': '#fffbe6' };
-      const semaforo    = { 'Entregado': '✅', 'Vencido': '🔴', 'Pendiente': '⏳' };
-      document.getElementById('informe-sol-contenido').innerHTML =
-        `<p style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:10px">Docente: ${res.docente}</p>` +
-        items.map(it => `
-          <div style="display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid #eee;border-radius:8px;margin-bottom:6px">
-            <span>${semaforo[it.estado] || '⏳'}</span>
-            <div style="flex:1">
-              <div style="font-weight:600;font-size:13px">${it.tipo}</div>
-              ${it.descripcion && it.descripcion !== it.tipo ? `<div style="font-size:11px;color:#777">${it.descripcion}</div>` : ''}
-              <div style="font-size:11px;color:#aaa">Vence: ${it.fechaVencimiento} · Entregado: ${it.fechaCumplimiento}</div>
-            </div>
-            <span style="padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;background:${estadoBg[it.estado] || '#fffbe6'};color:${estadoColor[it.estado] || '#b8860b'}">${it.estado}</span>
-          </div>`).join('');
-    });
-}
-
-function imprimirInformeSolicitudes() {
-  const cont = document.getElementById('informe-sol-contenido').innerHTML;
-  if (!cont || cont.includes('Cargando')) { showToast('Generá el informe primero', '⚠️'); return; }
-  const ventana = window.open('', '_blank');
-  ventana.document.write(`
-    <html><head><title>Informe Solicitudes</title>
-    <style>body{font-family:Arial,sans-serif;font-size:13px;padding:20px}h2{color:#1a9e5c}</style>
-    </head><body>
-    <h2>Colegio Perito Moreno — Informe de Solicitudes</h2>
-    ${cont}
-    </body></html>`);
-  ventana.document.close();
-  ventana.print();
-}
-
-// ════════════════════════════════════════════════════════════════════
-//  MEJORES PROMEDIOS GENERALES
-// ════════════════════════════════════════════════════════════════════
-
-let _mejoresPromData = null;
-let _mejoresCursosActual = [];
-
-function generarPromediosCurso(curso) {
-  const loading = document.getElementById('mejores-promedios-loading');
-  const cont    = document.getElementById('mejores-promedios-contenido');
-  const btnImp  = document.getElementById('btn-imprimir-promedios');
-  loading.style.display = 'block';
-  cont.innerHTML = '';
-  btnImp.style.display = 'none';
-  _mejoresCursosActual = [curso];
-
-  callWebApp({ accion: 'obtenerMejoresPromedios', cursos: JSON.stringify([curso]) })
-    .then(res => {
-      loading.style.display = 'none';
-      if (!res.ok) { cont.innerHTML = '<p style="color:#c0392b;font-size:13px">Error: ' + (res.error || '') + '</p>'; return; }
-      _mejoresPromData = res.alumnos || [];
-      renderPromediosCurso(_mejoresPromData, curso);
-      btnImp.style.display = 'inline-flex';
-    })
-    .catch(() => {
-      loading.style.display = 'none';
-      cont.innerHTML = '<p style="color:#c0392b;font-size:13px">Error de conexión.</p>';
-    });
-}
-
-function renderPromediosCurso(alumnos, curso) {
-  const cont = document.getElementById('mejores-promedios-contenido');
-  const cursoLabel = curso.replace(/([0-9]+)([A-Z]+)/, '$1° $2');
-
-  if (!alumnos.length) {
-    cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Sin datos suficientes para ' + cursoLabel + '.</p>';
-    return;
-  }
-
-  const filas = alumnos.map((a, idx) => {
-    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1);
-    const bg = idx % 2 === 0 ? '#fff' : '#f7faf8';
-    const detId = 'det-curso-' + idx;
-    return `
-      <tr style="background:${bg}">
-        <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1a9e5c">${medal}</td>
-        <td style="padding:7px 10px;font-weight:500">${a.nombre}</td>
-        <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1a9e5c;font-size:14px">${a.promedioGeneral.toFixed(2)}</td>
-        <td style="padding:7px 10px;text-align:center;color:#888;font-size:12px">${a.cantMaterias} mat.</td>
-        <td style="padding:7px 10px;text-align:center">
-          <button onclick="toggleDetallePromedio('${detId}')" style="padding:3px 8px;border:1px solid #c8e6d4;border-radius:6px;background:#e8f4ed;color:#1a9e5c;font-size:11px;cursor:pointer">Ver</button>
-        </td>
-      </tr>
-      <tr id="${detId}" style="display:none;background:#f0faf5">
-        <td colspan="5" style="padding:8px 16px">
-          <table style="width:100%;font-size:12px;border-collapse:collapse">
-            <tr style="color:#888;font-weight:600">
-              <th style="padding:4px 8px;text-align:left">Materia</th>
-              <th style="padding:4px 8px;text-align:center">1° Cuat.</th>
-              <th style="padding:4px 8px;text-align:center">2° Cuat.</th>
-              <th style="padding:4px 8px;text-align:center">Promedio</th>
-            </tr>
-            ${a.detalles.map(d => `
-              <tr style="border-top:1px solid #e0f2e9">
-                <td style="padding:4px 8px">${d.materia}</td>
-                <td style="padding:4px 8px;text-align:center">${d.c1 !== '' ? d.c1 : '—'}</td>
-                <td style="padding:4px 8px;text-align:center">${d.c2 !== '' ? d.c2 : '—'}</td>
-                <td style="padding:4px 8px;text-align:center;font-weight:700;color:${d.promedio !== null ? '#1a9e5c' : '#aaa'}">${d.promedio !== null ? d.promedio.toFixed(2) : '—'}</td>
-              </tr>`).join('')}
-            <tr style="border-top:2px solid #1a9e5c;background:#e8f4ed">
-              <td colspan="3" style="padding:5px 8px;font-weight:700;font-size:12px">Promedio General</td>
-              <td style="padding:5px 8px;text-align:center;font-weight:700;color:#1a9e5c;font-size:13px">${a.promedioGeneral.toFixed(2)}</td>
-            </tr>
-          </table>
-        </td>
-      </tr>`;
-  }).join('');
-
-  cont.innerHTML = `
-    <h4 style="font-size:14px;font-weight:700;color:#1a1a1a;margin:0 0 10px 0">📋 Ranking ${cursoLabel} — ${alumnos.length} alumno(s) con promedio calculado</h4>
-    <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <thead>
-        <tr style="background:#1a9e5c;color:#fff">
-          <th style="padding:7px 10px;text-align:center;width:36px">#</th>
-          <th style="padding:7px 10px;text-align:left">Apellido y Nombre</th>
-          <th style="padding:7px 10px;text-align:center;width:100px">Prom. General</th>
-          <th style="padding:7px 10px;text-align:center;width:70px">Materias</th>
-          <th style="padding:7px 10px;text-align:center;width:60px">Detalle</th>
-        </tr>
-      </thead>
-      <tbody>${filas}</tbody>
-    </table>`;
-}
-
-function generarMejoresPromedios(cursoA, cursoB) {
-  const loading  = document.getElementById('mejores-promedios-loading');
-  const cont     = document.getElementById('mejores-promedios-contenido');
-  const btnImp   = document.getElementById('btn-imprimir-promedios');
-  loading.style.display = 'block';
-  cont.innerHTML = '';
-  btnImp.style.display = 'none';
-  _mejoresCursosActual = [cursoA, cursoB];
-
-  callWebApp({ accion: 'obtenerMejoresPromedios', cursos: JSON.stringify([cursoA, cursoB]) })
-    .then(res => {
-      loading.style.display = 'none';
-      if (!res.ok) { cont.innerHTML = '<p style="color:#c0392b;font-size:13px">Error: ' + (res.error || '') + '</p>'; return; }
-      _mejoresPromData = res.alumnos || [];
-      renderMejoresPromedios(_mejoresPromData, cursoA, cursoB);
-      btnImp.style.display = 'inline-flex';
-    })
-    .catch(() => {
-      loading.style.display = 'none';
-      cont.innerHTML = '<p style="color:#c0392b;font-size:13px">Error de conexión.</p>';
-    });
-}
-
-function renderMejoresPromedios(alumnos, cursoA, cursoB) {
-  const cont = document.getElementById('mejores-promedios-contenido');
-  if (!alumnos.length) {
-    cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Sin datos suficientes para calcular promedios.</p>';
-    return;
-  }
-
-  const labelA = cursoA.replace(/([0-9]+)([A-Z]+)/, '$1° $2');
-  const labelB = cursoB.replace(/([0-9]+)([A-Z]+)/, '$1° $2');
-
-  const porA    = alumnos.filter(a => a.curso === cursoA).slice(0, 15);
-  const porB    = alumnos.filter(a => a.curso === cursoB).slice(0, 15);
-  const combinado = alumnos.slice(0, 15);
-
-  const renderTabla = (lista, titulo) => {
-    if (!lista.length) return `<p style="color:#aaa;font-size:12px;padding:8px 0">Sin datos.</p>`;
-    return `
-      <h4 style="font-size:13px;font-weight:700;color:#1a1a1a;margin:0 0 8px 0">${titulo}</h4>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:4px">
-        <thead>
-          <tr style="background:#1a9e5c;color:#fff">
-            <th style="padding:7px 10px;text-align:center;width:36px">#</th>
-            <th style="padding:7px 10px;text-align:left">Apellido y Nombre</th>
-            <th style="padding:7px 10px;text-align:center;width:60px">Curso</th>
-            <th style="padding:7px 10px;text-align:center;width:90px">Prom. Gral.</th>
-            <th style="padding:7px 10px;text-align:center;width:50px">Detalle</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lista.map((a, idx) => {
-            const bg = idx % 2 === 0 ? '#fff' : '#f7faf8';
-            const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1);
-            const cursoLabel = a.curso.replace(/([0-9]+)([A-Z]+)/, '$1° $2');
-            return `<tr style="background:${bg}">
-              <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1a9e5c">${medal}</td>
-              <td style="padding:7px 10px;font-weight:500">${a.nombre}</td>
-              <td style="padding:7px 10px;text-align:center;color:#555">${cursoLabel}</td>
-              <td style="padding:7px 10px;text-align:center;font-weight:700;color:#1a9e5c;font-size:14px">${a.promedioGeneral.toFixed(2)}</td>
-              <td style="padding:7px 10px;text-align:center">
-                <button onclick="toggleDetallePromedio('det-${titulo.replace(/\s/g,'')}-${idx}')" style="padding:3px 8px;border:1px solid #c8e6d4;border-radius:6px;background:#e8f4ed;color:#1a9e5c;font-size:11px;cursor:pointer">Ver</button>
-              </td>
-            </tr>
-            <tr id="det-${titulo.replace(/\s/g,'')}-${idx}" style="display:none;background:#f0faf5">
-              <td colspan="5" style="padding:8px 16px">
-                <table style="width:100%;font-size:12px;border-collapse:collapse">
-                  <tr style="color:#888;font-weight:600">
-                    <th style="padding:4px 8px;text-align:left">Materia</th>
-                    <th style="padding:4px 8px;text-align:center">1° Cuat.</th>
-                    <th style="padding:4px 8px;text-align:center">2° Cuat.</th>
-                    <th style="padding:4px 8px;text-align:center">Prom.</th>
-                  </tr>
-                  ${a.detalles.map(d => `
-                    <tr style="border-top:1px solid #e0f2e9">
-                      <td style="padding:4px 8px">${d.materia}</td>
-                      <td style="padding:4px 8px;text-align:center">${d.c1 !== '' ? d.c1 : '—'}</td>
-                      <td style="padding:4px 8px;text-align:center">${d.c2 !== '' ? d.c2 : '—'}</td>
-                      <td style="padding:4px 8px;text-align:center;font-weight:700;color:${d.promedio !== null ? '#1a9e5c' : '#aaa'}">${d.promedio !== null ? d.promedio.toFixed(2) : '—'}</td>
-                    </tr>`).join('')}
-                </table>
-              </td>
-            </tr>`;
-          }).join('')}
-        </tbody>
-      </table>`;
-  };
-
-  // Intercalado: alternar A y B hasta 15 de cada uno
-  const intercalado = [];
-  const maxLen = Math.max(porA.length, porB.length);
-  for (let i = 0; i < maxLen; i++) {
-    if (porA[i]) intercalado.push(porA[i]);
-    if (porB[i]) intercalado.push(porB[i]);
-  }
-
-  cont.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
-      <div>${renderTabla(porA, labelA)}</div>
-      <div>${renderTabla(porB, labelB)}</div>
-    </div>
-    <div style="border-top:1px solid #e0f2e9;padding-top:16px">
-      ${renderTabla(intercalado, 'Top 15 combinado ' + labelA + ' + ' + labelB + ' (intercalado)')}
-    </div>`;
-}
-
-function toggleDetallePromedio(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
-}
-
-function imprimirMejoresPromedios() {
-  const cont = document.getElementById('mejores-promedios-contenido').innerHTML;
-  if (!cont) { showToast('Generá el informe primero', '⚠️'); return; }
-  const cursoA = _mejoresCursosActual[0] || '';
-  const cursoB = _mejoresCursosActual[1] || '';
-  const ventana = window.open('', '_blank');
-  ventana.document.write(`
-    <html><head><title>Mejores Promedios</title>
-    <style>
-      body{font-family:Arial,sans-serif;font-size:12px;padding:20px}
-      h2{color:#1a9e5c;margin-bottom:4px}
-      table{width:100%;border-collapse:collapse;margin-bottom:16px}
-      th{background:#1a9e5c;color:#fff;padding:6px 8px}
-      td{padding:5px 8px;border-bottom:1px solid #eee}
-      h4{color:#1a1a1a;margin:12px 0 6px 0}
-      @media print{button{display:none}}
-    </style>
-    </head><body>
-    <h2>Colegio Perito Moreno — Mejores Promedios Generales</h2>
-    <p style="font-size:11px;color:#777;margin:0 0 16px 0">Cursos: ${cursoA.replace(/([0-9]+)([A-Z]+)/,'$1° $2')} y ${cursoB.replace(/([0-9]+)([A-Z]+)/,'$1° $2')} · Excluye Robótica y Técnicas de Estudio · ${new Date().toLocaleDateString('es-AR')}</p>
-    ${cont}
-    </body></html>`);
-  ventana.document.close();
-  ventana.print();
-}
-
-// ════════════════════════════════════════════════════════════════════
-//  BUSCADOR GLOBAL DE ALUMNOS
-// ════════════════════════════════════════════════════════════════════
-
-let _buscadorTimeout = null;
-
-function toggleBuscadorGlobal() {
-  const panel = document.getElementById('buscador-global-panel');
-  const abierto = panel.style.display !== 'none';
-  panel.style.display = abierto ? 'none' : 'block';
-  if (!abierto) {
-    setTimeout(() => document.getElementById('buscador-global-input').focus(), 100);
-  }
-}
-
-function onInputBuscador(val) {
-  clearTimeout(_buscadorTimeout);
-  if (val.trim().length >= 3) {
-    _buscadorTimeout = setTimeout(() => ejecutarBusquedaGlobal(), 500);
-  }
-}
-
-function ejecutarBusquedaGlobal() {
-  const q = document.getElementById('buscador-global-input').value.trim();
-  if (q.length < 2) { showToast('Ingresá al menos 2 caracteres', '⚠️'); return; }
-
-  const loading = document.getElementById('buscador-global-loading');
-  const cont    = document.getElementById('buscador-global-resultados');
-  loading.style.display = 'block';
-  cont.innerHTML = '';
-
-  callWebApp({ accion: 'buscarAlumnoGlobal', q })
-    .then(res => {
-      loading.style.display = 'none';
-      if (!res.ok) { cont.innerHTML = '<p style="color:#c0392b;font-size:13px;padding:8px">' + (res.error || 'Error') + '</p>'; return; }
-      const lista = res.resultados || [];
-      if (!lista.length) { cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:16px">Sin resultados.</p>'; return; }
-      cont.innerHTML = lista.map((a, idx) => {
-        const detId = 'bg-det-' + idx;
-        const EXCLUIDAS = ['robótica','robotica','técnicas de estudio','tecnicas de estudio'];
-        const materiasValidas = a.materias.filter(m => !EXCLUIDAS.includes(String(m.materia).toLowerCase().trim()));
-        const filasMaterias = materiasValidas.map(m => {
-          const c1 = m.cuat1 !== '' ? parseFloat(m.cuat1) : null;
-          const c2 = m.cuat2 !== '' ? parseFloat(m.cuat2) : null;
-          const ambos = c1 !== null && c2 !== null && !isNaN(c1) && !isNaN(c2) && c1 >= 7 && c2 >= 7;
-          const prom  = ambos ? ((c1 + c2) / 2).toFixed(2) : '—';
-          const colorProm = ambos ? '#1a9e5c' : '#aaa';
-          return `<tr style="border-top:1px solid #eee;font-size:12px">
-            <td style="padding:4px 8px">${m.materia}</td>
-            <td style="padding:4px 8px;text-align:center">${m.bim1 || '—'}</td>
-            <td style="padding:4px 8px;text-align:center">${m.cuat1 || '—'}</td>
-            <td style="padding:4px 8px;text-align:center">${m.bim3 || '—'}</td>
-            <td style="padding:4px 8px;text-align:center">${m.cuat2 || '—'}</td>
-            <td style="padding:4px 8px;text-align:center">${m.dic || '—'}</td>
-            <td style="padding:4px 8px;text-align:center">${m.feb || '—'}</td>
-            <td style="padding:4px 8px;text-align:center;font-weight:700;color:${colorProm}">${prom}</td>
-            <td style="padding:4px 8px;text-align:center;font-size:11px;color:#777">${m.estadoFinal || '—'}</td>
-          </tr>`;
-        }).join('');
-
-        return `
-          <div style="border:1px solid #e8e8e8;border-radius:10px;margin-bottom:10px;overflow:hidden">
-            <div style="padding:10px 12px;background:#f7faf8;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-              <div>
-                <div style="font-weight:700;font-size:14px;color:#1a1a1a">${a.nombre}</div>
-                <div style="font-size:12px;color:#777;margin-top:2px">
-                  Curso: <b>${a.curso}</b> · DNI: <b>${a.dni}</b> · Legajo: ${a.legajo}
-                  ${a.fechaNac !== '—' ? ' · Nac: ' + a.fechaNac : ''}
-                </div>
-                <div style="font-size:12px;color:#555;margin-top:4px">
-                  📅 Asistencia: <span style="color:#1a9e5c">✅ ${a.asistencia.presentes}</span>
-                  · <span style="color:#c0392b">❌ ${a.asistencia.ausentes}</span>
-                  · <span style="color:#b8860b">⏳ ${a.asistencia.tardanzas}</span>
-                </div>
-              </div>
-              <button onclick="toggleDetallePromedio('${detId}')" style="padding:4px 10px;border:1px solid #c8e6d4;border-radius:8px;background:#e8f4ed;color:#1a9e5c;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0">Ver notas</button>
-            </div>
-            <div id="${detId}" style="display:none;padding:8px 12px">
-              ${materiasValidas.length ? `
-                <table style="width:100%;border-collapse:collapse">
-                  <tr style="background:#f0f0f0;font-size:11px;font-weight:600;color:#555">
-                    <th style="padding:5px 8px;text-align:left">Materia</th>
-                    <th style="padding:5px 8px;text-align:center">1°Bim</th>
-                    <th style="padding:5px 8px;text-align:center">1°C</th>
-                    <th style="padding:5px 8px;text-align:center">3°Bim</th>
-                    <th style="padding:5px 8px;text-align:center">2°C</th>
-                    <th style="padding:5px 8px;text-align:center">Dic</th>
-                    <th style="padding:5px 8px;text-align:center">Feb</th>
-                    <th style="padding:5px 8px;text-align:center">Prom.</th>
-                    <th style="padding:5px 8px;text-align:center">Estado</th>
-                  </tr>
-                  ${filasMaterias}
-                </table>` : '<p style="color:#aaa;font-size:12px">Sin notas cargadas.</p>'}
-            </div>
-          </div>`;
-      }).join('');
-    })
-    .catch(() => {
-      loading.style.display = 'none';
-      cont.innerHTML = '<p style="color:#c0392b;font-size:13px;padding:8px">Error de conexión.</p>';
-    });
-}
-
-// ════════════════════════════════════════════════════════════════════
-//  EXPORTAR ASISTENCIA
-// ════════════════════════════════════════════════════════════════════
-
-let _eaDatos = null;
-
-function eaCursoChange() {
-  const curso = document.getElementById('ea-curso').value;
-  const selAlu = document.getElementById('ea-alumno');
-  selAlu.innerHTML = '<option value="">Todos los alumnos</option>';
-  if (!curso) return;
-  callWebApp({ accion: 'obtenerResumenAsistenciaCurso', curso })
-    .then(res => {
-      if (!res.ok) return;
-      (res.alumnos || []).sort((a,b) => a.nombre.localeCompare(b.nombre,'es'))
-        .forEach(a => {
-          selAlu.innerHTML += `<option value="${a.legajo}">${a.nombre}</option>`;
-        });
-    });
-}
-
-function generarExportAsistencia() {
-  const curso   = document.getElementById('ea-curso').value;
-  const legajo  = document.getElementById('ea-alumno').value;
-  const desdeRaw = document.getElementById('ea-desde').value;
-  const hastaRaw = document.getElementById('ea-hasta').value;
-  const errEl   = document.getElementById('ea-error');
-  errEl.style.display = 'none';
-
-  if (!curso) { errEl.textContent = 'Seleccioná un curso.'; errEl.style.display='block'; return; }
-  if (!desdeRaw || !hastaRaw) { errEl.textContent = 'Indicá el rango de fechas.'; errEl.style.display='block'; return; }
-
-  // Convertir a dd/MM/yyyy
-  const toArg = raw => { const p = raw.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
-  const fechaDesde = toArg(desdeRaw);
-  const fechaHasta = toArg(hastaRaw);
-
-  document.getElementById('ea-loading').style.display = 'block';
-  document.getElementById('ea-contenido').innerHTML = '';
-  document.getElementById('ea-btn-imprimir').style.display = 'none';
-
-  callWebApp({ accion: 'exportarAsistencia', curso, legajo: legajo || '', fechaDesde, fechaHasta })
-    .then(res => {
-      document.getElementById('ea-loading').style.display = 'none';
-      if (!res.ok) { errEl.textContent = res.error || 'Error al generar.'; errEl.style.display='block'; return; }
-      _eaDatos = res;
-      renderExportAsistencia(res);
-      document.getElementById('ea-btn-imprimir').style.display = 'inline-flex';
-    })
-    .catch(() => {
-      document.getElementById('ea-loading').style.display = 'none';
-      errEl.textContent = 'Error de conexión.'; errEl.style.display='block';
-    });
-}
-
-function renderExportAsistencia(res) {
-  const cont = document.getElementById('ea-contenido');
-  const cursoLabel = res.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-
-  if (!res.alumnos.length) {
-    cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:24px">Sin datos para el rango seleccionado.</p>';
-    return;
-  }
-
-  const estadoLabel = e => {
-    if (e === 'P')  return '<span style="color:#1a9e5c;font-weight:700">P</span>';
-    if (e === 'A' || e === 'AP') return '<span style="color:#c0392b;font-weight:700">A</span>';
-    if (e === 'T')  return '<span style="color:#b8860b;font-weight:700">T</span>';
-    if (e === 'R')  return '<span style="color:#7d3c98;font-weight:700">R</span>';
-    return '<span style="color:#aaa">—</span>';
-  };
-
-  const bloques = res.alumnos.map(a => {
-    const filas = a.registros.map(r =>
-      `<tr style="border-top:1px solid #eee;font-size:12px">
-        <td style="padding:5px 10px">${r.fecha}</td>
-        <td style="padding:5px 10px;text-align:center">${estadoLabel(r.estado)}</td>
-        <td style="padding:5px 10px;text-align:center;color:#777;font-size:11px">${r.hora || '—'}</td>
-      </tr>`
-    ).join('');
-
-    const pctColor = a.pct >= 85 ? '#1a9e5c' : a.pct >= 70 ? '#b8860b' : '#c0392b';
-
-    return `
-      <div style="border:1px solid #e8e8e8;border-radius:10px;margin-bottom:16px;overflow:hidden">
-        <div style="background:#f0faf5;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <div>
-            <div style="font-weight:700;font-size:14px;color:#1a1a1a">${a.nombre}</div>
-            <div style="font-size:12px;color:#777">Legajo: ${a.legajo} · Curso: ${cursoLabel}</div>
-          </div>
-          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-            <span style="font-size:12px">✅ <b>${a.presentes}</b> presentes</span>
-            <span style="font-size:12px">❌ <b>${a.ausentes}</b> ausentes</span>
-            <span style="font-size:12px">⏳ <b>${a.tardanzas}</b> tardanzas</span>
-            <span style="font-size:12px">🚪 <b>${a.retiros}</b> retiros</span>
-            <span style="font-size:13px;font-weight:700;color:${pctColor}">${a.pct}% asistencia</span>
-            <span style="font-size:12px;color:#888">${a.diasHabiles} días hábiles</span>
-          </div>
-        </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr style="background:#f7f7f7;font-size:11px;font-weight:600;color:#555">
-              <th style="padding:6px 10px;text-align:left">Fecha</th>
-              <th style="padding:6px 10px;text-align:center">Estado</th>
-              <th style="padding:6px 10px;text-align:center">Hora llegada</th>
-            </tr>
-          </thead>
-          <tbody>${filas}</tbody>
-        </table>
-      </div>`;
-  }).join('');
-
-  cont.innerHTML = `
-    <div style="margin-bottom:14px;padding:10px 14px;background:#e8f4ed;border-radius:8px;font-size:13px;color:#1a7a44">
-      <b>Curso ${cursoLabel}</b> · Del ${res.fechaDesde} al ${res.fechaHasta} · ${res.diasHabiles} días hábiles · ${res.alumnos.length} alumno(s)
-    </div>
-    ${bloques}`;
-}
-
-function imprimirExportAsistencia() {
-  if (!_eaDatos) return;
-  const cursoLabel = _eaDatos.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-  const cont = document.getElementById('ea-contenido').innerHTML;
-  const ventana = window.open('', '_blank');
-  ventana.document.write(`
-    <html><head><title>Asistencia ${cursoLabel}</title>
-    <style>
-      body{font-family:Arial,sans-serif;font-size:12px;padding:20px;color:#1a1a1a}
-      h2{color:#1a9e5c;margin-bottom:4px}
-      table{width:100%;border-collapse:collapse;margin-bottom:4px}
-      th{background:#1a9e5c;color:#fff;padding:5px 8px;font-size:11px}
-      td{padding:4px 8px;border-bottom:1px solid #eee}
-      .bloque{border:1px solid #ddd;border-radius:6px;margin-bottom:14px;overflow:hidden;page-break-inside:avoid}
-      .bloque-header{background:#f0faf5;padding:8px 12px}
-      .resumen{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;margin-top:4px}
-      @media print{button{display:none}}
-    </style>
-    </head><body>
-    <h2>Colegio Perito Moreno — Informe de Asistencia</h2>
-    <p style="font-size:11px;color:#777;margin:0 0 14px 0">
-      Curso: <b>${cursoLabel}</b> · Período: ${_eaDatos.fechaDesde} al ${_eaDatos.fechaHasta} · 
-      Días hábiles: ${_eaDatos.diasHabiles} · Generado: ${new Date().toLocaleDateString('es-AR')}
-    </p>
-    ${cont}
-    </body></html>`);
-  ventana.document.close();
-  ventana.print();
-}
-
-// ════════════════════════════════════════════════════════════════════
-//  PANEL DE ESTADÍSTICAS
-// ════════════════════════════════════════════════════════════════════
-
-let _estadDatos = null;
-let _estadTabActiva = 'asistencia';
-
-function initEstadisticas() {
-  document.getElementById('estad-loading').style.display = 'block';
-  ['asistencia','notas','evolucion','riesgo'].forEach(t =>
-    document.getElementById('estad-tab-'+t).style.display = 'none'
-  );
-  callWebApp({ accion: 'obtenerPanelEstadisticas' })
-    .then(res => {
-      document.getElementById('estad-loading').style.display = 'none';
-      if (!res.ok) { showToast('Error al cargar estadísticas', '❌'); return; }
-      _estadDatos = res;
-      renderEstadTab(_estadTabActiva);
-      document.getElementById('estad-tab-'+_estadTabActiva).style.display = 'block';
-    })
-    .catch(() => {
-      document.getElementById('estad-loading').style.display = 'none';
-      showToast('Error de conexión', '❌');
-    });
-}
-
-function switchEstadTab(tab, btn) {
-  _estadTabActiva = tab;
-  document.querySelectorAll('.estad-tab').forEach(b => {
-    b.style.color = '#888'; b.style.borderBottomColor = 'transparent';
-  });
-  btn.style.color = '#1a9e5c'; btn.style.borderBottomColor = '#1a9e5c';
-  ['asistencia','notas','evolucion','riesgo','descargas'].forEach(t =>
-    document.getElementById('estad-tab-'+t).style.display = t === tab ? 'block' : 'none'
-  );
-  if (_estadDatos) renderEstadTab(tab);
-  else if (tab === 'descargas') renderEstadDescargas();
-}
-
-function renderEstadTab(tab) {
-  if (!_estadDatos && tab !== 'descargas') return;
-  if (tab === 'asistencia') renderEstadAsistencia();
-  else if (tab === 'notas') renderEstadNotas();
-  else if (tab === 'evolucion') renderEstadEvolucion();
-  else if (tab === 'riesgo') renderEstadRiesgo();
-  else if (tab === 'descargas') renderEstadDescargas();
-}
-
-// ── Tab Asistencia ────────────────────────────────────────────────
-function renderEstadAsistencia() {
-  const cont = document.getElementById('estad-tab-asistencia');
-  const data = _estadDatos.asistenciaPorCurso || [];
-  if (!data.length) { cont.innerHTML = '<p style="color:#aaa;font-size:13px">Sin datos.</p>'; return; }
-
-  const barras = data.map(c => {
-    const pct   = c.promedioAsistencia;
-    const color = pct >= 85 ? '#1a9e5c' : pct >= 70 ? '#f0a500' : '#c0392b';
-    const label = c.curso.replace(/([0-9]+)([A-Z]+)/,'$1°$2');
-    return `
-      <div style="margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
-          <span style="font-weight:600">${label}</span>
-          <span style="color:${color};font-weight:700">${pct}%</span>
-        </div>
-        <div style="background:#eee;border-radius:6px;height:14px;overflow:hidden">
-          <div style="width:${pct}%;height:100%;background:${color};border-radius:6px;transition:width .4s"></div>
-        </div>
-        <div style="font-size:11px;color:#888;margin-top:2px">
-          ${c.totalAlumnos} alumnos · ⚠️ ${c.enRiesgo} en riesgo · 🔴 ${c.criticos} críticos
-        </div>
-      </div>`;
-  }).join('');
-
-  // Totales
-  const totalAlumnos = data.reduce((s,c) => s+c.totalAlumnos, 0);
-  const totalRiesgo  = data.reduce((s,c) => s+c.enRiesgo, 0);
-  const totalCritic  = data.reduce((s,c) => s+c.criticos, 0);
-  const promGlobal   = data.length ? Math.round(data.reduce((s,c)=>s+c.promedioAsistencia,0)/data.length) : 0;
-
-  cont.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px">
-      <div style="background:#e8f4ed;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:24px;font-weight:700;color:#1a9e5c">${promGlobal}%</div>
-        <div style="font-size:11px;color:#555;margin-top:4px">Asistencia global</div>
-      </div>
-      <div style="background:#fff3e0;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:24px;font-weight:700;color:#f0a500">${totalRiesgo}</div>
-        <div style="font-size:11px;color:#555;margin-top:4px">Alumnos en riesgo</div>
-      </div>
-      <div style="background:#fef0f0;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:24px;font-weight:700;color:#c0392b">${totalCritic}</div>
-        <div style="font-size:11px;color:#555;margin-top:4px">Casos críticos</div>
-      </div>
-      <div style="background:#f0f4ff;border-radius:10px;padding:14px;text-align:center">
-        <div style="font-size:24px;font-weight:700;color:#2d7dd2">${totalAlumnos}</div>
-        <div style="font-size:11px;color:#555;margin-top:4px">Total alumnos</div>
-      </div>
-    </div>
-    <h4 style="font-size:13px;font-weight:700;margin:0 0 14px 0">% Asistencia promedio por curso</h4>
-    <div style="max-width:600px">${barras}</div>`;
-}
-
-// ── Tab Notas por Materia ─────────────────────────────────────────
-function renderEstadNotas() {
-  const cont  = document.getElementById('estad-tab-notas');
-  const datos = _estadDatos.notasPorCurso || {};
-  const CURSOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
-
-  let html = `
-    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
-      ${CURSOS.filter(c => datos[c]).map(c =>
-        `<button onclick="filtrarEstadNotas('${c}')" class="estad-notas-btn" style="padding:5px 12px;border:1px solid #ddd;border-radius:20px;background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">${c.replace(/([0-9]+)([A-Z]+)/,'$1°$2')}</button>`
-      ).join('')}
-    </div>
-    <div id="estad-notas-detalle"></div>`;
-  cont.innerHTML = html;
-
-  // Mostrar el primero por defecto
-  const primero = CURSOS.find(c => datos[c]);
-  if (primero) filtrarEstadNotas(primero);
-}
-
-function filtrarEstadNotas(curso) {
-  document.querySelectorAll('.estad-notas-btn').forEach(b => {
-    const lbl = b.textContent.replace('°','').replace(' ','');
-    b.style.background = lbl === curso ? '#1a9e5c' : '#fff';
-    b.style.color = lbl === curso ? '#fff' : '#333';
-    b.style.borderColor = lbl === curso ? '#1a9e5c' : '#ddd';
-  });
-  const materias = (_estadDatos.notasPorCurso || {})[curso] || [];
-  const label = curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-  const filas = materias.map(m => {
-    const total = m.aprobados + m.reprobados;
-    const color = m.pctAprobados >= 70 ? '#1a9e5c' : m.pctAprobados >= 50 ? '#f0a500' : '#c0392b';
-    const barW  = m.pctAprobados || 0;
-    return `<tr style="border-top:1px solid #eee">
-      <td style="padding:8px 10px;font-size:13px">${m.materia}</td>
-      <td style="padding:8px 10px;text-align:center;color:#1a9e5c;font-weight:700">${m.aprobados}</td>
-      <td style="padding:8px 10px;text-align:center;color:#c0392b;font-weight:700">${m.reprobados}</td>
-      <td style="padding:8px 10px;text-align:center;color:#aaa">${m.sinDatos}</td>
-      <td style="padding:8px 10px;min-width:120px">
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="flex:1;background:#eee;border-radius:4px;height:10px">
-            <div style="width:${barW}%;height:100%;background:${color};border-radius:4px"></div>
-          </div>
-          <span style="font-size:12px;font-weight:700;color:${color};min-width:36px">${barW}%</span>
-        </div>
-      </td>
-      <td style="padding:8px 10px;text-align:center;font-size:12px;color:#555">${m.promMat !== null ? m.promMat.toFixed(2) : '—'}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('estad-notas-detalle').innerHTML = `
-    <h4 style="font-size:13px;font-weight:700;margin:0 0 10px 0">Curso ${label}</h4>
-    <table style="width:100%;border-collapse:collapse">
-      <thead>
-        <tr style="background:#1a9e5c;color:#fff;font-size:12px">
-          <th style="padding:8px 10px;text-align:left">Materia</th>
-          <th style="padding:8px 10px;text-align:center">Aprobados</th>
-          <th style="padding:8px 10px;text-align:center">Reprobados</th>
-          <th style="padding:8px 10px;text-align:center">Sin datos</th>
-          <th style="padding:8px 10px;text-align:left">% Aprobados</th>
-          <th style="padding:8px 10px;text-align:center">Prom. mat.</th>
-        </tr>
-      </thead>
-      <tbody>${filas}</tbody>
-    </table>`;
-}
-
-// ── Tab Evolución bimestral ───────────────────────────────────────
-function renderEstadEvolucion() {
-  const cont = document.getElementById('estad-tab-evolucion');
-  const evol = _estadDatos.evolucion || {};
-  const CURSOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B']
-    .filter(c => evol[c]);
-
-  if (!CURSOS.length) { cont.innerHTML = '<p style="color:#aaa;font-size:13px">Sin datos suficientes.</p>'; return; }
-
-  const filas = CURSOS.map(c => {
-    const d = evol[c];
-    const label = c.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-    const colorPct  = v => v === null ? '#aaa' : v >= 70 ? '#1a9e5c' : v >= 50 ? '#f0a500' : '#c0392b';
-    const colorNota = v => v === null ? '#aaa' : v >= 7 ? '#1a9e5c' : v >= 5 ? '#f0a500' : '#c0392b';
-    const fmtPct  = v => v !== null ? v + '% TEA' : '—';
-    const fmtNota = v => v !== null ? v.toFixed(2) : '—';
-    return `<tr style="border-top:1px solid #eee">
-      <td style="padding:8px 10px;font-weight:600">${label}</td>
-      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorPct(d.bim1)}">${fmtPct(d.bim1)}</td>
-      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorNota(d.cuat1)}">${fmtNota(d.cuat1)}</td>
-      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorPct(d.bim3)}">${fmtPct(d.bim3)}</td>
-      <td style="padding:8px 10px;text-align:center;font-weight:700;color:${colorNota(d.cuat2)}">${fmtNota(d.cuat2)}</td>
-    </tr>`;
-  }).join('');
-
-  cont.innerHTML = `
-    <p style="font-size:12px;color:#777;margin:0 0 14px 0">Bimestres: % de alumnos con TEA (Trayectoria Educativa Aprobada) · Cuatrimestres: promedio numérico · Excluye Robótica y Técnicas de Estudio</p>
-    <table style="width:100%;border-collapse:collapse;max-width:650px">
-      <thead>
-        <tr style="background:#1a9e5c;color:#fff;font-size:12px">
-          <th style="padding:8px 10px;text-align:left">Curso</th>
-          <th style="padding:8px 10px;text-align:center">1° Bim.</th>
-          <th style="padding:8px 10px;text-align:center">1° Cuat.</th>
-          <th style="padding:8px 10px;text-align:center">3° Bim.</th>
-          <th style="padding:8px 10px;text-align:center">2° Cuat.</th>
-        </tr>
-      </thead>
-      <tbody>${filas}</tbody>
-    </table>`;
-}
-
-// ── Tab Alumnos en Riesgo ─────────────────────────────────────────
-function renderEstadRiesgo() {
-  const cont  = document.getElementById('estad-tab-riesgo');
-  const asist = _estadDatos.asistenciaPorCurso || [];
-  const academ = _estadDatos.alumnosRiesgoAcad || [];
-
-  // Riesgo asistencia: traer de obtenerAlertasInasistencias (ya existe)
-  // Acá mostramos los dos: asistencia y académico
-  let htmlAcad = '';
-  if (!academ.length) {
-    htmlAcad = '<p style="color:#1a9e5c;font-size:13px">✅ Sin alumnos en riesgo académico.</p>';
-  } else {
-    const filas = academ.map(a => {
-      const label = a.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-      return `<tr style="border-top:1px solid #eee;font-size:13px">
-        <td style="padding:7px 10px;font-weight:500">${a.nombre}</td>
-        <td style="padding:7px 10px;text-align:center">${label}</td>
-        <td style="padding:7px 10px;text-align:center;color:#c0392b;font-weight:700">${a.materiasAprobadas}/${a.totalMaterias}</td>
-        <td style="padding:7px 10px;text-align:center;color:#555">${a.promGen !== null ? a.promGen.toFixed(2) : '—'}</td>
-      </tr>`;
-    }).join('');
-    htmlAcad = `
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="background:#c0392b;color:#fff;font-size:12px">
-            <th style="padding:7px 10px;text-align:left">Alumno</th>
-            <th style="padding:7px 10px;text-align:center">Curso</th>
-            <th style="padding:7px 10px;text-align:center">Mat. aprobadas</th>
-            <th style="padding:7px 10px;text-align:center">Prom. general</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>`;
-  }
-
-  cont.innerHTML = `
-    <div style="margin-bottom:24px">
-      <h4 style="font-size:13px;font-weight:700;margin:0 0 10px 0;color:#c0392b">⚠️ Riesgo Académico — menos del 50% de materias aprobadas</h4>
-      ${htmlAcad}
-    </div>
-    <div>
-      <h4 style="font-size:13px;font-weight:700;margin:0 0 10px 0;color:#f0a500">📅 Riesgo por Asistencia</h4>
-      <p style="font-size:12px;color:#777;margin:0 0 10px 0">Ver sección <b>Seguimiento de Faltas</b> para el detalle completo de inasistencias.</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
-        ${asist.filter(c => c.enRiesgo > 0).map(c => {
-          const label = c.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2');
-          return `<div style="border:1px solid #f5c6c6;border-radius:8px;padding:10px;background:#fef9f0">
-            <div style="font-weight:700;font-size:13px">${label}</div>
-            <div style="font-size:12px;color:#f0a500;margin-top:4px">⚠️ ${c.enRiesgo} en riesgo</div>
-            <div style="font-size:12px;color:#c0392b">🔴 ${c.criticos} críticos</div>
-          </div>`;
-        }).join('') || '<p style="color:#1a9e5c;font-size:13px">✅ Sin alumnos en riesgo por asistencia.</p>'}
-      </div>
-    </div>`;
-}
-
-function imprimirEstadisticas() {
-  if (!_estadDatos) { showToast('Cargá las estadísticas primero', '⚠️'); return; }
-  const cont = document.getElementById('estad-tab-' + _estadTabActiva).innerHTML;
-  const ventana = window.open('', '_blank');
-  ventana.document.write(`
-    <html><head><title>Estadísticas ${_estadDatos.anio}</title>
-    <style>
-      body{font-family:Arial,sans-serif;font-size:12px;padding:20px}
-      h2{color:#1a9e5c}table{width:100%;border-collapse:collapse;margin-bottom:14px}
-      th{background:#1a9e5c;color:#fff;padding:6px 8px}td{padding:5px 8px;border-bottom:1px solid #eee}
-      @media print{button{display:none}}
-    </style>
-    </head><body>
-    <h2>Colegio Perito Moreno — Estadísticas ${_estadDatos.anio}</h2>
-    ${cont}
-    </body></html>`);
-  ventana.document.close();
-  ventana.print();
-}
-
-// ════════════════════════════════════════════════════════════════════
-//  INFORME ALUMNO — NOTAS + ASISTENCIA (descargable como HTML/PDF)
-// ════════════════════════════════════════════════════════════════════
-
-function _generarHTMLRITE(nombre, curso, resNotas, resAsist) {
-  const hoy     = new Date().toLocaleDateString('es-AR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  const logoUrl = typeof PM_LOGO !== 'undefined' ? PM_LOGO : '';
-    const materias  = resNotas.materias  || [];
-    const registros = resAsist.registros || [];
-
-    // ── Asistencia ──
-    const presentes = registros.filter(r => r.estado === 'P').length;
-    const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP' || r.estado === 'J' || r.estado === 'AM').length;
-    const tardes    = registros.filter(r => r.estado === 'T').length;
-    const retiros   = registros.filter(r => r.estado === 'R').length;
-    const diasHab   = registros.length;
-    const presentesTotal = presentes + tardes + retiros;
-    // Fórmula idéntica al dashboard del alumno
-    const total   = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
-    const inasist = ausentes + (tardes * 0.25) + (retiros * 0.5);
-    const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
-    const pctColor  = pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
-
-    const novedades = registros.filter(r => r.estado !== 'P');
-    const estadoLabel = { A:'Ausente', AP:'Ausente Pres.', T:'Llegada tarde', R:'Retiro anticipado' };
-    const estadoColor = { A:'#c0392b', AP:'#c0392b', T:'#b8860b', R:'#7d3c98' };
-
-    const filasAsist = novedades.length
-      ? novedades.map(r => `
-          <tr>
-            <td>${r.fecha}</td>
-            <td style="color:${estadoColor[r.estado]||'#333'};font-weight:700">${estadoLabel[r.estado]||r.estado}</td>
-            <td>${r.horaLlegada || '—'}</td>
-          </tr>`).join('')
-      : '<tr><td colspan="3" style="text-align:center;color:#aaa">Sin novedades de asistencia</td></tr>';
-
-    // ── Notas ──
-    const periodos = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
-    const esBim    = [true, false, true, false, false, false];
-    const colPer   = ['#1565C0','#2E7D32','#6A1B9A','#C0131A','#E65100','#E65100'];
-
-    const expandTEA = v => {
-      if (v === 'TEA') return '<span style="color:#2E7D32;font-weight:700">TEA</span>';
-      if (v === 'TEP') return '<span style="color:#F57F17;font-weight:700">TEP</span>';
-      if (v === 'TED') return '<span style="color:#c0392b;font-weight:700">TED</span>';
-      return v || '—';
-    };
-
-    const filasNotas = materias.length
-      ? materias.map(m => {
-          const vals = [m.bim1, m.cuat1, m.bim3, m.cuat2, m.dic, m.feb];
-          const estColor = m.estadoFinal === 'Promovido' ? '#2E7D32' : m.estadoFinal === 'Adeuda' ? '#c0392b' : '#b8860b';
-          return `<tr>
-            <td style="font-weight:600;text-align:left;padding:7px 10px">${m.materia}</td>
-            ${vals.map((v,i) => `<td style="text-align:center;padding:7px 6px">${esBim[i] ? expandTEA(v) : (v||'—')}</td>`).join('')}
-            <td style="text-align:center;color:${estColor};font-weight:700;padding:7px 10px">${m.estadoFinal||'—'}</td>
-          </tr>`;
-        }).join('')
-      : '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:16px">Sin calificaciones cargadas aún</td></tr>';
-
-    const html = `<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Informe de ${nombre}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; padding: 24px; max-width: 800px; margin: 0 auto; }
-  .header { display: flex; align-items: center; gap: 16px; border-bottom: 3px solid #1a9e5c; padding-bottom: 16px; margin-bottom: 20px; }
-  .header img { width: 70px; height: 70px; object-fit: contain; }
-  .header-text h1 { font-size: 16px; color: #1a9e5c; margin-bottom: 2px; }
-  .header-text p { font-size: 12px; color: #777; }
-  .alumno-info { background: #f0faf5; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; display: flex; gap: 24px; flex-wrap: wrap; }
-  .alumno-info div { font-size: 13px; } .alumno-info strong { color: #1a9e5c; }
-  h2 { font-size: 14px; color: #1a9e5c; margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #e0f2e9; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-  th { background: #1a9e5c; color: #fff; padding: 7px 8px; font-size: 11px; text-align: center; }
-  th:first-child { text-align: left; }
-  td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 12px; text-align: center; }
-  td:first-child { text-align: left; }
-  tr:nth-child(even) { background: #f7faf8; }
-  .resumen-asist { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
-  .badge { padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; text-align: center; min-width: 80px; }
-  .ref { font-size: 11px; color: #777; margin-top: 10px; padding: 10px; background: #f7faf8; border-left: 3px solid #1a9e5c; border-radius: 0 6px 6px 0; line-height: 1.8; }
-  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #eee; font-size: 11px; color: #aaa; text-align: center; }
-  @media print { body { padding: 12px; } button { display: none; } }
-</style>
-</head>
-<body>
-  <div class="header">
-    <img src="${logoUrl}" alt="Logo Colegio Perito Moreno" onerror="this.style.display='none'">
-    <div class="header-text">
-      <h1>Colegio Secundario "Perito Moreno"</h1><p style="font-size:12px;color:#555;margin-top:2px">Tomás Valle 5662 — González Catán</p>
-      <p>R.I.T.E — Registro Institucional de Trayectorias Educativas — ${hoy}</p>
-    </div>
-  </div>
-
-  <div class="alumno-info">
-    <div><strong>Alumno/a:</strong> ${nombre}</div>
-    <div><strong>Curso:</strong> ${curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2')}</div>
-    <div><strong>% Asistencia:</strong> <span style="color:${pctColor};font-weight:700">${pct}%</span></div>
-  </div>
-
-  <h2>📊 Calificaciones</h2>
-  <table>
-    <thead>
-      <tr>
-        <th style="text-align:left">Materia</th>
-        ${periodos.map((p,i) => `<th style="background:${colPer[i]}">${p}</th>`).join('')}
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody>${filasNotas}</tbody>
-  </table>
-  <div class="ref">
-    <strong style="color:#1a9e5c">Referencia bimestral:</strong>
-    <span style="color:#2E7D32;font-weight:700">TEA</span> Trayecto Educativo Alcanzado &nbsp;|&nbsp;
-    <span style="color:#F57F17;font-weight:700">TEP</span> Trayecto Educativo en Proceso &nbsp;|&nbsp;
-    <span style="color:#c0392b;font-weight:700">TED</span> Trayecto Educativo Discontinuo
-  </div>
-
-  <h2>📅 Asistencia</h2>
-  <div class="resumen-asist">
-    <div class="badge" style="background:#d8f3dc;color:#1a7a44">✅ ${presentesTotal}<br><span style="font-weight:400;font-size:10px">Presentes</span></div>
-    <div class="badge" style="background:#fef0f0;color:#c0392b">❌ ${ausentes}<br><span style="font-weight:400;font-size:10px">Ausentes</span></div>
-    <div class="badge" style="background:#fffbe6;color:#b8860b">🕐 ${tardes}<br><span style="font-weight:400;font-size:10px">Tardanzas</span></div>
-    <div class="badge" style="background:#f3e5f5;color:#7d3c98">🚪 ${retiros}<br><span style="font-weight:400;font-size:10px">Retiros</span></div>
-    <div class="badge" style="background:#e8e8e8;color:#555">📅 ${diasHab}<br><span style="font-weight:400;font-size:10px">Días hábiles</span></div>
-  </div>
-  <table>
-    <thead>
-      <tr><th style="text-align:left">Fecha</th><th>Estado</th><th>Hora</th></tr>
-    </thead>
-    <tbody>${filasAsist}</tbody>
-  </table>
-
-  <div class="footer">
-    Informe generado por Perito Digital · ${hoy} · Este documento es de carácter informativo
-  </div>
-
-  <div style="text-align:center;margin-top:16px">
-    <button onclick="window.print()" style="padding:10px 24px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">🖨️ Imprimir / Guardar como PDF</button>
-  </div>
-</body>
-</html>`;
-
-  return html;
-}
-
-
-// ════════════════════════════════════════════════════════════════════
-//  MODAL NOTIFICACIÓN RITE + REGISTRO DE DESCARGAS
-// ════════════════════════════════════════════════════════════════════
-
-
-let _riteHtmlPendiente = null;
-let _riteNombrePendiente = '';
-let _riteCursoPendiente  = '';
-let _riteTimer = null;
-let _riteSegs  = 30;
-
-
-function descargarInformeAlumno() {
-  const nombre = currentNombre || currentUser;
-  const curso  = currentCursoAlumno || '—';
-
-  showToast('Generando informe...', '⏳');
-
-  Promise.all([
-    callWebApp({ accion: 'obtenerNotasAlumno',      legajo: currentUser, curso, nombre }),
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre })
-  ]).then(([resNotas, resAsist]) => {
-    _riteHtmlPendiente  = _generarHTMLRITE(nombre, curso, resNotas, resAsist);
-    _riteNombrePendiente = nombre;
-    _riteCursoPendiente  = curso;
-    _mostrarModalRITE(nombre);
-  }).catch(() => showToast('Error al generar el informe', '❌'));
-}
-
-function _mostrarModalRITE(nombre) {
-  document.getElementById('rite-nombre-alumno').textContent = nombre;
-  document.getElementById('rite-countdown').textContent = '30';
-  document.getElementById('rite-progress').style.width = '100%';
-  document.getElementById('modal-notif-rite').style.display = 'flex';
-
-  _riteSegs = 30;
-  clearInterval(_riteTimer);
-  _riteTimer = setInterval(() => {
-    _riteSegs--;
-    document.getElementById('rite-countdown').textContent = _riteSegs;
-    document.getElementById('rite-progress').style.width = (_riteSegs / 30 * 100) + '%';
-    if (_riteSegs <= 0) {
-      clearInterval(_riteTimer);
-      _ejecutarDescargaRITE();
-    }
-  }, 1000);
-}
-
-function saltarEsperaRITE() {
-  clearInterval(_riteTimer);
-  _ejecutarDescargaRITE();
-}
-
-function _ejecutarDescargaRITE() {
-  document.getElementById('modal-notif-rite').style.display = 'none';
-
-  // Registrar en el Sheet
-  callWebApp({
-    accion:  'registrarDescargaRITE',
-    alumno:  _riteNombrePendiente,
-    curso:   _riteCursoPendiente,
-    usuario: currentUser
-  });
-
-  // Descargar el archivo
-  if (_riteHtmlPendiente) {
-    const blob = new Blob([_riteHtmlPendiente], { type: 'text/html;charset=utf-8' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `RITE_${_riteNombrePendiente.replace(/[^a-zA-Z0-9]/g,'_')}_${_riteCursoPendiente}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    showToast('Informe R.I.T.E descargado', '✅');
-    _riteHtmlPendiente = null;
-  }
-}
-
-// ── Pestaña Descargas RITE en Estadísticas ───────────────────────
-function renderEstadDescargas() {
-  const cont = document.getElementById('estad-tab-descargas');
-  cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Cargando...</p>';
-
-  callWebApp({ accion: 'obtenerDescargasRITE' }).then(res => {
-    if (!res.ok || !res.descargas.length) {
-      cont.innerHTML = '<p style="color:#aaa;font-size:13px;text-align:center;padding:20px">Sin descargas registradas aún.</p>';
-      return;
-    }
-    const filas = res.descargas.map((d, i) => `
-      <tr style="background:${i%2===0?'#fff':'#f7faf8'}">
-        <td style="padding:8px 10px;font-size:12px;color:#555">${d.fecha}</td>
-        <td style="padding:8px 10px;font-weight:600">${d.alumno}</td>
-        <td style="padding:8px 10px;text-align:center">${d.curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2')}</td>
-        <td style="padding:8px 10px;color:#777;font-size:12px">${d.usuario}</td>
-      </tr>`).join('');
-
-    cont.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div>
-          <h4 style="font-size:14px;font-weight:700;margin:0">📥 Descargas de R.I.T.E</h4>
-          <p style="font-size:12px;color:#777;margin:2px 0 0 0">${res.descargas.length} descarga(s) registrada(s)</p>
-        </div>
-        <input type="text" placeholder="Buscar alumno..." oninput="filtrarDescargasRITE(this.value)" style="padding:7px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit">
-      </div>
-      <table style="width:100%;border-collapse:collapse" id="tabla-descargas-rite">
-        <thead>
-          <tr style="background:#1a9e5c;color:#fff;font-size:12px">
-            <th style="padding:8px 10px;text-align:left">Fecha y hora</th>
-            <th style="padding:8px 10px;text-align:left">Alumno/a</th>
-            <th style="padding:8px 10px;text-align:center">Curso</th>
-            <th style="padding:8px 10px;text-align:left">Usuario</th>
-          </tr>
-        </thead>
-        <tbody id="tbody-descargas-rite">${filas}</tbody>
-      </table>`;
-  });
-}
-
-function filtrarDescargasRITE(q) {
-  const tbody = document.getElementById('tbody-descargas-rite');
-  if (!tbody) return;
-  const filas = tbody.querySelectorAll('tr');
-  filas.forEach(f => {
-    f.style.display = f.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
-  });
-}
-
 // ── Al entrar a la sección EOE, asegurar que el panel se inicialice ──
 const _origShowSectionSupa = typeof _origShowSection !== 'undefined' ? _origShowSection : null;
 // Hook adicional ligero
@@ -11166,24 +9440,6 @@ const _showSectionBase = showSection;
 
 
 </script>
-<!-- ── Buscador Global de Alumnos ─────────────────────────────────────── -->
-<div id="buscador-global-btn" onclick="toggleBuscadorGlobal()" title="Buscar alumno" style="display:none;position:fixed;bottom:24px;right:24px;z-index:8000;width:46px;height:46px;border-radius:50%;background:#1a9e5c;color:#fff;font-size:20px;box-shadow:0 4px 16px rgba(0,0,0,.18);cursor:pointer;align-items:center;justify-content:center;border:none">🔍</div>
-
-<div id="buscador-global-panel" style="display:none;position:fixed;bottom:80px;right:24px;z-index:8100;width:min(420px,94vw);background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.18);overflow:hidden">
-  <div style="background:#1a9e5c;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
-    <span style="color:#fff;font-weight:700;font-size:14px">🔍 Buscar Alumno</span>
-    <button onclick="toggleBuscadorGlobal()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;line-height:1">✕</button>
-  </div>
-  <div style="padding:12px 14px">
-    <div style="display:flex;gap:8px">
-      <input id="buscador-global-input" type="text" placeholder="Apellido o DNI..." onkeydown="if(event.key==='Enter')ejecutarBusquedaGlobal()" style="flex:1;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none" oninput="onInputBuscador(this.value)">
-      <button onclick="ejecutarBusquedaGlobal()" style="padding:8px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Buscar</button>
-    </div>
-    <div id="buscador-global-loading" style="display:none;text-align:center;padding:16px;color:#888;font-size:13px">Buscando...</div>
-    <div id="buscador-global-resultados" style="max-height:60vh;overflow-y:auto;margin-top:8px"></div>
-  </div>
-</div>
-
 <div id="toast"><span class="toast-icon" id="toast-icon">✅</span><span class="toast-text" id="toast-text">Listo</span></div>
 </body>
 </html>
