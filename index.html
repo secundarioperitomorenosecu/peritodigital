@@ -10882,6 +10882,7 @@ function imprimirEstadisticas() {
 
 function _generarHTMLRITE(nombre, curso, resNotas, resAsist) {
   const hoy     = new Date().toLocaleDateString('es-AR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const logoUrl = typeof PM_LOGO !== 'undefined' ? PM_LOGO : '';
     const materias  = resNotas.materias  || [];
     const registros = resAsist.registros || [];
 
