@@ -4086,6 +4086,7 @@ let cursoActualAtt = '3°B';
 let tardyTimes = {};
 let alumnosActuales = []; // alumnos reales cargados desde Sheets
 
+let alumnosCalificaciones = []; // alumnos del modulo de calificaciones
 function cambiarCursoAtt(el, curso) {
   document.querySelectorAll('#sec-asistencia .curso-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
@@ -4294,7 +4295,7 @@ function buildGrades(){
   if (!tb) return;
   const selPeriodo = document.getElementById('cal-periodo');
   const periodo = selPeriodo ? selPeriodo.value : '1BIM';
-  const lista = alumnosActuales.length > 0 ? alumnosActuales.map(a => a.nombre) : [];
+  const lista = alumnosCalificaciones.length > 0 ? alumnosCalificaciones.map(a => a.nombre) : [];
   if (lista.length === 0) {
     tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(0,0,0,.3);padding:20px">Seleccioná un curso para cargar calificaciones.</td></tr>';
     return;
@@ -4408,9 +4409,9 @@ function onCalFinalChange(i) {
 function cargarAlumnosCalificaciones() {
   const curso = document.getElementById('cal-curso').value;
   if (!curso) return;
-  alumnosActuales = [];
+  alumnosCalificaciones = [];
   callWebApp({ accion: 'obtenerAsistencia', curso, fecha: fechaHoy() }).then(res => {
-    if (res.ok && res.alumnos) { alumnosActuales = res.alumnos; }
+    if (res.ok && res.alumnos) { alumnosCalificaciones = res.alumnos; }
     buildGrades();
     cargarCalificacionesExistentes();
   });
@@ -4421,7 +4422,7 @@ function cargarCalificacionesExistentes() {
   const curso   = document.getElementById('cal-curso').value;
   const materia = document.getElementById('cal-materia').value;
   const periodo = document.getElementById('cal-periodo').value;
-  if (!curso || !materia || alumnosActuales.length === 0) return;
+  if (!curso || !materia || alumnosCalificaciones.length === 0) return;
 
   callWebApp({ accion: 'obtenerCalificaciones', curso, materia, anio: new Date().getFullYear() }).then(res => {
     if (!res || !res.ok || !res.calificaciones.length) return;
@@ -4434,7 +4435,7 @@ function cargarCalificacionesExistentes() {
       '2CUAT':'cuat2', 'DIC':'dic', 'FEB':'feb'
     }[periodo];
 
-    alumnosActuales.forEach((a, i) => {
+    alumnosCalificaciones.forEach((a, i) => {
       const datos = mapaNotas[a.legajo];
       if (!datos) return;
       const val = datos[colPeriodo];
@@ -4462,17 +4463,17 @@ function guardarCalificaciones() {
 
   if (!curso)   { showToast('Seleccioná un curso','⚠️'); return; }
   if (!materia) { showToast('Seleccioná la materia','⚠️'); return; }
-  if (alumnosActuales.length === 0) { showToast('No hay alumnos cargados','⚠️'); return; }
+  if (alumnosCalificaciones.length === 0) { showToast('No hay alumnos cargados','⚠️'); return; }
 
   // Validar que TEP/TED en DIC/FEB tengan Cal. Final numérica
   if (esDicFeb) {
-    for (let i = 0; i < alumnosActuales.length; i++) {
+    for (let i = 0; i < alumnosCalificaciones.length; i++) {
       const sel = document.getElementById('grade-' + i);
       const val = sel ? sel.value : '';
       if (val === 'TEP' || val === 'TED') {
         const cf = document.getElementById('cal-final-' + i);
         if (!cf || !cf.value || isNaN(parseFloat(cf.value))) {
-          showToast('⚠️ ' + alumnosActuales[i].nombre + ' tiene TEP/TED pero falta la Calificación Final numérica', '❌');
+          showToast('⚠️ ' + alumnosCalificaciones[i].nombre + ' tiene TEP/TED pero falta la Calificación Final numérica', '❌');
           return;
         }
       }
@@ -4480,7 +4481,7 @@ function guardarCalificaciones() {
   }
 
   // Armar bloque con todos los alumnos — UNA sola llamada al backend
-  const alumnosBloque = alumnosActuales.map((a, i) => {
+  const alumnosBloque = alumnosCalificaciones.map((a, i) => {
     const input = document.getElementById('grade-' + i);
     const val   = input ? input.value.trim() : '';
     let calFinal = '';
@@ -5018,7 +5019,7 @@ function setupCalificaciones() {
   // Al cambiar materia tambien recarga notas existentes
   const matSel = document.getElementById('cal-materia');
   if (matSel) matSel.addEventListener('change', function() {
-    if (alumnosActuales.length) cargarCalificacionesExistentes();
+    if (alumnosCalificaciones.length) cargarCalificacionesExistentes();
   });
 }
 
