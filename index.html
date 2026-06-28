@@ -4990,20 +4990,36 @@ function setupCalificaciones() {
   cursoSel.innerHTML = '<option value="">— Seleccioná un curso —</option>' +
     opciones.map(c => `<option value="${c}">${c}</option>`).join('');
 
-  // Materia: para admin carga desde Horarios al elegir curso; para docentes usa buildMateriaField
+  // Materia: siempre reacciona al cambio de curso
   const isAdminCal = ['director','vicedirector','secretary','secretario','secretario/a','legal'].some(r => currentRole.toLowerCase().includes(r));
-  if (isAdminCal) {
-    cursoSel.addEventListener('change', function() {
-      cargarMateriasCurso(this.value, 'cal-materia');
-    });
-    // Al cambiar materia también cargar notas existentes
-    const matSel = document.getElementById('cal-materia');
-    if (matSel) matSel.addEventListener('change', function() {
-      if (alumnosActuales.length) cargarCalificacionesExistentes();
-    });
-  } else {
-    buildMateriaField('cal-materia');
-  }
+
+  cursoSel.addEventListener('change', function() {
+    const curso = this.value;
+    const sel = document.getElementById('cal-materia');
+    if (!sel) return;
+    if (!curso) {
+      sel.innerHTML = '<option value="">\u2014 Seleccion\u00e1 curso primero \u2014</option>';
+      return;
+    }
+    if (isAdminCal || !currentMaterias.length) {
+      // Admin o docente sin materias definidas: carga todo el horario del curso
+      cargarMateriasCurso(curso, 'cal-materia');
+    } else if (currentMaterias.length === 1) {
+      // Docente con una sola materia: la fija automaticamente
+      sel.innerHTML = `<option value="${currentMaterias[0]}">${currentMaterias[0]}</option>`;
+      sel.value = currentMaterias[0];
+    } else {
+      // Docente con varias materias: muestra solo las suyas
+      sel.innerHTML = '<option value="">\u2014 Seleccion\u00e1 materia \u2014</option>' +
+        currentMaterias.map(m => `<option value="${m}">${m}</option>`).join('');
+    }
+  });
+
+  // Al cambiar materia tambien recarga notas existentes
+  const matSel = document.getElementById('cal-materia');
+  if (matSel) matSel.addEventListener('change', function() {
+    if (alumnosActuales.length) cargarCalificacionesExistentes();
+  });
 }
 
 function cargarMateriasCurso(curso, selectId) {
