@@ -4906,6 +4906,23 @@ function buildMateriaField(inputId, style) {
   if (!el || !currentMaterias.length) return;
   const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   if (isAdmin) return;
+
+  // Si el elemento ya es un select, agregar las opciones directamente
+  if (el.tagName === 'SELECT') {
+    el.innerHTML = currentMaterias.length === 1
+      ? `<option value="${currentMaterias[0]}">${currentMaterias[0]}</option>`
+      : '<option value="">— Seleccioná materia —</option>' +
+        currentMaterias.map(m => `<option value="${m}">${m}</option>`).join('');
+    if (currentMaterias.length === 1) {
+      el.value = currentMaterias[0];
+      el.style.background = '#fdf8f3';
+      el.style.fontWeight = '500';
+      el.title = 'Tu materia asignada';
+    }
+    return;
+  }
+
+  // Si es un input, comportamiento original
   if (currentMaterias.length === 1) {
     el.value = currentMaterias[0];
     el.readOnly = true;
