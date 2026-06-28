@@ -544,7 +544,6 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this);if(!bibCargado)inicializarBiblioteca()" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
-      <div class="nav-item" id="nav-reg-ausencias" onclick="window.open('https://secundarioperitomorenosecu.github.io/asistencia-perito/','_blank')" style="display:none"><span class="nav-icon">📝</span> Reg. Ausencias</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
@@ -3438,8 +3437,6 @@ function doLogin(name, role, usuario, res){
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navAud = document.getElementById('nav-ausencias-docentes');
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
-  const navRegAus = document.getElementById('nav-reg-ausencias');
-  if (navRegAus) navRegAus.style.display = (isAdmin || isPreceptor || isDocente) ? 'flex' : 'none';
   const navInf = document.getElementById('nav-informe-materias');
   if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navDnl = document.getElementById('nav-dias-no-lectivos');
@@ -4909,23 +4906,6 @@ function buildMateriaField(inputId, style) {
   if (!el || !currentMaterias.length) return;
   const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   if (isAdmin) return;
-
-  // Si el elemento ya es un select, agregar las opciones directamente
-  if (el.tagName === 'SELECT') {
-    el.innerHTML = currentMaterias.length === 1
-      ? `<option value="${currentMaterias[0]}">${currentMaterias[0]}</option>`
-      : '<option value="">— Seleccioná materia —</option>' +
-        currentMaterias.map(m => `<option value="${m}">${m}</option>`).join('');
-    if (currentMaterias.length === 1) {
-      el.value = currentMaterias[0];
-      el.style.background = '#fdf8f3';
-      el.style.fontWeight = '500';
-      el.title = 'Tu materia asignada';
-    }
-    return;
-  }
-
-  // Si es un input, comportamiento original
   if (currentMaterias.length === 1) {
     el.value = currentMaterias[0];
     el.readOnly = true;
