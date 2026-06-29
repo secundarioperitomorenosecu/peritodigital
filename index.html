@@ -3422,7 +3422,7 @@ function doLogin(name, role, usuario, res){
   const canSeeEOE  = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
-  ['nav-asistencia','nav-calificaciones'].forEach(id =>
+  ['nav-asistencia','nav-calificaciones','nav-reg-ausencias'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
   document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) && !isStudent ? 'flex' : 'none';
   const panelPost = document.getElementById('panel-nuevo-post');
