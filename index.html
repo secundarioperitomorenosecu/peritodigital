@@ -1320,6 +1320,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <select id="rc-vista" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenCurso()">
               <option value="asistencia">Asistencia</option>
               <option value="notas">Calificaciones</option>
+              <option value="paneo">Paneo General</option>
             </select>
           </div>
           <div id="resumen-curso-contenido" style="color:rgba(0,0,0,.3);text-align:center;padding:30px">Seleccioná un curso para ver el resumen.</div>
@@ -5135,6 +5136,82 @@ function cargarResumenCurso() {
   const contenido = document.getElementById('resumen-curso-contenido');
   if (!curso) { contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Seleccioná un curso.</div>'; return; }
   contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Cargando...</div>';
+
+  if (vista === 'paneo') {
+    // Usa el mismo endpoint que calificaciones, que ya trae notas + asistencia
+    callWebApp({ accion: 'obtenerResumenIntegralCurso', curso }).then(res => {
+      if (!res.ok || !res.alumnos || res.alumnos.length === 0) {
+        contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin datos para este curso.</div>'; return;
+      }
+      const { materias, alumnos } = res;
+      const periodoKeys = ['bim1','cuat1','bim3','cuat2','dic','feb','calFinal'];
+
+      // ── Promedio de asistencia del curso ──
+      const pctsValidos = alumnos.map(a => a.asist ? a.asist.pct : null).filter(p => p !== null);
+      const promAsist = pctsValidos.length > 0 ? Math.round(pctsValidos.reduce((s,p)=>s+p,0)/pctsValidos.length) : null;
+      const colorAsist = promAsist >= 85 ? '#2e7d32' : promAsist >= 70 ? '#e65100' : '#c62828';
+
+      // ── Bloque de asistencia ──
+      const bloqueAsist = promAsist !== null ? `
+        <div style="background:#f1f8f4;border:1px solid #c8e6d4;border-radius:10px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:14px">
+          <span style="font-size:28px">📊</span>
+          <div>
+            <div style="font-size:11px;color:#666;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Promedio de asistencia del curso</div>
+            <div style="font-size:28px;font-weight:800;color:${colorAsist}">${promAsist}%</div>
+            <div style="font-size:11px;color:#888">${alumnos.length} alumnos relevados</div>
+          </div>
+        </div>` : '';
+
+      // ── Tarjetas por materia ──
+      const tarjetas = materias.map(mat => {
+        let tea=0, tep=0, ted=0, aprobados=0, desaprobados=0, conNota=0;
+        alumnos.forEach(a => {
+          const notas = a.notas[mat] || {};
+          // TEA/TEP/TED: buscar en cualquier período
+          let tieneTE = false;
+          periodoKeys.forEach(k => {
+            const v = (notas[k] || '').toString().trim().toUpperCase();
+            if (v === 'TEA') { tea++; tieneTE = true; }
+            else if (v === 'TEP') { tep++; tieneTE = true; }
+            else if (v === 'TED') { ted++; tieneTE = true; }
+          });
+          // Aprobados/desaprobados: períodos numéricos (cuatrimestres)
+          ['cuat1','cuat2','calFinal'].forEach(k => {
+            const v = parseFloat(notas[k]);
+            if (!isNaN(v)) {
+              conNota++;
+              if (v >= 7) aprobados++;
+              else desaprobados++;
+            }
+          });
+        });
+
+        const totalTE = tea + tep + ted;
+        const bloqueTE = totalTE > 0 ? `
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            ${tea>0?`<span style="background:#e3f2fd;color:#1565c0;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">TEA: ${tea}</span>`:''}
+            ${tep>0?`<span style="background:#fff8e1;color:#e65100;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">TEP: ${tep}</span>`:''}
+            ${ted>0?`<span style="background:#fce4ec;color:#c62828;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">TED: ${ted}</span>`:''}
+          </div>` : '<div style="font-size:11px;color:#aaa;margin-bottom:8px">Sin trayectos registrados</div>';
+
+        const bloqueNotas = conNota > 0 ? `
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="background:#e8f5e9;color:#2e7d32;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">✅ Aprobados: ${aprobados}</span>
+            <span style="background:#ffebee;color:#c62828;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">❌ Desaprobados: ${desaprobados}</span>
+          </div>` : '<div style="font-size:11px;color:#aaa">Sin notas numéricas cargadas</div>';
+
+        return `
+          <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:14px 16px;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #f0f0f0">📚 ${mat}</div>
+            ${bloqueTE}
+            ${bloqueNotas}
+          </div>`;
+      }).join('');
+
+      contenido.innerHTML = bloqueAsist + tarjetas;
+    });
+    return;
+  }
 
   if (vista === 'asistencia') {
     callWebApp({ accion: 'obtenerResumenAsistenciaCurso', curso }).then(res => {
