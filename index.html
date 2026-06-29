@@ -5661,11 +5661,11 @@ function buscarAlumnoGlobal() {
   clearTimeout(_bgTimer);
   _bgTimer = setTimeout(() => {
     callWebApp({ accion: 'buscarAlumnoGlobal', q }).then(r => {
-      if (!r.ok || !r.alumnos || r.alumnos.length === 0) {
+      if (!r.ok || !r.resultados || r.resultados.length === 0) {
         res.innerHTML = '<span style="color:#aaa">Sin resultados para "' + q + '"</span>';
         return;
       }
-      res.innerHTML = r.alumnos.map(a => `
+      res.innerHTML = r.resultados.map(a => `
         <div onclick="abrirResumenDesdeGlobal('${a.legajo}','${a.curso}','${a.nombre.replace(/'/g,"\'")}')"
           style="padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;background:#f9f5f1;border:1px solid #f0e9e0;transition:background .15s"
           onmouseover="this.style.background='#f0e9e0'" onmouseout="this.style.background='#f9f5f1'">
