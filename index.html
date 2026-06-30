@@ -4528,9 +4528,37 @@ function guardarCalificaciones() {
       showToast('✅ ' + res.guardados + ' calificaciones guardadas', '✅');
       cargarCalificacionesExistentes();
     } else {
-      showToast('❌ Error: ' + (res?.error || 'No se pudo guardar'), '❌');
+      verificarGuardadoCalificaciones(curso, materia, periodo, alumnosBloque, res);
     }
-  }).catch(() => showToast('❌ Error de conexión', '❌'));
+  }).catch(() => {
+    verificarGuardadoCalificaciones(curso, materia, periodo, alumnosBloque, null);
+  });
+}
+
+// Apps Script suele ejecutar igual aunque el navegador no reciba la respuesta (CORS/latencia).
+// Verificamos en silencio releyendo las notas antes de mostrar error definitivo.
+const PERIODO_CAMPO = { '1BIM':'bim1', '1CUAT':'cuat1', '3BIM':'bim3', '2CUAT':'cuat2', 'DIC':'dic', 'FEB':'feb' };
+function verificarGuardadoCalificaciones(curso, materia, periodo, alumnosBloque, resOriginal) {
+  showToast('⏳ Verificando guardado...', '⏳');
+  const campo = PERIODO_CAMPO[periodo] || 'bim1';
+  setTimeout(() => {
+    callWebApp({ accion: 'obtenerCalificaciones', curso, materia }).then(check => {
+      const mapa = {};
+      (check && check.ok && check.calificaciones ? check.calificaciones : []).forEach(c => { mapa[c.legajo] = c; });
+      const todasGuardadas = alumnosBloque.every(a => {
+        const fila = mapa[a.legajo];
+        return fila && fila[campo] !== '' && fila[campo] !== undefined;
+      });
+      if (todasGuardadas) {
+        showToast('✅ Calificaciones guardadas correctamente', '✅');
+      } else {
+        showToast('❌ Error: ' + (resOriginal?.error || 'No se pudo guardar. Verificá tu conexión.'), '❌');
+      }
+      cargarCalificacionesExistentes();
+    }).catch(() => {
+      showToast('❌ Error: ' + (resOriginal?.error || 'No se pudo guardar'), '❌');
+    });
+  }, 2500);
 }
 
 function subirArchivo() {
@@ -6565,10 +6593,57 @@ function cargarAlertas() {
   const cont = document.getElementById('alertas-contenido');
   if (!cont) return;
   cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Calculando...</div>';
-  callWebApp({ accion: 'obtenerAlertasInasistencias' }).then(res => {
-    if (!res.ok || !res.alertas) { cont.innerHTML = '<div style="text-align:center;padding:30px;color:#F44336">Error al cargar alertas.</div>'; return; }
+
+  Promise.all([
+    callWebApp({ accion: 'obtenerAlertasInasistencias' }),
+    callWebApp({ accion: 'obtenerAlertasAcademicas' })
+  ]).then(([resInasist, resAcad]) => {
+    let htmlAcademico = '';
+    if (resAcad && resAcad.ok && resAcad.alertas && resAcad.alertas.length > 0) {
+      const porCurso = {};
+      resAcad.alertas.forEach(a => {
+        if (!porCurso[a.curso]) porCurso[a.curso] = [];
+        porCurso[a.curso].push(a);
+      });
+      const cursosOrd = Object.keys(porCurso).sort();
+
+      htmlAcademico += `<div style="margin-bottom:24px">
+        <div style="font-weight:700;color:#6A1B9A;margin-bottom:12px;font-size:13px;padding:8px 12px;background:#F3E5F5;border-radius:8px;border-left:4px solid #9C27B0">
+          📚 RIESGO ACADÉMICO — ${resAcad.alertas.length} alumno${resAcad.alertas.length>1?'s':''}
+          <div style="font-weight:400;font-size:11px;color:#7B1FA2;margin-top:3px">4+ materias con TEP y/o 4+ notas por debajo de 7</div>
+        </div>`;
+
+      cursosOrd.forEach(curso => {
+        const alumnos = porCurso[curso];
+        htmlAcademico += `<div style="margin-bottom:12px">
+          <div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;background:var(--color-background-secondary);border-radius:6px;margin-bottom:6px;display:inline-block">
+            📚 ${curso} — ${alumnos.length} alumno${alumnos.length>1?'s':''}
+          </div>
+          <div style="display:grid;gap:6px">`;
+        alumnos.forEach(a => {
+          const partes = [];
+          if (a.materiasTEP >= 4) partes.push(`${a.materiasTEP} con TEP`);
+          if (a.notasBajas >= 4) partes.push(`${a.notasBajas} notas <7`);
+          htmlAcademico += `<div style="background:#F3E5F5;border:1px solid #CE93D8;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-weight:600;font-size:13px;color:#1a1a1a">${a.nombre}</div>
+              <div style="font-size:11px;color:#888;margin-top:1px" title="${(a.materiasTEP>=4?a.detalleTEP.join(', '):'') + (a.notasBajas>=4?' | '+a.detalleBajas.join(', '):'')}">${partes.join(' · ')}</div>
+            </div>
+            <div style="font-size:20px">📚</div>
+          </div>`;
+        });
+        htmlAcademico += '</div></div>';
+      });
+      htmlAcademico += '</div>';
+    }
+
+    const res = resInasist;
+    if (!res.ok || !res.alertas) {
+      cont.innerHTML = htmlAcademico || '<div style="text-align:center;padding:30px;color:#F44336">Error al cargar alertas.</div>';
+      return;
+    }
     if (res.alertas.length === 0) {
-      cont.innerHTML = '<div style="text-align:center;padding:40px;color:#4CAF50;font-size:15px">✅ Ningún alumno en riesgo por el momento.</div>';
+      cont.innerHTML = htmlAcademico || '<div style="text-align:center;padding:40px;color:#4CAF50;font-size:15px">✅ Ningún alumno en riesgo por el momento.</div>';
       return;
     }
     const colores = { critico: { bg: '#FFEBEE', color: '#B71C1C', label: '🚨 CRÍTICO (28+)', border: '#F44336' }, alto: { bg: '#FFF8E1', color: '#E65100', label: '⚠️ ALTO (20-27)', border: '#FF9800' }, medio: { bg: '#E3F2FD', color: '#1565C0', label: '📋 MEDIO (10-19)', border: '#2196F3' } };
@@ -6616,7 +6691,7 @@ function cargarAlertas() {
       });
       html += '</div>';
     });
-    cont.innerHTML = html;
+    cont.innerHTML = htmlAcademico + html;
   });
 }
 
