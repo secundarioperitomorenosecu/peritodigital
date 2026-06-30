@@ -6594,10 +6594,8 @@ function cargarAlertas() {
   if (!cont) return;
   cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Calculando...</div>';
 
-  Promise.all([
-    callWebApp({ accion: 'obtenerAlertasInasistencias' }),
-    callWebApp({ accion: 'obtenerAlertasAcademicas' })
-  ]).then(([resInasist, resAcad]) => {
+  callWebApp({ accion: 'obtenerAlertasInasistencias' }).then(resInasist => {
+  callWebApp({ accion: 'obtenerAlertasAcademicas' }).then(resAcad => {
     let htmlAcademico = '';
     if (resAcad && resAcad.ok && resAcad.alertas && resAcad.alertas.length > 0) {
       const porCurso = {};
@@ -6692,6 +6690,7 @@ function cargarAlertas() {
       html += '</div>';
     });
     cont.innerHTML = htmlAcademico + html;
+  });
   });
 }
 
