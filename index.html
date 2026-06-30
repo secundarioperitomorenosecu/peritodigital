@@ -6612,104 +6612,70 @@ function cargarAlertasCurso() {
   }
   cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Calculando riesgo para ' + curso + '...</div>';
 
-  // Académico: usa obtenerResumenIntegralCurso (1 curso = rápido)
-  callWebApp({ accion: 'obtenerAlertasAcademicas', curso }).then(resAcad => {
-  callWebApp({ accion: 'obtenerAlertasInasistencias', curso }).then(resInasist => {
-    const resAcadSafe = (resAcad && resAcad.ok) ? resAcad : null;
-    let htmlAcademico = '';
+  callWebApp({ accion: 'obtenerAlertasAcademicas', curso }).then(function(resAcad) {
+  callWebApp({ accion: 'obtenerAlertasInasistencias', curso }).then(function(resInasist) {
+    var resAcadSafe = (resAcad && resAcad.ok) ? resAcad : null;
+    var htmlAcademico = '';
     if (resAcadSafe && resAcadSafe.alertas && resAcadSafe.alertas.length > 0) {
-      const porCurso = {};
-      resAcad.alertas.forEach(a => {
-        if (!porCurso[a.curso]) porCurso[a.curso] = [];
-        porCurso[a.curso].push(a);
+      htmlAcademico += '<div style="margin-bottom:24px">';
+      htmlAcademico += '<div style="font-weight:700;color:#6A1B9A;margin-bottom:12px;font-size:13px;padding:8px 12px;background:#F3E5F5;border-radius:8px;border-left:4px solid #9C27B0">';
+      htmlAcademico += '📚 RIESGO ACADÉMICO — ' + resAcadSafe.alertas.length + ' alumno' + (resAcadSafe.alertas.length > 1 ? 's' : '');
+      htmlAcademico += '<div style="font-weight:400;font-size:11px;color:#7B1FA2;margin-top:3px">4+ materias con TEP y/o 4+ notas por debajo de 7</div></div>';
+      htmlAcademico += '<div style="display:grid;gap:6px">';
+      resAcadSafe.alertas.forEach(function(a) {
+        var partes = [];
+        if (a.materiasTEP >= 4) partes.push(a.materiasTEP + ' materias con TEP');
+        if (a.notasBajas >= 4) partes.push(a.notasBajas + ' notas menores a 7');
+        var detalle = (a.materiasTEP >= 4 ? a.detalleTEP.join(', ') : '') + (a.notasBajas >= 4 ? ' | ' + a.detalleBajas.join(', ') : '');
+        htmlAcademico += '<div style="background:#F3E5F5;border:1px solid #CE93D8;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">';
+        htmlAcademico += '<div>';
+        htmlAcademico += '<div style="font-weight:600;font-size:13px;color:#1a1a1a">' + a.nombre + '</div>';
+        htmlAcademico += '<div style="font-size:11px;color:#888;margin-top:1px" title="' + detalle + '">' + partes.join(' · ') + '</div>';
+        htmlAcademico += '</div><div style="font-size:20px">📚</div></div>';
       });
-      const cursosOrd = Object.keys(porCurso).sort();
-
-      htmlAcademico += `<div style="margin-bottom:24px">
-        <div style="font-weight:700;color:#6A1B9A;margin-bottom:12px;font-size:13px;padding:8px 12px;background:#F3E5F5;border-radius:8px;border-left:4px solid #9C27B0">
-          📚 RIESGO ACADÉMICO — ${resAcad.alertas.length} alumno${resAcad.alertas.length>1?'s':''}
-          <div style="font-weight:400;font-size:11px;color:#7B1FA2;margin-top:3px">4+ materias con TEP y/o 4+ notas por debajo de 7</div>
-        </div>`;
-
-      cursosOrd.forEach(curso => {
-        const alumnos = porCurso[curso];
-        htmlAcademico += `<div style="margin-bottom:12px">
-          <div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;background:var(--color-background-secondary);border-radius:6px;margin-bottom:6px;display:inline-block">
-            📚 ${curso} — ${alumnos.length} alumno${alumnos.length>1?'s':''}
-          </div>
-          <div style="display:grid;gap:6px">`;
-        alumnos.forEach(a => {
-          const partes = [];
-          if (a.materiasTEP >= 4) partes.push(`${a.materiasTEP} con TEP`);
-          if (a.notasBajas >= 4) partes.push(`${a.notasBajas} notas <7`);
-          htmlAcademico += `<div style="background:#F3E5F5;border:1px solid #CE93D8;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-weight:600;font-size:13px;color:#1a1a1a">${a.nombre}</div>
-              <div style="font-size:11px;color:#888;margin-top:1px" title="${(a.materiasTEP>=4?a.detalleTEP.join(', '):'') + (a.notasBajas>=4?' | '+a.detalleBajas.join(', '):'')}">${partes.join(' · ')}</div>
-            </div>
-            <div style="font-size:20px">📚</div>
-          </div>`;
-        });
-        htmlAcademico += '</div></div>';
-      });
-      htmlAcademico += '</div>';
+      htmlAcademico += '</div></div>';
     }
 
-    const res = resInasist;
-    if (!res.ok || !res.alertas) {
+    var res = resInasist;
+    if (!res || !res.ok || !res.alertas) {
       cont.innerHTML = htmlAcademico || '<div style="text-align:center;padding:30px;color:#F44336">Error al cargar alertas.</div>';
       return;
     }
-    if (res.alertas.length === 0) {
-      cont.innerHTML = htmlAcademico || '<div style="text-align:center;padding:40px;color:#4CAF50;font-size:15px">✅ Ningún alumno en riesgo por el momento.</div>';
+    if (res.alertas.length === 0 && !htmlAcademico) {
+      cont.innerHTML = '<div style="text-align:center;padding:40px;color:#4CAF50;font-size:15px">✅ Ningún alumno en riesgo en ' + curso + '.</div>';
       return;
     }
-    const colores = { critico: { bg: '#FFEBEE', color: '#B71C1C', label: '🚨 CRÍTICO (28+)', border: '#F44336' }, alto: { bg: '#FFF8E1', color: '#E65100', label: '⚠️ ALTO (20-27)', border: '#FF9800' }, medio: { bg: '#E3F2FD', color: '#1565C0', label: '📋 MEDIO (10-19)', border: '#2196F3' } };
-    const grupos = { critico: [], alto: [], medio: [] };
-    res.alertas.forEach(a => grupos[a.nivel].push(a));
+    var colores = {
+      critico: { bg: '#FFEBEE', color: '#B71C1C', label: '🚨 CRÍTICO (28+)', border: '#F44336' },
+      alto:    { bg: '#FFF8E1', color: '#E65100', label: '⚠️ ALTO (20-27)',  border: '#FF9800' },
+      medio:   { bg: '#E3F2FD', color: '#1565C0', label: '📋 MEDIO (10-19)', border: '#2196F3' }
+    };
+    var grupos = { critico: [], alto: [], medio: [] };
+    res.alertas.forEach(function(a) { if (grupos[a.nivel]) grupos[a.nivel].push(a); });
 
-    let html = '';
-    ['critico','alto','medio'].forEach(nivel => {
+    var html = '';
+    ['critico','alto','medio'].forEach(function(nivel) {
       if (grupos[nivel].length === 0) return;
-      const c = colores[nivel];
-
-      // Agrupar por curso dentro de cada nivel
-      const porCurso = {};
-      grupos[nivel].forEach(a => {
-        if (!porCurso[a.curso]) porCurso[a.curso] = [];
-        porCurso[a.curso].push(a);
-      });
-      const cursosOrdenados = Object.keys(porCurso).sort();
-
-      html += `<div style="margin-bottom:24px">
-        <div style="font-weight:700;color:${c.color};margin-bottom:12px;font-size:13px;padding:8px 12px;background:${c.bg};border-radius:8px;border-left:4px solid ${c.border}">
-          ${c.label} — ${grupos[nivel].length} alumno${grupos[nivel].length>1?'s':''}
-        </div>`;
-
-      cursosOrdenados.forEach(curso => {
-        const alumnos = porCurso[curso];
-        html += `<div style="margin-bottom:12px">
-          <div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;background:var(--color-background-secondary);border-radius:6px;margin-bottom:6px;display:inline-block">
-            📚 ${curso} — ${alumnos.length} alumno${alumnos.length>1?'s':''}
-          </div>
-          <div style="display:grid;gap:6px">`;
-        alumnos.forEach(a => {
-          html += `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <div style="font-weight:600;font-size:13px;color:#1a1a1a">${a.nombre}</div>
-              <div style="font-size:11px;color:#888;margin-top:1px">${a.tardanzas||0} tard. · ${a.retiros||0} retiros</div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-size:22px;font-weight:700;color:${c.color}">${a.ausencias}</div>
-              <div style="font-size:10px;color:#888">inasistencias</div>
-            </div>
-          </div>`;
-        });
+      var c = colores[nivel];
+      html += '<div style="margin-bottom:24px">';
+      html += '<div style="font-weight:700;color:' + c.color + ';margin-bottom:12px;font-size:13px;padding:8px 12px;background:' + c.bg + ';border-radius:8px;border-left:4px solid ' + c.border + '">';
+      html += c.label + ' — ' + grupos[nivel].length + ' alumno' + (grupos[nivel].length > 1 ? 's' : '') + '</div>';
+      html += '<div style="display:grid;gap:6px">';
+      grupos[nivel].forEach(function(a) {
+        html += '<div style="background:' + c.bg + ';border:1px solid ' + c.border + ';border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">';
+        html += '<div>';
+        html += '<div style="font-weight:600;font-size:13px;color:#1a1a1a">' + a.nombre + '</div>';
+        html += '<div style="font-size:11px;color:#888;margin-top:1px">' + (a.tardanzas||0) + ' tard. · ' + (a.retiros||0) + ' retiros</div>';
+        html += '</div>';
+        html += '<div style="text-align:right">';
+        html += '<div style="font-size:22px;font-weight:700;color:' + c.color + '">' + a.ausencias + '</div>';
+        html += '<div style="font-size:10px;color:#888">inasistencias</div>';
         html += '</div></div>';
       });
-      html += '</div>';
+      html += '</div></div>';
     });
     cont.innerHTML = htmlAcademico + html;
+  });
   });
 }
 
