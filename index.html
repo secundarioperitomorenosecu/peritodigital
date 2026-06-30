@@ -1368,10 +1368,18 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="panel">
         <div class="panel-header">
           <h3>⚠️ Alumnos en Riesgo</h3>
-          <button class="btn btn-sm btn-outline" onclick="cargarAlertas()">↺ Actualizar</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="alertas-curso-sel" style="padding:6px 10px;border:1px solid #e8d5c4;border-radius:8px;font-size:13px;font-family:inherit;background:#fff;color:#1a1a1a" onchange="cargarAlertasCurso()">
+              <option value="">— Seleccioná curso —</option>
+              <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+              <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+              <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+            </select>
+            <button class="btn btn-sm btn-outline" onclick="cargarAlertasCurso()">↺ Actualizar</button>
+          </div>
         </div>
         <div class="panel-body" id="alertas-contenido">
-          <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Cargando alertas...</div>
+          <div style="text-align:center;padding:40px;color:rgba(0,0,0,.3)">Seleccioná un curso para ver los alumnos en riesgo.</div>
         </div>
       </div>
     </div>
@@ -6590,14 +6598,26 @@ function confirmarEliminarUsuario() {
 // ═══════════════════════════════════════
 
 function cargarAlertas() {
-  const cont = document.getElementById('alertas-contenido');
-  if (!cont) return;
-  cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Calculando...</div>';
+  // ahora usa selector por curso
+  cargarAlertasCurso();
+}
 
-  callWebApp({ accion: 'obtenerAlertasInasistencias' }).then(resInasist => {
-    const resAcad = null; // pendiente optimización backend
+function cargarAlertasCurso() {
+  const cont = document.getElementById('alertas-contenido');
+  const curso = (document.getElementById('alertas-curso-sel')?.value || '').trim();
+  if (!cont) return;
+  if (!curso) {
+    cont.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3)">Seleccioná un curso para ver los alumnos en riesgo.</div>';
+    return;
+  }
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">⏳ Calculando riesgo para ' + curso + '...</div>';
+
+  // Académico: usa obtenerResumenIntegralCurso (1 curso = rápido)
+  callWebApp({ accion: 'obtenerAlertasAcademicas', curso }).then(resAcad => {
+  callWebApp({ accion: 'obtenerAlertasInasistencias', curso }).then(resInasist => {
+    const resAcadSafe = (resAcad && resAcad.ok) ? resAcad : null;
     let htmlAcademico = '';
-    if (resAcad && resAcad.ok && resAcad.alertas && resAcad.alertas.length > 0) {
+    if (resAcadSafe && resAcadSafe.alertas && resAcadSafe.alertas.length > 0) {
       const porCurso = {};
       resAcad.alertas.forEach(a => {
         if (!porCurso[a.curso]) porCurso[a.curso] = [];
