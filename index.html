@@ -3139,13 +3139,20 @@ function callWebApp(params) {
   const esLenta = accionesLentas.includes(params.accion);
   const timeoutMs = esLenta ? 90000 : 30000;
 
-  const url = BACKEND_URL + '?data=' + encodeURIComponent(JSON.stringify(params));
-
   // AbortController para manejar timeout sin caer al catch de error de red
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  return fetch(url, { redirect: 'follow', signal: controller.signal })
+  // POST evita el límite de ~8000 caracteres de una URL GET, crítico en bloques grandes
+  // (ej. 35+ alumnos). Content-Type text/plain evita que el navegador dispare un preflight
+  // OPTIONS, que Apps Script no responde correctamente. El backend lee esto en doPost().
+  return fetch(BACKEND_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(params),
+    redirect: 'follow',
+    signal: controller.signal
+  })
     .then(res => { clearTimeout(timer); return res.json(); })
     .catch(err => {
       clearTimeout(timer);
@@ -3153,7 +3160,11 @@ function callWebApp(params) {
       if (err && err.name === 'AbortError') {
         return { ok: false, error: 'La operación tardó más de lo esperado. Los datos pueden haberse guardado igual — verificá en el Drive antes de reintentar.' };
       }
-      // Fallback a JSONP para navegadores que no soporten fetch con CORS
+      // Fallback a JSONP (GET) solo si el payload entra en el límite práctico de una URL
+      const url = BACKEND_URL + '?data=' + encodeURIComponent(JSON.stringify(params));
+      if (url.length > 7500) {
+        return { ok: false, error: 'Error de conexión al guardar. El bloque de datos es grande y no se pudo enviar por POST ni por el respaldo de URL — reintentá, o si persiste, dividí el bloque en grupos más chicos.' };
+      }
       return new Promise((resolve) => {
         const cbName = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
         const script = document.createElement('script');
@@ -3167,7 +3178,7 @@ function callWebApp(params) {
           if (document.body.contains(script)) document.body.removeChild(script);
           resolve({ ok: false, error: 'Error de conexión' });
         };
-        script.src = BACKEND_URL + '?callback=' + cbName + '&data=' + encodeURIComponent(JSON.stringify(params));
+        script.src = url + '&callback=' + cbName;
         document.body.appendChild(script);
       });
     });
