@@ -3356,6 +3356,12 @@ function buildBottomNav(role) {
       items.push({ id: 'seguimiento-faltas', icon: '📋', label: 'Faltas' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'ausencias-docentes', icon: '🚫', label: 'Aus. Doc.' });
+    if (isAdmin || isPreceptor || isDocente)
+      items.push({ id: '__reg-ausencias-ext', icon: '🚫', label: 'Reg. Ausencias', external: 'https://secundarioperitomorenosecu.github.io/asistencia-perito/' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'alertas', icon: '⚠️', label: 'En Riesgo' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'biblioteca', icon: '📚', label: 'Biblioteca' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'informe-materias', icon: '📊', label: 'x Materia' });
     if (isAdmin || isPreceptor)
@@ -3376,11 +3382,17 @@ function buildBottomNav(role) {
 
   const inner = document.getElementById('bottom-nav-inner');
   if (!inner) return;
-  inner.innerHTML = items.map(item => `
-    <button class="bn-item" id="bn-${item.id}" onclick="${item.id==='agenda'?'crearSeccionAgenda();':''}showSection('${item.id}',null);syncBottomNav('${item.id}')">
-      <div class="bn-icon">${item.icon}</div>
-      <div class="bn-label">${item.label}</div>
-    </button>`).join('');
+  inner.innerHTML = items.map(function(item) {
+    if (item.external) {
+      return '<button class="bn-item" onclick="window.open(' + "'" + item.external + "'" + ',' + "'" + '_blank' + "'" + ')">' +
+        '<div class="bn-icon">' + item.icon + '</div>' +
+        '<div class="bn-label">' + item.label + '</div></button>';
+    }
+    var prefix = item.id === 'agenda' ? 'crearSeccionAgenda();' : '';
+    return '<button class="bn-item" id="bn-' + item.id + '" onclick="' + prefix + 'showSection(' + "'" + item.id + "'" + ',null);syncBottomNav(' + "'" + item.id + "'" + ')">' +
+      '<div class="bn-icon">' + item.icon + '</div>' +
+      '<div class="bn-label">' + item.label + '</div></button>';
+  }).join('');
 }
 
 function syncBottomNav(activeId) {
@@ -4434,7 +4446,7 @@ function cargarAlumnosCalificaciones() {
   const curso = document.getElementById('cal-curso').value;
   if (!curso) return;
   alumnosCalificaciones = [];
-  callWebApp({ accion: 'obtenerAsistencia', curso, fecha: fechaHoy() }).then(res => {
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
     if (res.ok && res.alumnos) { alumnosCalificaciones = res.alumnos; }
     buildGrades();
     cargarCalificacionesExistentes();
