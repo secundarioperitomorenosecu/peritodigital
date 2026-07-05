@@ -3741,6 +3741,9 @@ function cargarLegajosEOE() {
       } catch(e) { archivosMap[g.alumno.toUpperCase()] = []; }
     }));
 
+    window._eoeLegajosPorId = {};
+    res.legajos.forEach(l => { window._eoeLegajosPorId[l.id] = l; });
+
     lista.innerHTML = grupos.map(g => {
       const archivos = archivosMap[g.alumno.toUpperCase()] || [];
       const totalAdj = archivos.length;
@@ -3770,14 +3773,18 @@ function cargarLegajosEOE() {
           })();
           const separador = (esPrimerDeEsteMes && mesAnio) ? `<div style="display:flex;justify-content:center;margin:10px 0 8px"><span style="font-size:11px;color:#888;background:#f5f5f5;padding:3px 12px;border-radius:99px;border:0.5px solid #e0e0e0">${mesAnio}</span></div>` : '';
           return separador + `<div style="display:flex;justify-content:flex-start;margin-bottom:8px;padding-left:4px">
-            <div style="max-width:90%;background:#fff;border:0.5px solid #e0e0e0;border-radius:0 12px 12px 12px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+            <div class="eoe-card" style="max-width:90%;background:#fff;border:0.5px solid #e0e0e0;border-radius:0 12px 12px 12px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
                 <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${bg};color:#555;font-weight:600">${label}</span>
               </div>
               <div style="font-size:13px;color:#222;line-height:1.6;white-space:pre-wrap">${item.descripcion}</div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:8px;flex-wrap:wrap">
                 <span style="font-size:10px;color:#aaa">${item.autorNombre||item.autor||'—'}</span>
-                <span style="font-size:10px;color:#bbb">${fechaStr}</span>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:10px;color:#bbb">${fechaStr}</span>
+                  <button onclick="eoeEditarInline(this)" data-id="${item.id}" title="Editar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer">✏️</button>
+                  <button onclick="eoeEliminarLegajo(this)" data-id="${item.id}" title="Eliminar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#e53935;font-size:12px;cursor:pointer">🗑</button>
+                </div>
               </div>
             </div>
           </div>`;
@@ -3975,6 +3982,46 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   showToast('Historial exportado correctamente','✅');
+}
+
+// ── Editar/eliminar un legajo EOE puntual (inline en la línea de tiempo) ─
+function eoeEditarInline(btn) {
+  const id = btn.dataset.id;
+  const l  = window._eoeLegajosPorId?.[id];
+  if (!l) return;
+  const card = btn.closest('.eoe-card');
+  if (!card) return;
+  const TIPOS = { convivencia:'🤝 Convivencia', academica:'📚 Problemática académica', familiar:'👨‍👩‍👧 Situación familiar', salud:'🏥 Salud / Discapacidad', conducta:'⚠️ Conducta', cud:'♿ CUD / Terapia', otro:'📌 Otro' };
+  const opts = Object.keys(TIPOS).map(k => `<option value="${k}" ${k===l.tipo?'selected':''}>${TIPOS[k]}</option>`).join('');
+  card.dataset.idEnEdicion = id;
+  card.innerHTML = `
+    <select id="eoe-edit-tipo-${id}" style="width:100%;margin-bottom:8px;padding:6px 10px;border-radius:7px;border:1px solid #e0e0e0;font-family:inherit;font-size:12px;background:#fdf8f3">${opts}</select>
+    <textarea id="eoe-edit-desc-${id}" rows="4" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid #e0e0e0;font-family:inherit;font-size:13px;resize:vertical;background:#fdf8f3">${l.descripcion}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="eoeGuardarEdicion('${id}')" style="padding:6px 14px;border-radius:7px;border:none;background:#1a9e5c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Guardar</button>
+      <button onclick="cargarLegajosEOE()" style="padding:6px 14px;border-radius:7px;border:none;background:#eee;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+    </div>`;
+}
+
+function eoeGuardarEdicion(id) {
+  const tipoEl = document.getElementById('eoe-edit-tipo-'+id);
+  const descEl = document.getElementById('eoe-edit-desc-'+id);
+  const tipo = tipoEl?.value;
+  const descripcion = descEl?.value.trim();
+  if (!descripcion) { showToast('La descripción no puede quedar vacía','⚠️'); return; }
+  callWebApp({ accion:'editarLegajoEOE', id, tipo, descripcion }).then(res => {
+    if (res?.ok) { showToast('Legajo actualizado ✅','✏️'); cargarLegajosEOE(); }
+    else showToast('Error: ' + (res?.error||'no se pudo actualizar'), '❌');
+  });
+}
+
+function eoeEliminarLegajo(btn) {
+  const id = btn.dataset.id;
+  if (!confirm('¿Eliminar este registro del legajo EOE? Esta acción no se puede deshacer.')) return;
+  callWebApp({ accion:'eliminarLegajoEOE', id }).then(res => {
+    if (res?.ok) { showToast('Registro eliminado ✅','🗑️'); cargarLegajosEOE(); }
+    else showToast('Error: ' + (res?.error||'no se pudo eliminar'), '❌');
+  });
 }
 
 function exportarPDFLegajoEOE(l) {
