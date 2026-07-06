@@ -4207,6 +4207,11 @@ function cargarAsistenciaDesdeSheets() {
       return;
     }
 
+    // Reset total antes de repoblar: evita que queden posiciones "fantasma"
+    // de una carga anterior (otra fecha u otro curso) que inflen el contador.
+    attendanceState = {};
+    tardyTimes = {};
+
     // Cargar estados guardados o P por defecto
     alumnosActuales.forEach((a, i) => {
       const est = a.estado === 'A' ? 'ausente' : a.estado === 'AP' ? 'ausentePres' : a.estado === 'T' ? 'tarde' : a.estado === 'R' ? 'retiro' : 'presente';
@@ -7773,14 +7778,53 @@ function renderHistorialBanos(registros, fecha) {
     return;
   }
   lista.innerHTML = registros.map(r => `
-    <div class="bano-registro">
+    <div class="bano-registro" id="bano-reg-${r.id}">
       <div class="bano-reg-hora">${parsearHoraArgentina(r.hora)}</div>
       <div class="bano-reg-info">
         <div class="bano-reg-nombre">${r.nombre}</div>
         <div class="bano-reg-meta">Curso ${r.curso} · Leg. ${r.legajo} · ${r.preceptor}</div>
       </div>
       <div class="bano-reg-inodoro" title="Baño ${r.inodoro}">${r.inodoro==='rosa'?'♀️ Mujeres':r.inodoro==='celeste'?'♂️ Varones':'🚽'+r.inodoro}</div>
+      <div style="display:flex;gap:6px;margin-left:8px">
+        <button onclick="banoEditarInline('${r.id}')" title="Editar baño" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer">✏️</button>
+        <button onclick="banoEliminarRegistro('${r.id}')" title="Eliminar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#e53935;font-size:12px;cursor:pointer">🗑</button>
+      </div>
     </div>`).join('');
+}
+
+function banoEditarInline(id) {
+  const reg = (_banosRegistros || []).find(r => String(r.id) === String(id));
+  if (!reg) return;
+  const cont = document.getElementById('bano-reg-' + id);
+  if (!cont) return;
+  cont.innerHTML = `
+    <div class="bano-reg-info" style="flex:1">
+      <div class="bano-reg-nombre">${reg.nombre}</div>
+      <select id="bano-edit-inodoro-${id}" style="margin-top:6px;padding:5px 8px;border-radius:7px;border:1px solid #e0e0e0;font-family:inherit;font-size:12px">
+        <option value="rosa" ${reg.inodoro==='rosa'?'selected':''}>♀️ Mujeres</option>
+        <option value="celeste" ${reg.inodoro==='celeste'?'selected':''}>♂️ Varones</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button onclick="banoGuardarEdicion('${id}')" style="padding:5px 10px;border-radius:7px;border:none;background:#1a9e5c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Guardar</button>
+      <button onclick="cargarHistorialBanos()" style="padding:5px 10px;border-radius:7px;border:none;background:#eee;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+    </div>`;
+}
+
+function banoGuardarEdicion(id) {
+  const inodoro = document.getElementById('bano-edit-inodoro-' + id)?.value;
+  callWebApp({ accion: 'editarRegistroBano', id, inodoro }).then(res => {
+    if (res?.ok) { showToast('Registro actualizado ✅', '✏️'); cargarHistorialBanos(); }
+    else showToast('Error: ' + (res?.error || 'no se pudo actualizar'), '❌');
+  });
+}
+
+function banoEliminarRegistro(id) {
+  if (!confirm('¿Eliminar este registro de baño? Esta acción no se puede deshacer.')) return;
+  callWebApp({ accion: 'eliminarRegistroBano', id }).then(res => {
+    if (res?.ok) { showToast('Registro eliminado ✅', '🗑️'); cargarHistorialBanos(); }
+    else showToast('Error: ' + (res?.error || 'no se pudo eliminar'), '❌');
+  });
 }
 
 function actualizarContadoresBanos(registros) {
