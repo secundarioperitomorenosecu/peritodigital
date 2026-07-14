@@ -3749,11 +3749,41 @@ function cargarLegajosEOE() {
       const totalAdj = archivos.length;
       const n = g.legajos.length;
 
-      // Línea de tiempo unificada ordenada por fecha
+      // Fijados van aparte, arriba de la línea de tiempo (como un mensaje fijado)
+      const fijados = g.legajos.filter(l => l.fijado);
+      const noFijados = g.legajos.filter(l => !l.fijado);
+
+      // Línea de tiempo unificada ordenada por fecha (sin los fijados, que van arriba)
       const items = [
-        ...g.legajos.map(l => ({ ...l, _tipo:'legajo' })),
+        ...noFijados.map(l => ({ ...l, _tipo:'legajo' })),
         ...archivos
       ].sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+
+      const fijadosHTML = fijados.length ? `
+        <div style="margin-bottom:12px;padding:10px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px">
+          <div style="font-size:10px;font-weight:700;color:#f57f17;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📌 Fijado${fijados.length>1?'s':''}</div>
+          ${fijados.map(l => {
+            const bg = TIPO_COLOR[l.tipo]||'#fafafa';
+            const label = TIPO_LABEL[l.tipo]||l.tipo;
+            const fechaObj = l.fecha ? new Date(l.fecha+'T12:00:00') : null;
+            const fechaStr = fechaObj ? fechaObj.toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : '—';
+            return `<div class="eoe-card" style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 1px 3px rgba(0,0,0,.06)">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
+                <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${bg};color:#555;font-weight:600">${label}</span>
+              </div>
+              <div style="font-size:13px;color:#222;line-height:1.6;white-space:pre-wrap">${l.descripcion}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;gap:8px;flex-wrap:wrap">
+                <span style="font-size:10px;color:#aaa">${l.autorNombre||l.autor||'—'}</span>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <span style="font-size:10px;color:#bbb">${fechaStr}</span>
+                  <button onclick="eoeFijarLegajo('${l.id}', false)" title="Desfijar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#f57f17;font-size:12px;cursor:pointer">📌</button>
+                  <button onclick="eoeEditarInline(this)" data-id="${l.id}" title="Editar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer">✏️</button>
+                  <button onclick="eoeEliminarLegajo(this)" data-id="${l.id}" title="Eliminar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#e53935;font-size:12px;cursor:pointer">🗑</button>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : '';
 
       let legajoIdx = 0;
       const timelineHTML = items.map(item => {
@@ -3782,6 +3812,7 @@ function cargarLegajosEOE() {
                 <span style="font-size:10px;color:#aaa">${item.autorNombre||item.autor||'—'}</span>
                 <div style="display:flex;align-items:center;gap:10px">
                   <span style="font-size:10px;color:#bbb">${fechaStr}</span>
+                  <button onclick="eoeFijarLegajo('${item.id}', true)" title="Fijar arriba" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer">📌</button>
                   <button onclick="eoeEditarInline(this)" data-id="${item.id}" title="Editar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer">✏️</button>
                   <button onclick="eoeEliminarLegajo(this)" data-id="${item.id}" title="Eliminar" style="padding:2px 6px;border-radius:6px;border:none;background:transparent;color:#e53935;font-size:12px;cursor:pointer">🗑</button>
                 </div>
@@ -3829,7 +3860,7 @@ function cargarLegajosEOE() {
               </button>
             </div>
           </div>
-          <div>${timelineHTML}</div>
+          <div>${fijadosHTML}${timelineHTML}</div>
         </div>
       </div>`;
     }).join('');
@@ -3884,7 +3915,11 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
   let legajos, archivos;
   try { legajos = JSON.parse(legajosStr); } catch(e) { showToast('Error al generar PDF','❌'); return; }
   try { archivos = archivosStr ? JSON.parse(archivosStr) : []; } catch(e) { archivos = []; }
-  legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+  legajos.sort((a,b) => {
+    const fa = a.fijado ? 1 : 0, fb = b.fijado ? 1 : 0;
+    if (fa !== fb) return fb - fa; // fijados primero
+    return (a.fecha||'').localeCompare(b.fecha||'');
+  });
 
   const TIPO_LABEL  = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', cud:'CUD / Terapia', otro:'Otro' };
   const TIPO_COLOR  = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
@@ -3899,6 +3934,7 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
         <div>
           <span style="font-size:10px;font-weight:700;color:#888">REGISTRO #${i+1}</span>
           <span style="margin-left:10px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'}">${TIPO_LABEL[l.tipo]||l.tipo}</span>
+          ${l.fijado ? '<span style="margin-left:6px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#fff8e1;color:#f57f17;border:1px solid #ffe082">📌 FIJADO</span>' : ''}
         </div>
         <span style="font-size:11px;color:#888">${fechaStr}</span>
       </div>
@@ -3985,6 +4021,13 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
 }
 
 // ── Editar/eliminar un legajo EOE puntual (inline en la línea de tiempo) ─
+function eoeFijarLegajo(id, fijado) {
+  callWebApp({ accion:'fijarLegajoEOE', id, fijado }).then(res => {
+    if (res?.ok) { showToast(fijado ? 'Intervención fijada 📌' : 'Intervención desfijada', fijado ? '📌' : '✅'); cargarLegajosEOE(); }
+    else showToast('Error: ' + (res?.error||'no se pudo actualizar'), '❌');
+  });
+}
+
 function eoeEditarInline(btn) {
   const id = btn.dataset.id;
   const l  = window._eoeLegajosPorId?.[id];
