@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // Apps Script sirve en iframe — forzamos viewport correcto
 (function(){
@@ -4022,6 +4023,41 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
 }
 
 // ── Editar/eliminar un legajo EOE puntual (inline en la línea de tiempo) ─
+function exportarInformeIntensificacionExcel() {
+  const res = window._intensificacionData;
+  if (!res || !res.alumnos) { showToast('No hay informe cargado','⚠️'); return; }
+  if (typeof XLSX === 'undefined') { showToast('No se pudo cargar el generador de Excel','❌'); return; }
+
+  const filas = [];
+  res.alumnos.forEach(a => {
+    a.materiasPorNota.forEach(mat => {
+      filas.push({
+        'Alumno': a.nombre,
+        'Curso': res.curso,
+        'Materia': mat,
+        'Motivo': 'Por rendimiento académico',
+        'Detalle': ''
+      });
+    });
+    a.materiasPorInasistencia.forEach(m => {
+      filas.push({
+        'Alumno': a.nombre,
+        'Curso': res.curso,
+        'Materia': m.materia,
+        'Motivo': 'Por inasistencias',
+        'Detalle': `${m.inasistencias} inasistencias, ${m.pct}% asistencia`
+      });
+    });
+  });
+
+  const ws = XLSX.utils.json_to_sheet(filas);
+  ws['!cols'] = [{ wch: 32 }, { wch: 8 }, { wch: 22 }, { wch: 26 }, { wch: 32 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Intensificacion');
+  XLSX.writeFile(wb, `Intensificacion_${res.curso}_${res.anio}.xlsx`);
+  showToast('Excel exportado correctamente','✅');
+}
+
 function exportarInformeIntensificacion() {
   const res = window._intensificacionData;
   if (!res || !res.alumnos) { showToast('No hay informe cargado','⚠️'); return; }
@@ -5450,6 +5486,7 @@ function cargarResumenCurso() {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
           <div style="font-size:12px;color:#888">${res.alumnos.length} alumno(s) con materias a intensificar</div>
           <button onclick="exportarInformeIntensificacion()" style="padding:6px 13px;font-size:12px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-family:inherit;font-weight:600">📄 Exportar informe</button>
+          <button onclick="exportarInformeIntensificacionExcel()" style="padding:6px 13px;font-size:12px;border-radius:8px;border:1px solid #1a9e5c;background:#1a9e5c;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;margin-left:8px">📊 Exportar Excel</button>
         </div>
         ${tarjetas}`;
     });
