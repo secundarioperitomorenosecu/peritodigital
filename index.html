@@ -4034,9 +4034,9 @@ function exportarInformeIntensificacionExcel() {
       filas.push({
         'Alumno': a.nombre,
         'Curso': res.curso,
-        'Materia': mat,
+        'Materia': mat.materia,
         'Motivo': 'Por rendimiento académico',
-        'Detalle': ''
+        'Detalle': mat.detalle
       });
     });
     a.materiasPorInasistencia.forEach(m => {
@@ -4062,7 +4062,7 @@ function exportarInformeIntensificacion() {
   const res = window._intensificacionData;
   if (!res || !res.alumnos) { showToast('No hay informe cargado','⚠️'); return; }
   const filas = res.alumnos.map(a => {
-    const nota = a.materiasPorNota.length ? `<strong style="color:#c62828">Por rendimiento académico:</strong> ${a.materiasPorNota.join(', ')}` : '';
+    const nota = a.materiasPorNota.length ? `<strong style="color:#c62828">Por rendimiento académico:</strong><div style="margin-top:2px">${a.materiasPorNota.map(mat => `<div style="padding-left:14px">${mat.materia}: ${mat.detalle}</div>`).join('')}</div>` : '';
     const ina  = a.materiasPorInasistencia.length ? `<strong style="color:#e65100">Por inasistencias:</strong><div style="margin-top:2px">${a.materiasPorInasistencia.map(m => `<div style="padding-left:14px">${m.materia}: ${m.inasistencias} inasistencias, ${m.pct}% asistencia</div>`).join('')}</div>` : '';
     return `<div style="padding:12px 16px;border:1px solid #e0e0e0;border-radius:8px;margin-bottom:8px">
       <div style="font-weight:700;margin-bottom:6px">${a.nombre}</div>
@@ -5466,7 +5466,9 @@ function cargarResumenCurso() {
         const bloqueNota = a.materiasPorNota.length ? `
           <div style="margin-bottom:6px">
             <span style="font-size:11px;font-weight:700;color:#c62828">📉 Por rendimiento académico:</span>
-            <span style="font-size:12px;color:#333"> ${a.materiasPorNota.join(', ')}</span>
+            <div style="margin-top:2px">
+              ${a.materiasPorNota.map(mat => `<div style="font-size:12px;color:#333;padding-left:14px">${mat.materia}: ${mat.detalle}</div>`).join('')}
+            </div>
           </div>` : '';
         const bloqueInasist = a.materiasPorInasistencia.length ? `
           <div>
