@@ -541,6 +541,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-evolucion" onclick="showSection('evolucion',this)"><span class="nav-icon">📈</span> Evolución Alumno</div>
       <div class="nav-item" id="nav-reportes" onclick="showSection('reportes',this)"><span class="nav-icon">📈</span> Reportes</div>
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
+      <div class="nav-item" id="nav-migracion" onclick="showSection('migracion',this)" style="display:none"><span class="nav-icon">🔄</span> Migración Ciclo Lectivo</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
       <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this);if(!bibCargado)inicializarBiblioteca()" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
@@ -1298,6 +1299,39 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
     </div>
 
+    <!-- MIGRACIÓN CICLO LECTIVO -->
+    <div id="sec-migracion" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🔄 Migración de Ciclo Lectivo</h3>
+        </div>
+        <div style="padding:16px 20px">
+          <div style="background:#fff3e0;border:1px solid #ffcc80;border-radius:10px;padding:14px 16px;margin-bottom:18px">
+            <strong style="color:#e65100">⚠️ Acción irreversible — usar UNA SOLA VEZ al arrancar el ciclo lectivo nuevo.</strong>
+            <div style="font-size:13px;color:#555;margin-top:8px;line-height:1.6">
+              Esto va a hacer, de una sola vez:
+              <ul style="margin:8px 0 0 18px;padding:0">
+                <li>Promocionar en <code>3_Alumnos</code> a todos los alumnos activos: 1A→2A, 1B→2B, 2A→3A, 2B→3B, 3A→4A, 3B→4B, 4A→5A, 4B→5B, 5A→6A, 5B→6B.</li>
+                <li>Marcar como <strong>egresados</strong> (inactivos) a los alumnos que estaban en 6A y 6B.</li>
+                <li>Archivar cada hoja <code>Asist_1A</code>…<code>Asist_6B</code> como copia con el año (ej: <code>Asist_5A_2026</code>) y vaciar la hoja original, lista para el curso nuevo.</li>
+              </ul>
+              <div style="margin-top:8px"><strong>Calificaciones y Legajos EOE no se tocan</strong> — ya guardan todo por año en la misma hoja.</div>
+              <div style="margin-top:8px">No incluye la carga de los alumnos nuevos de 1° año — esos los cargás vos aparte en <code>3_Alumnos</code> antes o después de correr esto.</div>
+            </div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:14px;cursor:pointer">
+            <input type="checkbox" id="mig-confirmo1"> Entiendo que esta acción mueve a alumnos reales de curso y no se puede deshacer.
+          </label>
+          <label style="display:block;font-size:13px;margin-bottom:8px">Para confirmar, escribí <strong>MIGRAR</strong> en el siguiente campo:</label>
+          <input type="text" id="mig-confirmo-texto" placeholder="MIGRAR" style="padding:8px 12px;border-radius:8px;border:1px solid #e0e0e0;font-family:inherit;font-size:13px;width:200px;margin-bottom:14px">
+          <div>
+            <button onclick="ejecutarMigracionCicloLectivo()" style="padding:10px 20px;border-radius:9px;border:none;background:#c62828;color:#fff;font-weight:700;cursor:pointer;font-family:inherit">🔄 Migrar a nuevo ciclo lectivo</button>
+          </div>
+          <div id="mig-resultado" style="margin-top:16px;font-size:13px"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- USUARIOS -->
     <div id="sec-usuarios" class="section">
       <div class="panel">
@@ -1508,6 +1542,17 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <option value="">Todos los años</option>
           </select>
           <button class="btn btn-sm btn-outline" onclick="cargarLegajosEOE()">↺ Actualizar</button>
+        </div>
+      </div>
+
+      <!-- Buscar por alumno, sin importar el curso (para ver todo su historial a través de los años) -->
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+          <input id="eoe-buscar-alumno" type="text" placeholder="🔍 Buscar por alumno (todos los cursos y años)…"
+            style="flex:1;min-width:220px;padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"
+            onkeydown="if(event.key==='Enter')buscarLegajosEOEPorAlumno()">
+          <button class="btn btn-sm btn-primary-sm" onclick="buscarLegajosEOEPorAlumno()">Buscar</button>
+          <button class="btn btn-sm btn-outline" onclick="document.getElementById('eoe-buscar-alumno').value='';cargarLegajosEOE()">✕ Limpiar</button>
         </div>
       </div>
 
@@ -3459,6 +3504,7 @@ function doLogin(name, role, usuario, res){
   // Cargar foto DESPUÉS de poner las iniciales — sobreescribe si hay foto guardada
   cargarFotoPerfilGuardada();
   const isAdmin    = ['director','vicedirector','secretary','secretario','legal'].includes(role);
+  const isDirectorEstricto = ['director','vicedirector','secretary','secretario'].includes(role);
   const isPreceptor= role === 'preceptor';
   const isDocente  = role === 'Docente' || role === 'docente' || role === 'teacher';
   const isEOE      = role === 'eoe';
@@ -3483,6 +3529,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-evolucion').style.display = (isAdmin || isPreceptor || isEOE) ? 'flex' : 'none';
   document.getElementById('nav-reportes').style.display  = (isAdmin || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
+  document.getElementById('nav-migracion').style.display = isDirectorEstricto ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
   document.getElementById('nav-banos').style.display     = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navSeg = document.getElementById('nav-seguimiento-faltas');
@@ -3686,6 +3733,55 @@ function guardarLegajoEOE() {
       cargarLegajosEOE();
     } else { showToast('Error al guardar','❌'); }
   });
+}
+
+function buscarLegajosEOEPorAlumno() {
+  const nombre = document.getElementById('eoe-buscar-alumno')?.value.trim();
+  const lista = document.getElementById('eoe-lista');
+  if (!lista) return;
+  if (!nombre) { showToast('Escribí el nombre del alumno','⚠️'); return; }
+
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Buscando...</div>';
+
+  callWebApp({ accion:'obtenerLegajosEOEPorAlumno', nombre }).then(res => {
+    if (!res?.ok || !res.legajos?.length) {
+      lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">📋 Sin legajos para ese alumno</div>';
+      return;
+    }
+    const TIPO_LABEL = { convivencia:'🤝 Convivencia', academica:'📚 Académica', familiar:'👨‍👩‍👧 Familiar', salud:'🏥 Salud', conducta:'⚠️ Conducta', cud:'♿ CUD/Terapia', otro:'📌 Otro' };
+    const TIPO_COLOR = { convivencia:'#e3f2fd', academica:'#fff3e0', familiar:'#f3e5f5', salud:'#e8f5e9', conducta:'#ffebee', otro:'#fafafa' };
+
+    const fijados   = res.legajos.filter(l => l.fijado);
+    const noFijados = res.legajos.filter(l => !l.fijado).sort((a,b) => b.fecha.localeCompare(a.fecha));
+
+    const renderItem = l => {
+      const bg = TIPO_COLOR[l.tipo] || '#fafafa';
+      const label = TIPO_LABEL[l.tipo] || l.tipo;
+      const fechaStr = l.fecha ? new Date(l.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+      return `<div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+          <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:${bg};color:#555;font-weight:600">${label}</span>
+          <span style="font-size:10px;padding:2px 7px;border-radius:99px;background:#eee;color:#666;font-weight:600">Curso ${l.curso}</span>
+        </div>
+        <div style="font-size:13px;color:#222;line-height:1.6;white-space:pre-wrap">${l.descripcion}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <span style="font-size:10px;color:#aaa">${l.autorNombre||l.autor||'—'}</span>
+          <span style="font-size:10px;color:#bbb">${fechaStr}</span>
+        </div>
+      </div>`;
+    };
+
+    const fijadosHTML = fijados.length ? `
+      <div style="margin-bottom:14px;padding:10px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px">
+        <div style="font-size:10px;font-weight:700;color:#f57f17;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📌 Fijado${fijados.length>1?'s':''}</div>
+        ${fijados.map(renderItem).join('')}
+      </div>` : '';
+
+    lista.innerHTML = `
+      <div style="font-size:12px;color:#888;margin-bottom:10px">${res.legajos.length} registro(s) de ${nombre}, en todos los cursos y años</div>
+      ${fijadosHTML}
+      ${noFijados.map(renderItem).join('')}`;
+  }).catch(() => { lista.innerHTML = '<div style="text-align:center;padding:30px;color:#c62828;font-size:13px">Error al buscar</div>'; });
 }
 
 function cargarLegajosEOE() {
@@ -4023,6 +4119,32 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
 }
 
 // ── Editar/eliminar un legajo EOE puntual (inline en la línea de tiempo) ─
+function ejecutarMigracionCicloLectivo() {
+  const chk = document.getElementById('mig-confirmo1');
+  const txt = document.getElementById('mig-confirmo-texto');
+  const resultDiv = document.getElementById('mig-resultado');
+  if (!chk.checked) { showToast('Primero tildá que entendés que la acción es irreversible','⚠️'); return; }
+  if (txt.value.trim().toUpperCase() !== 'MIGRAR') { showToast('Escribí MIGRAR para confirmar','⚠️'); return; }
+  if (!confirm('Última confirmación: esto va a promocionar de curso a todos los alumnos activos y archivar la asistencia. ¿Seguro que querés continuar?')) return;
+
+  resultDiv.innerHTML = '⏳ Migrando... esto puede tardar unos segundos.';
+  callWebApp({ accion: 'migrarCicloLectivo' }).then(res => {
+    if (res?.ok) {
+      resultDiv.innerHTML = `✅ Migración completada:<br>
+        · ${res.promovidos} alumno(s) promocionado(s) de curso<br>
+        · ${res.egresados} alumno(s) marcado(s) como egresados (6°)<br>
+        · Hojas de asistencia archivadas: ${res.hojasArchivadas.join(', ')}`;
+      showToast('Migración completada ✅','🔄');
+      chk.checked = false; txt.value = '';
+    } else {
+      resultDiv.innerHTML = '❌ Error: ' + (res?.error || 'no se pudo completar la migración');
+      showToast('Error en la migración','❌');
+    }
+  }).catch(() => {
+    resultDiv.innerHTML = '❌ Error de conexión al migrar.';
+  });
+}
+
 function exportarInformeIntensificacionExcel() {
   const res = window._intensificacionData;
   if (!res || !res.alumnos) { showToast('No hay informe cargado','⚠️'); return; }
