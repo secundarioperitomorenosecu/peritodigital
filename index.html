@@ -1215,6 +1215,33 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
       </div>
 
+      <!-- LISTAS DE ALUMNOS POR CURSO -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>📚 Listas de Alumnos por Curso</h3>
+        </div>
+        <div class="panel-body">
+          <div style="font-size:11px;color:rgba(0,0,0,.45);margin-bottom:14px;line-height:1.5">
+            Exportá el listado de Apellido y Nombre por curso, en Excel o en PDF.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+              <select id="lista-al-curso" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm" style="background:#e8f5e9;color:#1a9e5c;border:1px solid #c8e6d4" onclick="exportarListaAlumnosExcel()">📊 Excel</button>
+              <button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarListaAlumnosPDF()">🖨️ PDF</button>
+            </div>
+          </div>
+          <div id="lista-al-contenido"></div>
+        </div>
+      </div>
+
       <!-- INFORME INASISTENCIAS -->
       <div class="panel" style="margin-top:16px">
         <div class="panel-header">
@@ -5283,6 +5310,77 @@ function generarMejoresPromedios(grupo) {
     cont.innerHTML = html;
   }).catch(() => {
     cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión al calcular los promedios.</div>';
+  });
+}
+
+// ── Listas de alumnos por curso — solo Apellido y Nombre + Curso ──────
+function exportarListaAlumnosExcel() {
+  const curso = document.getElementById('lista-al-curso').value;
+  const cont  = document.getElementById('lista-al-contenido');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Generando Excel...</div>';
+
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + ((res && res.error) || 'no se pudo obtener el listado') + '</div>'; return; }
+    if (typeof XLSX === 'undefined') { cont.innerHTML = '<div style="color:#F44336;padding:16px">No se pudo cargar el generador de Excel.</div>'; return; }
+    const alumnos = res.alumnos || [];
+    if (alumnos.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No hay alumnos cargados para ' + curso + '.</div>'; return; }
+
+    const filas = alumnos.map(a => ({ 'Apellido y Nombre': a.nombre, 'Curso': curso }));
+    const ws = XLSX.utils.json_to_sheet(filas);
+    ws['!cols'] = [{ wch: 40 }, { wch: 10 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, curso);
+    XLSX.writeFile(wb, `Lista_Alumnos_${curso}.xlsx`);
+    cont.innerHTML = '<div style="text-align:center;padding:12px;color:#1a9e5c;font-weight:600">✅ Excel de ' + curso + ' descargado (' + alumnos.length + ' alumnos).</div>';
+  }).catch(() => {
+    cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión al generar el Excel.</div>';
+  });
+}
+
+function exportarListaAlumnosPDF() {
+  const curso = document.getElementById('lista-al-curso').value;
+  const cont  = document.getElementById('lista-al-contenido');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Generando PDF...</div>';
+
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + ((res && res.error) || 'no se pudo obtener el listado') + '</div>'; return; }
+    const alumnos = res.alumnos || [];
+    if (alumnos.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No hay alumnos cargados para ' + curso + '.</div>'; return; }
+
+    const filas = alumnos.map((a, i) => `<tr><td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center;color:#888">${i + 1}</td><td style="padding:6px 10px;border-bottom:1px solid #eee">${a.nombre}</td></tr>`).join('');
+    const hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+      <title>Lista de Alumnos — ${curso}</title>
+      <style>
+        body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a}
+        h1{font-size:18px;margin-bottom:4px}
+        .meta{color:#888;font-size:13px;margin-bottom:20px}
+        table{width:100%;border-collapse:collapse;font-size:13px}
+        th{text-align:left;padding:8px 10px;background:#fdf8f3;border-bottom:2px solid #e8d5c4}
+        @media print{button{display:none}}
+      </style></head>
+      <body>
+        <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-weight:600">🖨️ Imprimir / Guardar PDF</button>
+        <h1>Lista de Alumnos — Curso ${curso}</h1>
+        <div class="meta">${alumnos.length} alumno(s) · Generado el ${hoy}</div>
+        <table>
+          <thead><tr><th style="width:40px">#</th><th>Apellido y Nombre</th></tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </body></html>`;
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (!win) {
+      const link = document.createElement('a');
+      link.href = url; link.download = `Lista_Alumnos_${curso}.html`;
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 8000);
+    cont.innerHTML = '';
+  }).catch(() => {
+    cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión al generar el PDF.</div>';
   });
 }
 
