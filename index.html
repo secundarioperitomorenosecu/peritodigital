@@ -1227,7 +1227,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
             <div>
               <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
-              <select id="lista-al-curso" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+              <select id="lista-al-curso" onchange="cargarListaAlumnosAdmin()" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
                 <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
                 <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
                 <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
@@ -1239,6 +1239,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             </div>
           </div>
           <div id="lista-al-contenido"></div>
+          <div id="lista-al-tabla" style="margin-top:14px"></div>
         </div>
       </div>
 
@@ -3674,7 +3675,7 @@ function showSection(id,el){
   if(id === 'dias-no-lectivos') inicializarDiasNoLectivos();
   if(id === 'mensajes') inicializarMensajes();
   if(id === 'archivos') cargarArchivos();
-  if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); generarMejoresPromedios('5'); generarMejoresPromedios('6'); }
+  if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); generarMejoresPromedios('5'); generarMejoresPromedios('6'); cargarListaAlumnosAdmin(); }
   if(id === 'usuarios') cargarUsuarios();
 }
 
@@ -5382,6 +5383,110 @@ function exportarListaAlumnosPDF() {
   }).catch(() => {
     cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión al generar el PDF.</div>';
   });
+}
+
+const CURSOS_TODOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+
+// ── Gestión de alumnos: cambio de curso y baja/reactivación ──────────
+function cargarListaAlumnosAdmin() {
+  const curso = document.getElementById('lista-al-curso')?.value;
+  const cont  = document.getElementById('lista-al-tabla');
+  if (!cont) return;
+  cont.innerHTML = '<div style="text-align:center;padding:16px;color:rgba(0,0,0,.3)">⏳ Cargando alumnos...</div>';
+
+  callWebApp({ accion: 'obtenerAlumnosCursoAdmin', curso }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + ((res && res.error) || 'no se pudo cargar el listado') + '</div>'; return; }
+    renderTablaAlumnosAdmin(res.alumnos || [], curso);
+  }).catch(() => {
+    cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión al cargar los alumnos.</div>';
+  });
+}
+
+function renderTablaAlumnosAdmin(alumnos, curso) {
+  const cont = document.getElementById('lista-al-tabla');
+  if (!cont) return;
+  if (alumnos.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:16px;color:rgba(0,0,0,.3)">No hay alumnos cargados para ' + curso + '.</div>'; return; }
+
+  const opcionesCurso = CURSOS_TODOS.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  let html = '<div style="display:grid;gap:8px">';
+  alumnos.forEach(a => {
+    const selId = 'mv-curso-' + a.legajo;
+    if (a.activo) {
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:10px 14px">
+        <div style="font-weight:600;font-size:13px;min-width:180px">${a.nombre}</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <select id="${selId}" style="padding:6px 8px;border-radius:7px;border:1px solid #e0e0e0;font-family:inherit;font-size:12px">${opcionesCurso}</select>
+          <button onclick="moverAlumnoCurso('${a.legajo}','${(a.nombre||'').replace(/'/g,"\\'")}','${selId}')" style="padding:6px 12px;border-radius:7px;border:none;background:#8FB8E8;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">↔️ Mover</button>
+          <button onclick="abrirModalBajaAlumno('${a.legajo}','${(a.nombre||'').replace(/'/g,"\\'")}')" style="padding:6px 12px;border-radius:7px;border:none;background:#F44336;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🚫 Dar de baja</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#fdeaea;border:1px solid #f3c6c6;border-radius:10px;padding:10px 14px;opacity:.85">
+        <div>
+          <div style="font-weight:600;font-size:13px;color:#7a2a2a">${a.nombre} <span style="font-weight:400;font-size:11px;color:#a55">(Baja)</span></div>
+          <div style="font-size:11px;color:#a55;margin-top:2px">${a.motivoBaja || 'Sin motivo registrado'}${a.fechaBaja ? ' · ' + a.fechaBaja : ''}</div>
+        </div>
+        <button onclick="reactivarAlumnoUI('${a.legajo}','${(a.nombre||'').replace(/'/g,"\\'")}')" style="padding:6px 12px;border-radius:7px;border:none;background:#1a9e5c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">↩️ Reactivar</button>
+      </div>`;
+    }
+  });
+  html += '</div>';
+  cont.innerHTML = html;
+}
+
+function moverAlumnoCurso(legajo, nombre, selId) {
+  const cursoNuevo = document.getElementById(selId)?.value;
+  if (!cursoNuevo) return;
+  if (!confirm(`¿Mover a ${nombre} al curso ${cursoNuevo}?`)) return;
+
+  callWebApp({ accion: 'cambiarCursoAlumno', legajo, cursoNuevo }).then(res => {
+    if (res?.ok) {
+      showToast(`${nombre} movido a ${cursoNuevo} ✅`, '↔️');
+      cargarListaAlumnosAdmin();
+    } else {
+      showToast('Error: ' + (res?.error || 'no se pudo mover al alumno'), '❌');
+    }
+  }).catch(() => showToast('Error de conexión al mover al alumno', '❌'));
+}
+
+function abrirModalBajaAlumno(legajo, nombre) {
+  document.getElementById('baja-al-legajo').value = legajo;
+  document.getElementById('baja-al-nombre').textContent = nombre;
+  document.getElementById('baja-al-motivo').value = '';
+  document.getElementById('modal-baja-alumno').style.display = 'flex';
+}
+
+function cerrarModalBajaAlumno() {
+  document.getElementById('modal-baja-alumno').style.display = 'none';
+}
+
+function confirmarBajaAlumno() {
+  const legajo = document.getElementById('baja-al-legajo').value;
+  const motivo = document.getElementById('baja-al-motivo').value.trim();
+  if (!motivo) { showToast('Indicá el motivo de la baja', '⚠️'); return; }
+
+  callWebApp({ accion: 'darDeBajaAlumno', legajo, motivo }).then(res => {
+    if (res?.ok) {
+      showToast('Alumno dado de baja ✅', '🚫');
+      cerrarModalBajaAlumno();
+      cargarListaAlumnosAdmin();
+    } else {
+      showToast('Error: ' + (res?.error || 'no se pudo dar de baja'), '❌');
+    }
+  }).catch(() => showToast('Error de conexión al dar de baja', '❌'));
+}
+
+function reactivarAlumnoUI(legajo, nombre) {
+  if (!confirm(`¿Reactivar a ${nombre}?`)) return;
+  callWebApp({ accion: 'reactivarAlumno', legajo }).then(res => {
+    if (res?.ok) {
+      showToast(`${nombre} reactivado ✅`, '↩️');
+      cargarListaAlumnosAdmin();
+    } else {
+      showToast('Error: ' + (res?.error || 'no se pudo reactivar'), '❌');
+    }
+  }).catch(() => showToast('Error de conexión al reactivar', '❌'));
 }
 
 function generarInformeInasistencias() {
@@ -7713,6 +7818,22 @@ function cargarEvolucion() {
     <div style="display:flex;gap:10px">
       <button onclick="confirmarEliminarUsuario()" style="flex:1;padding:10px;background:#1a9e5c;color:white;border:none;border-radius:9px;cursor:pointer;font-family:inherit;font-weight:600">Sí, eliminar</button>
       <button onclick="document.getElementById('modal-confirmar-eliminar').style.display='none'" style="flex:1;padding:10px;background:#f5f5f5;border:none;border-radius:9px;cursor:pointer;font-family:inherit">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Dar de Baja Alumno -->
+<div id="modal-baja-alumno" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div class="modal-box" style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:420px;position:relative">
+    <button onclick="cerrarModalBajaAlumno()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+    <h3 style="margin:0 0 6px;font-size:16px;color:#1a1a1a">🚫 Dar de baja</h3>
+    <p id="baja-al-nombre" style="color:#888;font-size:13px;margin:0 0 16px"></p>
+    <input type="hidden" id="baja-al-legajo">
+    <label style="font-size:12px;color:#888;margin-bottom:4px;display:block">Motivo de la baja</label>
+    <textarea id="baja-al-motivo" rows="4" placeholder="Ej: Traslado a otra institución, abandono, etc." style="width:100%;padding:10px;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="confirmarBajaAlumno()" style="flex:1;padding:10px;background:#c62828;color:#fff;border:none;border-radius:9px;cursor:pointer;font-family:inherit;font-weight:600">Confirmar baja</button>
+      <button onclick="cerrarModalBajaAlumno()" style="flex:1;padding:10px;background:#f5f5f5;border:none;border-radius:9px;cursor:pointer;font-family:inherit">Cancelar</button>
     </div>
   </div>
 </div>
