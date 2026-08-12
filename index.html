@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script>
 // Apps Script sirve en iframe — forzamos viewport correcto
 (function(){
@@ -541,6 +542,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-alertas" onclick="showSection('alertas',this)"><span class="nav-icon">⚠️</span> Alumnos en Riesgo</div>
       <div class="nav-item" id="nav-evolucion" onclick="showSection('evolucion',this)"><span class="nav-icon">📈</span> Evolución Alumno</div>
       <div class="nav-item" id="nav-reportes" onclick="showSection('reportes',this)"><span class="nav-icon">📈</span> Reportes</div>
+      <div class="nav-item" id="nav-gd" onclick="showSection('gd',this)" style="display:none"><span class="nav-icon">📁</span> Gestión Documental</div>
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
       <div class="nav-item" id="nav-migracion" onclick="showSection('migracion',this)" style="display:none"><span class="nav-icon">🔄</span> Migración Ciclo Lectivo</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
@@ -1382,6 +1384,89 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           </div>
           <div id="mig-resultado" style="margin-top:16px;font-size:13px"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- GESTIÓN DOCUMENTAL DOCENTE -->
+    <div id="sec-gd" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>📁 Gestión Documental Docente</h3>
+        </div>
+        <div class="panel-body">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="gd-tab-docentes" onclick="gdMostrarTab('docentes')" style="background:#1F3A5F;color:#fff;border:none">👤 Docentes</button>
+            <button class="btn btn-sm btn-outline" id="gd-tab-vencimientos" onclick="gdMostrarTab('vencimientos')">⏰ Vencimientos</button>
+          </div>
+
+          <!-- TAB DOCENTES -->
+          <div id="gd-panel-docentes">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end">
+              <div style="flex:1;min-width:180px">
+                <label style="font-size:11px;font-weight:700;color:rgba(0,0,0,.5);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Buscar docente</label>
+                <input id="gd-buscar" type="text" placeholder="Nombre y apellido..." oninput="gdBuscarDocentes()" style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:9px;border:0.5px solid rgba(0,0,0,.12);font-family:inherit;font-size:13px">
+              </div>
+              <button class="btn btn-sm" style="background:#4FA98C;color:#fff;border:none" onclick="gdAbrirModalNuevoDocente()">＋ Nuevo Docente</button>
+            </div>
+
+            <div id="gd-lista-docentes" style="display:grid;gap:8px;margin-bottom:18px"></div>
+
+            <!-- Detalle del docente seleccionado -->
+            <div id="gd-detalle-docente" style="display:none;border-top:1px solid rgba(0,0,0,.08);padding-top:16px;margin-top:6px"></div>
+          </div>
+
+          <!-- TAB VENCIMIENTOS -->
+          <div id="gd-panel-vencimientos" style="display:none">
+            <div id="gd-vencimientos-contenido"><div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando...</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra flotante de selección para PDF combinado -->
+    <div id="gd-barra-seleccion" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:12px 18px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:500;display:flex;align-items:center;gap:14px">
+      <span id="gd-sel-contador" style="font-size:13px;font-weight:600">0 documentos seleccionados</span>
+      <button onclick="gdGenerarPDF()" style="background:#EF9F27;color:#1a1a1a;border:none;padding:8px 14px;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">📄 Generar PDF</button>
+      <button onclick="gdLimpiarSeleccion()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:8px 12px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13px">Vaciar</button>
+    </div>
+
+    <!-- Modal Nuevo Docente -->
+    <div id="modal-gd-nuevo-docente" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+      <div class="modal-box" style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:400px;position:relative">
+        <button onclick="document.getElementById('modal-gd-nuevo-docente').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+        <h3 style="margin:0 0 16px;font-size:16px">＋ Nuevo Docente</h3>
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Nombre y apellido</label>
+        <input id="gd-nuevo-nombre" type="text" placeholder="Ej: García, María" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #e0e0e0;border-radius:9px;font-family:inherit;font-size:13px;margin-bottom:14px">
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Rol en el trámite</label>
+        <select id="gd-nuevo-tipo" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #e0e0e0;border-radius:9px;font-family:inherit;font-size:13px;margin-bottom:20px">
+          <option value="Suplente">Suplente (cubre la falta)</option>
+          <option value="Titular">Titular (falta o renuncia)</option>
+        </select>
+        <button onclick="gdCrearDocenteUI()" style="width:100%;padding:11px;background:#4FA98C;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit">Crear docente</button>
+      </div>
+    </div>
+
+    <!-- Modal Subir Documento -->
+    <div id="modal-gd-subir" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+      <div class="modal-box" style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:420px;position:relative">
+        <button onclick="gdCerrarModalSubir()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888">✕</button>
+        <h3 style="margin:0 0 4px;font-size:16px">📤 Subir documento</h3>
+        <p id="gd-subir-tipo-label" style="color:#888;font-size:13px;margin:0 0 16px"></p>
+        <input type="hidden" id="gd-subir-docente-id">
+        <input type="hidden" id="gd-subir-tipo">
+
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Nombre descriptivo</label>
+        <input id="gd-subir-nombre" type="text" placeholder="Ej: DNI frente y dorso" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #e0e0e0;border-radius:9px;font-family:inherit;font-size:13px;margin-bottom:14px">
+
+        <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Foto o escaneo</label>
+        <input id="gd-subir-archivo" type="file" accept="image/*,application/pdf" capture="environment" style="width:100%;margin-bottom:14px;font-size:13px">
+
+        <div id="gd-subir-venc-wrap" style="display:none;margin-bottom:18px">
+          <label style="font-size:12px;color:#888;display:block;margin-bottom:4px">Fecha de vencimiento</label>
+          <input id="gd-subir-vencimiento" type="date" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #e0e0e0;border-radius:9px;font-family:inherit;font-size:13px">
+        </div>
+
+        <button onclick="gdSubirDocumentoUI()" id="gd-subir-btn" style="width:100%;padding:11px;background:#4FA98C;color:#fff;border:none;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit">Subir documento</button>
       </div>
     </div>
 
@@ -3581,6 +3666,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-alertas').style.display   = (isAdmin || isPreceptor) ? 'flex' : 'none';
   document.getElementById('nav-evolucion').style.display = (isAdmin || isPreceptor || isEOE) ? 'flex' : 'none';
   document.getElementById('nav-reportes').style.display  = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navGD = document.getElementById('nav-gd'); if (navGD) navGD.style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-migracion').style.display = isDirectorEstricto ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
@@ -3676,6 +3762,7 @@ function showSection(id,el){
   if(id === 'mensajes') inicializarMensajes();
   if(id === 'archivos') cargarArchivos();
   if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); generarMejoresPromedios('5'); generarMejoresPromedios('6'); cargarListaAlumnosAdmin(); }
+  if(id === 'gd') { gdBuscarDocentes(); }
   if(id === 'usuarios') cargarUsuarios();
 }
 
@@ -10523,6 +10610,369 @@ tr:nth-child(even){background:#f7faf8}
 </body></html>`;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+//  GESTIÓN DOCUMENTAL DOCENTE (Movimientos / Suplencias)
+// ═══════════════════════════════════════════════════════════════════
+const GD_TIPOS_POR_ROL = {
+  Suplente: [
+    { tipo: 'DNI', label: 'Documento de Identidad (frente y dorso)' },
+    { tipo: 'CUIL', label: 'CUIL' },
+    { tipo: 'Titulo', label: 'Título/s' },
+    { tipo: 'ActoPsicofisico', label: 'Acto Psicofísico' }
+  ],
+  Titular: [
+    { tipo: 'CertificadoMedico', label: 'Certificado Médico' },
+    { tipo: 'ComprobanteABC', label: 'Comprobante ABC (opcional)', opcional: true }
+  ]
+};
+
+let gdDocenteActualId = null;
+let gdSeleccionPDF = []; // [{docId, docenteNombre, tipoDocumento, nombreDescriptivo}]
+
+function gdMostrarTab(tab) {
+  document.getElementById('gd-panel-docentes').style.display     = tab === 'docentes' ? 'block' : 'none';
+  document.getElementById('gd-panel-vencimientos').style.display = tab === 'vencimientos' ? 'block' : 'none';
+  document.getElementById('gd-tab-docentes').style.cssText       = tab === 'docentes' ? 'background:#1F3A5F;color:#fff;border:none' : 'background:transparent;color:#1F3A5F;border:1px solid #1F3A5F';
+  document.getElementById('gd-tab-vencimientos').style.cssText   = tab === 'vencimientos' ? 'background:#1F3A5F;color:#fff;border:none' : 'background:transparent;color:#1F3A5F;border:1px solid #1F3A5F';
+  if (tab === 'vencimientos') gdCargarVencimientos();
+}
+
+function gdBuscarDocentes() {
+  const q = document.getElementById('gd-buscar')?.value || '';
+  callWebApp({ accion: 'gdObtenerDocentes', busqueda: q }).then(res => {
+    if (!res || !res.ok) { document.getElementById('gd-lista-docentes').innerHTML = '<div style="color:#F44336;padding:12px">Error al cargar docentes.</div>'; return; }
+    gdRenderListaDocentes(res.docentes || []);
+  }).catch(() => { document.getElementById('gd-lista-docentes').innerHTML = '<div style="color:#F44336;padding:12px">Error de conexión.</div>'; });
+}
+
+function gdRenderListaDocentes(docentes) {
+  const cont = document.getElementById('gd-lista-docentes');
+  if (docentes.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No hay docentes cargados todavía.</div>'; return; }
+  cont.innerHTML = docentes.map(d => `
+    <div onclick="gdAbrirDocente('${d.id}')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:12px 14px;cursor:pointer">
+      <div>
+        <div style="font-weight:600;font-size:13px">${d.nombreCompleto}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">${d.tipo === 'Suplente' ? '🧑‍🏫 Suplente' : '👤 Titular'}</div>
+      </div>
+      <span style="font-size:16px;color:#8FB8E8">›</span>
+    </div>`).join('');
+}
+
+function gdAbrirModalNuevoDocente() {
+  document.getElementById('gd-nuevo-nombre').value = '';
+  document.getElementById('gd-nuevo-tipo').value = 'Suplente';
+  document.getElementById('modal-gd-nuevo-docente').style.display = 'flex';
+}
+
+function gdCrearDocenteUI() {
+  const nombreCompleto = document.getElementById('gd-nuevo-nombre').value.trim();
+  const tipo = document.getElementById('gd-nuevo-tipo').value;
+  if (!nombreCompleto) { showToast('Ingresá el nombre del docente', '⚠️'); return; }
+
+  callWebApp({ accion: 'gdCrearDocente', nombreCompleto, tipo }).then(res => {
+    if (res?.ok) {
+      showToast('Docente creado ✅', '👤');
+      document.getElementById('modal-gd-nuevo-docente').style.display = 'none';
+      gdBuscarDocentes();
+      gdAbrirDocente(res.id);
+    } else {
+      showToast('Error: ' + (res?.error || 'no se pudo crear'), '❌');
+    }
+  }).catch(() => showToast('Error de conexión', '❌'));
+}
+
+function gdAbrirDocente(docenteId) {
+  gdDocenteActualId = docenteId;
+  const cont = document.getElementById('gd-detalle-docente');
+  cont.style.display = 'block';
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando documentos...</div>';
+  cont.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  callWebApp({ accion: 'gdObtenerDocumentosDocente', docenteId }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + ((res && res.error) || 'no se pudo cargar') + '</div>'; return; }
+    gdRenderDetalleDocente(res.docente, res.documentos || []);
+  }).catch(() => { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión.</div>'; });
+}
+
+function gdRenderDetalleDocente(docente, documentos) {
+  const cont = document.getElementById('gd-detalle-docente');
+  const tiposReq = GD_TIPOS_POR_ROL[docente.tipo] || [];
+
+  let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap">
+    <h4 style="margin:0;font-size:15px">${docente.nombreCompleto} <span style="font-weight:400;font-size:12px;color:#888">(${docente.tipo})</span></h4>
+    <div style="display:flex;align-items:center;gap:14px">
+      <button onclick="gdEliminarDocenteUI('${docente.id}','${docente.nombreCompleto.replace(/'/g,"\\'")}')" style="background:none;border:none;font-size:12px;color:#c0392b;cursor:pointer;font-weight:600">🗑️ Eliminar docente</button>
+      <button onclick="document.getElementById('gd-detalle-docente').style.display='none';gdDocenteActualId=null" style="background:none;border:none;font-size:13px;color:#888;cursor:pointer">✕ Cerrar</button>
+    </div>
+  </div><div style="display:grid;gap:10px">`;
+
+  tiposReq.forEach(t => {
+    const docsDeTipo = documentos.filter(d => d.tipoDocumento === t.tipo);
+    html += `<div style="border:1px solid #e8d5c4;border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${docsDeTipo.length ? '10px' : '0'}">
+        <div style="font-weight:600;font-size:13px">${t.label}</div>
+        <button onclick="gdAbrirModalSubir('${docente.id}','${t.tipo}','${t.label.replace(/'/g,"\\'")}')" style="padding:5px 10px;border-radius:7px;border:none;background:#8FB8E8;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">＋ Subir</button>
+      </div>`;
+    if (docsDeTipo.length === 0) {
+      html += t.opcional
+        ? `<div style="font-size:12px;color:#888">— no cargado (opcional)</div>`
+        : `<div style="font-size:12px;color:#c0392b">⚠️ No hay documento cargado</div>`;
+    } else {
+      docsDeTipo.forEach(d => {
+        const yaSel = gdSeleccionPDF.some(s => s.docId === d.id);
+        let badgeVenc = '';
+        if (d.fechaVencimiento) {
+          const dias = Math.round((new Date(d.fechaVencimiento) - new Date()) / 86400000);
+          const color = dias < 0 ? '#F44336' : dias <= 30 ? '#EF9F27' : '#4FA98C';
+          badgeVenc = `<span style="font-size:10px;color:${color};font-weight:700;margin-left:6px">${dias < 0 ? 'VENCIDO' : 'vence ' + d.fechaVencimiento}</span>`;
+        }
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px dashed #eee">
+          <input type="checkbox" ${yaSel ? 'checked' : ''} onchange="gdToggleSeleccion(this,'${d.id}','${docente.nombreCompleto.replace(/'/g,"\\'")}','${t.tipo}','${(d.nombreDescriptivo||'').replace(/'/g,"\\'")}')" style="width:16px;height:16px">
+          <a href="${d.archivoUrl}" target="_blank" style="flex:1;font-size:12px;color:#1F3A5F;text-decoration:none">${d.nombreDescriptivo}${badgeVenc}</a>
+          <button onclick="gdEliminarDocumentoUI('${d.id}')" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:13px">🗑️</button>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+  cont.innerHTML = html;
+}
+
+// ── Comprimir foto antes de subir (documentos): reduce tamaño de archivo
+// manteniendo buena legibilidad. PDFs pasan sin tocar. Si la compresión no
+// mejora el tamaño (fotos ya chicas), se usa el archivo original.
+function gdComprimirImagen(file, maxDim, calidad) {
+  maxDim = maxDim || 1800;
+  calidad = calidad || 0.82;
+  return new Promise((resolve) => {
+    if (!file.type || !file.type.startsWith('image/')) { resolve(file); return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      const escala = Math.min(1, maxDim / Math.max(width, height));
+      width  = Math.max(1, Math.round(width  * escala));
+      height = Math.max(1, Math.round(height * escala));
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(url);
+        if (!blob || blob.size >= file.size) { resolve(file); return; }
+        const nombreJpg = file.name.replace(/\.\w+$/, '') + '.jpg';
+        resolve(new File([blob], nombreJpg, { type: 'image/jpeg', lastModified: Date.now() }));
+      }, 'image/jpeg', calidad);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
+function gdAbrirModalSubir(docenteId, tipoDocumento, tipoLabel) {
+  document.getElementById('gd-subir-docente-id').value = docenteId;
+  document.getElementById('gd-subir-tipo').value = tipoDocumento;
+  document.getElementById('gd-subir-tipo-label').textContent = tipoLabel;
+  document.getElementById('gd-subir-nombre').value = tipoLabel;
+  document.getElementById('gd-subir-archivo').value = '';
+  document.getElementById('gd-subir-vencimiento').value = '';
+  document.getElementById('gd-subir-venc-wrap').style.display = (tipoDocumento === 'ActoPsicofisico') ? 'block' : 'none';
+  document.getElementById('modal-gd-subir').style.display = 'flex';
+}
+
+function gdCerrarModalSubir() {
+  document.getElementById('modal-gd-subir').style.display = 'none';
+}
+
+function gdSubirDocumentoUI() {
+  const docenteId   = document.getElementById('gd-subir-docente-id').value;
+  const tipo        = document.getElementById('gd-subir-tipo').value;
+  const nombreDesc  = document.getElementById('gd-subir-nombre').value.trim();
+  const vencimiento = document.getElementById('gd-subir-vencimiento').value;
+  const fileInput   = document.getElementById('gd-subir-archivo');
+  const file = fileInput.files[0];
+
+  if (!file) { showToast('Elegí una foto o archivo', '⚠️'); return; }
+  if (!nombreDesc) { showToast('Ingresá un nombre descriptivo', '⚠️'); return; }
+
+  const btn = document.getElementById('gd-subir-btn');
+  btn.disabled = true; btn.textContent = 'Comprimiendo...';
+
+  gdComprimirImagen(file, 1800, 0.82).then(archivoFinal => {
+    if (archivoFinal !== file && archivoFinal.size < file.size) {
+      const antes = (file.size / 1024 / 1024).toFixed(1);
+      const despues = (archivoFinal.size / 1024 / 1024).toFixed(1);
+      showToast(`Comprimido: ${antes}MB → ${despues}MB`, '🗜️');
+    }
+    btn.textContent = 'Subiendo...';
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(',')[1];
+      callWebApp({
+        accion: 'gdSubirDocumento', docenteId, tipoDocumento: tipo, nombreDescriptivo: nombreDesc,
+        nombreArchivo: archivoFinal.name, mimeType: archivoFinal.type || 'application/octet-stream',
+        contenidoBase64: base64, fechaVencimiento: vencimiento, subidoPor: currentUser
+      }).then(res => {
+        btn.disabled = false; btn.textContent = 'Subir documento';
+        if (res?.ok) {
+          showToast('Documento subido ✅', '📤');
+          gdCerrarModalSubir();
+          gdAbrirDocente(docenteId);
+        } else {
+          showToast('Error: ' + (res?.error || 'no se pudo subir'), '❌');
+        }
+      }).catch(() => { btn.disabled = false; btn.textContent = 'Subir documento'; showToast('Error de conexión al subir', '❌'); });
+    };
+    reader.onerror = () => { btn.disabled = false; btn.textContent = 'Subir documento'; showToast('Error al leer el archivo', '❌'); };
+    reader.readAsDataURL(archivoFinal);
+  });
+}
+
+function gdEliminarDocenteUI(docenteId, nombre) {
+  const confirmacion = prompt(`Esto va a eliminar a "${nombre}" y TODOS sus documentos cargados (no se puede deshacer desde la app).\n\nPara confirmar, escribí el nombre del docente tal cual:`, '');
+  if (confirmacion === null) return;
+  if (confirmacion.trim().toLowerCase() !== nombre.trim().toLowerCase()) {
+    showToast('El nombre no coincide, no se eliminó nada', '⚠️');
+    return;
+  }
+  callWebApp({ accion: 'gdEliminarDocente', docenteId }).then(res => {
+    if (res?.ok) {
+      showToast(`${nombre} eliminado ✅`, '🗑️');
+      document.getElementById('gd-detalle-docente').style.display = 'none';
+      gdDocenteActualId = null;
+      gdSeleccionPDF = gdSeleccionPDF.filter(s => s.docenteId !== docenteId);
+      gdActualizarBarraSeleccion();
+      if (typeof gdBuscarDocentes === 'function') gdBuscarDocentes();
+    } else {
+      showToast('Error: ' + (res?.error || 'no se pudo eliminar'), '❌');
+    }
+  }).catch(() => showToast('Error de conexión al eliminar', '❌'));
+}
+
+function gdEliminarDocumentoUI(docId) {
+  if (!confirm('¿Eliminar este documento? Esta acción no se puede deshacer.')) return;
+  callWebApp({ accion: 'gdEliminarDocumento', docId }).then(res => {
+    if (res?.ok) {
+      showToast('Documento eliminado', '🗑️');
+      gdSeleccionPDF = gdSeleccionPDF.filter(s => s.docId !== docId);
+      gdActualizarBarraSeleccion();
+      if (gdDocenteActualId) gdAbrirDocente(gdDocenteActualId);
+    } else {
+      showToast('Error: ' + (res?.error || 'no se pudo eliminar'), '❌');
+    }
+  }).catch(() => showToast('Error de conexión', '❌'));
+}
+
+function gdToggleSeleccion(checkbox, docId, docenteNombre, tipoDocumento, nombreDescriptivo) {
+  if (checkbox.checked) {
+    if (!gdSeleccionPDF.some(s => s.docId === docId)) {
+      gdSeleccionPDF.push({ docId, docenteNombre, tipoDocumento, nombreDescriptivo });
+    }
+  } else {
+    gdSeleccionPDF = gdSeleccionPDF.filter(s => s.docId !== docId);
+  }
+  gdActualizarBarraSeleccion();
+}
+
+function gdActualizarBarraSeleccion() {
+  const barra = document.getElementById('gd-barra-seleccion');
+  if (gdSeleccionPDF.length === 0) { barra.style.display = 'none'; return; }
+  barra.style.display = 'flex';
+  document.getElementById('gd-sel-contador').textContent = gdSeleccionPDF.length + ' documento' + (gdSeleccionPDF.length === 1 ? '' : 's') + ' seleccionado' + (gdSeleccionPDF.length === 1 ? '' : 's');
+}
+
+function gdLimpiarSeleccion() {
+  gdSeleccionPDF = [];
+  gdActualizarBarraSeleccion();
+  if (gdDocenteActualId) gdAbrirDocente(gdDocenteActualId);
+}
+
+async function gdGenerarPDF() {
+  if (gdSeleccionPDF.length === 0) return;
+  if (typeof PDFLib === 'undefined') { showToast('No se pudo cargar el generador de PDF', '❌'); return; }
+  showToast('Armando el PDF combinado...', '⏳');
+
+  try {
+    const { PDFDocument } = PDFLib;
+    const pdfFinal = await PDFDocument.create();
+
+    for (const item of gdSeleccionPDF) {
+      const res = await callWebApp({ accion: 'gdObtenerContenidoDocumento', docId: item.docId });
+      if (!res || !res.ok) { showToast('No se pudo leer: ' + item.nombreDescriptivo, '❌'); continue; }
+
+      const bytes = Uint8Array.from(atob(res.base64), c => c.charCodeAt(0));
+      if (res.mimeType === 'application/pdf') {
+        const srcPdf = await PDFDocument.load(bytes, { ignoreEncryption: true });
+        const paginas = await pdfFinal.copyPages(srcPdf, srcPdf.getPageIndices());
+        paginas.forEach(p => pdfFinal.addPage(p));
+      } else {
+        let img;
+        try {
+          img = res.mimeType.includes('png') ? await pdfFinal.embedPng(bytes) : await pdfFinal.embedJpg(bytes);
+        } catch (eImg) { showToast('Formato de imagen no soportado: ' + item.nombreDescriptivo, '⚠️'); continue; }
+        const pagina = pdfFinal.addPage([img.width, img.height]);
+        pagina.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+      }
+    }
+
+    const bytesFinal = await pdfFinal.save();
+    let binary = '';
+    bytesFinal.forEach(b => binary += String.fromCharCode(b));
+    const base64Final = btoa(binary);
+
+    const nombreArchivo = 'Movimiento_' + new Date().toISOString().slice(0,10) + '.pdf';
+    const blob = new Blob([bytesFinal], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = nombreArchivo;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 8000);
+    showToast('PDF descargado ✅', '📄');
+
+  } catch (e) {
+    showToast('Error al generar el PDF: ' + e.message, '❌');
+  }
+}
+
+function gdEliminarDesdeVencimientos(docId) {
+  if (!confirm('¿Eliminar este documento vencido? Esta acción no se puede deshacer.')) return;
+  callWebApp({ accion: 'gdEliminarDocumento', docId }).then(res => {
+    if (res?.ok) { showToast('Documento eliminado', '🗑️'); gdCargarVencimientos(); }
+    else { showToast('Error: ' + (res?.error || 'no se pudo eliminar'), '❌'); }
+  }).catch(() => showToast('Error de conexión al eliminar', '❌'));
+}
+
+function gdCargarVencimientos() {
+  const cont = document.getElementById('gd-vencimientos-contenido');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando...</div>';
+  callWebApp({ accion: 'gdInformeVencimientos' }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error al cargar vencimientos.</div>'; return; }
+    const items = res.items || [];
+    if (items.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No hay documentos con vencimiento cargado.</div>'; return; }
+
+    const colores = { vigente: '#4FA98C', proximo: '#EF9F27', vencido: '#F44336' };
+    const etiquetas = { vigente: 'Vigente', proximo: 'Próximo a vencer', vencido: 'Vencido' };
+
+    let html = '<div style="display:grid;gap:8px">';
+    items.forEach(it => {
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:10px 14px">
+        <div>
+          <div style="font-weight:600;font-size:13px">${it.docenteNombre}</div>
+          <div style="font-size:11px;color:#888;margin-top:2px">${it.nombreDescriptivo} · vence ${it.fechaVencimiento}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:700;color:#fff;background:${colores[it.estado]};padding:4px 10px;border-radius:20px;white-space:nowrap">${etiquetas[it.estado]}</span>
+          <button onclick="gdEliminarDesdeVencimientos('${it.docId}')" title="Eliminar documento" style="background:none;border:none;cursor:pointer;font-size:15px;color:#c0392b;padding:4px">🗑️</button>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+    cont.innerHTML = html;
+  }).catch(() => { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión.</div>'; });
+}
 
 </script>
 <!-- Modal: Notificación RITE antes de descargar -->
