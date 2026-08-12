@@ -1424,8 +1424,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
 
     <!-- Barra flotante de selección para PDF combinado -->
+    <div id="gd-sel-detalle" style="display:none;position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:499;max-width:min(92vw,420px);max-height:260px;overflow-y:auto"></div>
     <div id="gd-barra-seleccion" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:12px 18px;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:500;display:flex;align-items:center;gap:14px">
-      <span id="gd-sel-contador" style="font-size:13px;font-weight:600">0 documentos seleccionados</span>
+      <span id="gd-sel-contador" onclick="gdToggleDetalleSeleccion()" style="font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline dotted">0 documentos seleccionados</span>
       <button onclick="gdGenerarPDF()" style="background:#EF9F27;color:#1a1a1a;border:none;padding:8px 14px;border-radius:9px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px">📄 Generar PDF</button>
       <button onclick="gdLimpiarSeleccion()" style="background:rgba(255,255,255,.15);color:#fff;border:none;padding:8px 12px;border-radius:9px;cursor:pointer;font-family:inherit;font-size:13px">Vaciar</button>
     </div>
@@ -10648,14 +10649,17 @@ function gdBuscarDocentes() {
 function gdRenderListaDocentes(docentes) {
   const cont = document.getElementById('gd-lista-docentes');
   if (docentes.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">No hay docentes cargados todavía.</div>'; return; }
-  cont.innerHTML = docentes.map(d => `
+  cont.innerHTML = docentes.map(d => {
+    const seleccionados = gdSeleccionPDF.filter(s => s.docenteNombre === d.nombreCompleto).length;
+    return `
     <div onclick="gdAbrirDocente('${d.id}')" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:12px 14px;cursor:pointer">
       <div>
         <div style="font-weight:600;font-size:13px">${d.nombreCompleto}</div>
-        <div style="font-size:11px;color:#888;margin-top:2px">${d.tipo === 'Suplente' ? '🧑‍🏫 Suplente' : '👤 Titular'}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">${d.tipo === 'Suplente' ? '🧑‍🏫 Suplente' : '👤 Titular'}${seleccionados ? ` · <span style="color:#EF9F27;font-weight:700">✓ ${seleccionados} para el PDF</span>` : ''}</div>
       </div>
       <span style="font-size:16px;color:#8FB8E8">›</span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function gdAbrirModalNuevoDocente() {
@@ -10879,9 +10883,32 @@ function gdToggleSeleccion(checkbox, docId, docenteNombre, tipoDocumento, nombre
 
 function gdActualizarBarraSeleccion() {
   const barra = document.getElementById('gd-barra-seleccion');
-  if (gdSeleccionPDF.length === 0) { barra.style.display = 'none'; return; }
+  if (gdSeleccionPDF.length === 0) { barra.style.display = 'none'; document.getElementById('gd-sel-detalle').style.display = 'none'; return; }
   barra.style.display = 'flex';
-  document.getElementById('gd-sel-contador').textContent = gdSeleccionPDF.length + ' documento' + (gdSeleccionPDF.length === 1 ? '' : 's') + ' seleccionado' + (gdSeleccionPDF.length === 1 ? '' : 's');
+  const docentesUnicos = new Set(gdSeleccionPDF.map(s => s.docenteNombre)).size;
+  document.getElementById('gd-sel-contador').textContent = gdSeleccionPDF.length + ' documento' + (gdSeleccionPDF.length === 1 ? '' : 's') +
+    (docentesUnicos > 1 ? ` (de ${docentesUnicos} docentes)` : '');
+  gdRenderDetalleSeleccion();
+}
+
+function gdToggleDetalleSeleccion() {
+  const det = document.getElementById('gd-sel-detalle');
+  det.style.display = det.style.display === 'none' ? 'block' : 'none';
+}
+
+function gdRenderDetalleSeleccion() {
+  const det = document.getElementById('gd-sel-detalle');
+  det.innerHTML = gdSeleccionPDF.map((s, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.12);font-size:12px">
+      <span>${i + 1}. <b>${s.docenteNombre}</b> — ${s.nombreDescriptivo}</span>
+      <button onclick="gdQuitarDeSeleccion('${s.docId}')" style="background:none;border:none;color:#fff;opacity:.7;cursor:pointer;font-size:13px">✕</button>
+    </div>`).join('');
+}
+
+function gdQuitarDeSeleccion(docId) {
+  gdSeleccionPDF = gdSeleccionPDF.filter(s => s.docId !== docId);
+  gdActualizarBarraSeleccion();
+  if (gdDocenteActualId) gdAbrirDocente(gdDocenteActualId); // refresca checkboxes si está viendo ese docente
 }
 
 function gdLimpiarSeleccion() {
