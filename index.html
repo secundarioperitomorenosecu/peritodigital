@@ -9540,12 +9540,23 @@ function generarActaAccidente() {
 }
 
 
+// ── Frases motivadoras personalizadas para usuarios puntuales ─────────
+// Clave = nombre de usuario de login (currentUser), en minúsculas.
+// Si un usuario tiene entrada acá, se usa SIEMPRE en vez de las genéricas.
+const FRASES_PERSONALIZADAS = {
+  // 'yessica': ['Querés usar la app o querés que te muestre el camino al correo?', 'Recordá que venís a trabajar porque hay bocas que alimentar', 'Que hoy falte toda la gente que te hace infeliz... imposible!!! sería toda la escuela!!'],
+};
+
 // ── Bienvenida con frases según horario ──────────────────────────────
 function mostrarBienvenida(nombre) {
   const primerNombre = (nombre || '').split(/[\s,]+/).filter(Boolean)[0] || nombre;
   const h = new Date().getHours();
   let frases;
-  if (h >= 7 && h < 13) {
+
+  const frasesPersonales = FRASES_PERSONALIZADAS[String(currentUser || '').trim().toLowerCase()];
+  if (frasesPersonales && frasesPersonales.length > 0) {
+    frases = frasesPersonales.map(f => f.replace(/\{nombre\}/g, primerNombre));
+  } else if (h >= 7 && h < 13) {
     frases = [
       `☀️ Buenos días, ${primerNombre}! Bienvenido/a. Que tengas un día espléndido y lleno de energía.`,
       `🌅 Buenos días, ${primerNombre}! Arrancamos con todo. Que este día te traiga cosas buenas.`,
