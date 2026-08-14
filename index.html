@@ -1193,6 +1193,29 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
       </div>
 
+      <!-- CIERRE DE CUATRIMESTRE -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>🎓 Cierre de Cuatrimestre</h3>
+        </div>
+        <div class="panel-body">
+          <div style="font-size:11px;color:rgba(0,0,0,.45);margin-bottom:14px;line-height:1.5">
+            Por cada año (1° a 6°) combina las dos divisiones (A y B) y muestra, materia por materia, el % de aprobados, el % a intensificar y el promedio numérico conjunto. Se calcula sobre las notas cargadas del cuatrimestre elegido.
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Cuatrimestre</label>
+              <select id="cc-cuatrimestre" onchange="generarCierreCuatrimestre()" style="padding:9px 12px;border-radius:9px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px">
+                <option value="1">1° Cuatrimestre</option>
+                <option value="2">2° Cuatrimestre</option>
+              </select>
+            </div>
+            <button class="btn btn-sm" style="background:#e8f5e9;color:#1a9e5c;border:1px solid #c8e6d4" onclick="exportarCierreCuatrimestreExcel()">📊 Excel</button>
+          </div>
+          <div id="cc-contenido"><div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Cargando...</div></div>
+        </div>
+      </div>
+
       <!-- MEJORES PROMEDIOS -->
       <div class="panel" style="margin-top:16px">
         <div class="panel-header">
@@ -3762,7 +3785,7 @@ function showSection(id,el){
   if(id === 'dias-no-lectivos') inicializarDiasNoLectivos();
   if(id === 'mensajes') inicializarMensajes();
   if(id === 'archivos') cargarArchivos();
-  if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); generarMejoresPromedios('5'); generarMejoresPromedios('6'); cargarListaAlumnosAdmin(); }
+  if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); generarMejoresPromedios('5'); generarMejoresPromedios('6'); cargarListaAlumnosAdmin(); generarCierreCuatrimestre(); }
   if(id === 'gd') { gdBuscarDocentes(); }
   if(id === 'usuarios') cargarUsuarios();
 }
@@ -5367,6 +5390,81 @@ function generarInformeCalificaciones() {
 }
 
 // ── Mejores Promedios (Top 8) — grupo '5' = 5°A+5°B, grupo '6' = 6°A+6°B ──
+// ── Cierre de Cuatrimestre: % aprobados / % a intensificar / promedio por
+// materia, combinando A+B por año ─────────────────────────────────────────
+let cierreCuatrimestreData = null;
+
+function generarCierreCuatrimestre() {
+  const cuatrimestre = document.getElementById('cc-cuatrimestre').value;
+  const cont = document.getElementById('cc-contenido');
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Calculando...</div>';
+
+  callWebApp({ accion: 'informeCierreCuatrimestre', cuatrimestre }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + ((res && res.error) || 'desconocido') + '</div>'; return; }
+    cierreCuatrimestreData = res;
+    if (!res.anios || res.anios.length === 0) { cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">Todavía no hay notas cargadas para el ' + cuatrimestre + '° Cuatrimestre.</div>'; return; }
+
+    let html = '';
+    res.anios.forEach(a => {
+      html += `<div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+          <h4 style="margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:rgba(0,0,0,.5)">${a.anio} Año (${a.cursos.join(' + ')})</h4>
+          <div style="display:flex;gap:8px">
+            <span style="font-size:12px;font-weight:700;color:#1a9e5c;background:#e8f5e9;padding:4px 10px;border-radius:20px">Prom. % Aprobados: ${a.pctAprobadosPromedio !== null ? a.pctAprobadosPromedio + '%' : '—'}</span>
+            <span style="font-size:12px;font-weight:700;color:#e65100;background:#fff3e0;padding:4px 10px;border-radius:20px">Prom. % A Intensificar: ${a.pctIntensificarPromedio !== null ? a.pctIntensificarPromedio + '%' : '—'}</span>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:#fdf8f3">
+            <th style="text-align:left;padding:7px 10px;border-bottom:2px solid #e8d5c4">Materia</th>
+            <th style="padding:7px 10px;border-bottom:2px solid #e8d5c4">Notas</th>
+            <th style="padding:7px 10px;border-bottom:2px solid #e8d5c4">% Aprobados</th>
+            <th style="padding:7px 10px;border-bottom:2px solid #e8d5c4">% A Intensificar</th>
+            <th style="padding:7px 10px;border-bottom:2px solid #e8d5c4">Promedio</th>
+          </tr></thead>
+          <tbody>`;
+      a.materias.forEach(m => {
+        html += `<tr>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0e6da">${m.materia}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0e6da;text-align:center;color:#888">${m.totalNotas}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0e6da;text-align:center;color:#1a9e5c;font-weight:600">${m.pctAprobados !== null ? m.pctAprobados + '%' : '—'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0e6da;text-align:center;color:#e65100;font-weight:600">${m.pctIntensificar !== null ? m.pctIntensificar + '%' : '—'}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #f0e6da;text-align:center;font-weight:700">${m.promedio !== null ? m.promedio.toFixed(2) : '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div></div>';
+    });
+    cont.innerHTML = html;
+  }).catch(() => {
+    cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión al calcular el informe.</div>';
+  });
+}
+
+function exportarCierreCuatrimestreExcel() {
+  if (!cierreCuatrimestreData || !cierreCuatrimestreData.anios || cierreCuatrimestreData.anios.length === 0) {
+    showToast('Primero generá el informe', '⚠️'); return;
+  }
+  if (typeof XLSX === 'undefined') { showToast('No se pudo cargar el generador de Excel', '❌'); return; }
+
+  const filas = [];
+  cierreCuatrimestreData.anios.forEach(a => {
+    a.materias.forEach(m => {
+      filas.push({
+        'Año': a.anio, 'Cursos': a.cursos.join(' + '), 'Materia': m.materia,
+        'Notas cargadas': m.totalNotas, '% Aprobados': m.pctAprobados ?? '', '% A Intensificar': m.pctIntensificar ?? '',
+        'Promedio numérico materia': m.promedio ?? '',
+        'Prom. % Aprobados (año)': a.pctAprobadosPromedio ?? '', 'Prom. % A Intensificar (año)': a.pctIntensificarPromedio ?? ''
+      });
+    });
+  });
+  const ws = XLSX.utils.json_to_sheet(filas);
+  ws['!cols'] = [{wch:6},{wch:10},{wch:26},{wch:14},{wch:13},{wch:16},{wch:20},{wch:20},{wch:22}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `Cierre ${cierreCuatrimestreData.cuatrimestre}C`);
+  XLSX.writeFile(wb, `Cierre_${cierreCuatrimestreData.cuatrimestre}Cuatrimestre_${cierreCuatrimestreData.anioLectivo}.xlsx`);
+}
+
 function generarMejoresPromedios(grupo) {
   const cursos = grupo === '6' ? ['6A','6B'] : ['5A','5B'];
   const cont   = document.getElementById('mp-contenido-' + grupo);
