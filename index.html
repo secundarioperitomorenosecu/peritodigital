@@ -10061,6 +10061,63 @@ function verDetalleEventoAgenda(id) {
   // Por ahora solo muestra en la lista (scroll)
 }
 
+function generarGrillaCalendarioImprimible(eventos, mesNombre, logoSrc) {
+  const DIAS_SEM = ['Dom','Lun','Mar','Miér','Jue','Vier','Sáb'];
+  const primerDia = new Date(agendaAnioActual, agendaMesActual - 1, 1).getDay();
+  const diasEnMes = new Date(agendaAnioActual, agendaMesActual, 0).getDate();
+
+  const eventosPorDia = {};
+  eventos.forEach(ev => {
+    const p = String(ev.fecha || '').split('/');
+    if (p.length === 3) {
+      const d = parseInt(p[0]);
+      if (!eventosPorDia[d]) eventosPorDia[d] = [];
+      eventosPorDia[d].push(ev);
+    }
+  });
+
+  let celdas = '';
+  for (let i = 0; i < primerDia; i++) {
+    celdas += '<div style="min-height:90px;background:#fafafa;border:1px solid #eee;border-radius:5px"></div>';
+  }
+  for (let d = 1; d <= diasEnMes; d++) {
+    const evsDia = eventosPorDia[d] || [];
+    let evHtml = '';
+    evsDia.forEach(ev => {
+      const color = AGENDA_TIPO_COLOR[ev.tipo] || '#f5f5f5';
+      const hora = ev.horaInicio ? ` ${ev.horaInicio}` : '';
+      evHtml += `<div style="font-size:8px;padding:1px 3px;border-radius:3px;background:${color};border:1px solid #ddd;margin-top:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis" title="${ev.tipo}: ${ev.descripcion||''}">${hora} ${ev.tipo.split(' ')[0]}</div>`;
+    });
+    celdas += `<div style="min-height:90px;background:#fff;border:1px solid #e8d5c4;border-radius:5px;padding:4px">
+      <div style="font-size:11px;font-weight:700;color:#1a1a1a">${d}</div>
+      ${evHtml}
+    </div>`;
+  }
+
+  const referencias = AGENDA_TIPOS.map(t => `<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:${AGENDA_TIPO_COLOR[t]||'#f5f5f5'};border:1px solid #ddd;color:#333;margin-right:4px">${t}</span>`).join('');
+
+  return `<div style="page-break-after:always;padding:30px 40px;font-family:'Arial',sans-serif;max-width:900px;margin:0 auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #1a9e5c;padding-bottom:14px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:14px">
+        ${logoSrc ? `<img src="${logoSrc}" style="width:60px;height:60px;object-fit:contain">` : ''}
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:2px;text-transform:uppercase">Colegio Perito Moreno</div>
+          <div style="font-size:20px;font-weight:700;color:#1a1a1a;font-family:'Georgia',serif">Calendario de Agenda Directiva</div>
+          <div style="font-size:13px;color:#555;margin-top:2px">${mesNombre}</div>
+        </div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:#aaa">
+        Generado: ${new Date().toLocaleDateString('es-AR')}<br>${new Date().toLocaleTimeString('es-AR')}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+      ${DIAS_SEM.map(d => `<div style="text-align:center;font-size:10px;font-weight:700;color:#888;text-transform:uppercase">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${celdas}</div>
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:4px">${referencias}</div>
+  </div>`;
+}
+
 function imprimirAgenda() {
   // Obtener todos los eventos del mes de TODOS los directivos (separado por persona)
   callWebApp({
@@ -10104,6 +10161,10 @@ function generarReporteImprimibleAgenda(eventos) {
   const ROL_LABEL = {director:'Director/a', vicedirector:'Vicedirector/a', secretary:'Secretario/a', secretario:'Secretario/a', legal:'Rep. Legal'};
 
   let paginas = '';
+
+  // ── Página 1: el calendario mensual tal como se ve en pantalla ──────────
+  paginas += generarGrillaCalendarioImprimible(eventos, mesNombre, logoSrc);
+
   usuarios.forEach((u, idx) => {
     // Agrupar sus eventos por fecha
     const porFecha = {};
@@ -10184,8 +10245,7 @@ function generarReporteImprimibleAgenda(eventos) {
     paginas = `<div style="padding:40px;text-align:center;color:#aaa;font-size:16px">No hay eventos registrados para ${mesNombre}</div>`;
   }
 
-  const ventana = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
-  ventana.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  const htmlCompleto = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
     <title>Agenda Directiva – ${mesNombre}</title>
     <style>
       @media print {
@@ -10198,8 +10258,22 @@ function generarReporteImprimibleAgenda(eventos) {
   </head><body>${paginas}
   <div style="text-align:center;padding:20px;font-size:12px;color:#aaa">PM Digital – Colegio Perito Moreno</div>
   <script>window.onload=function(){window.print()}<\/script>
-  </body></html>`);
-  ventana.document.close();
+  </body></html>`;
+
+  // Blob + URL en vez de window.open('') + document.write: en varios
+  // celulares ese método puede reemplazar la pestaña actual de la app en
+  // vez de abrir una nueva, lo que se sentía como "me saca de la app".
+  const blob = new Blob([htmlCompleto], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const ventana = window.open(url, '_blank');
+  if (!ventana) {
+    // Si el navegador bloqueó el popup, ofrecer descarga directa como respaldo.
+    const link = document.createElement('a');
+    link.href = url; link.download = `Agenda_Directiva_${mesNombre.replace(/\s+/g,'_')}.html`;
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    mostrarToast('El navegador bloqueó la ventana emergente — se descargó el reporte como archivo', false);
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
 }
 
 // Cerrar modal al hacer click fuera — manejado dentro de crearSeccionAgenda()
