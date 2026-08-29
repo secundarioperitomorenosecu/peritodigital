@@ -4580,6 +4580,7 @@ function cargarDashboard() {
 let cursoActualAtt = '3°B';
 let tardyTimes = {};
 let alumnosActuales = []; // alumnos reales cargados desde Sheets
+let cursoDeAlumnosActuales = null; // curso al que pertenece alumnosActuales, para detectar desincronización
 
 let alumnosCalificaciones = []; // alumnos del modulo de calificaciones
 function cambiarCursoAtt(el, curso) {
@@ -4594,14 +4595,22 @@ function cambiarCursoAtt(el, curso) {
 function cargarAsistenciaDesdeSheets() {
   const fecha = document.getElementById('att-fecha').value;
   if (!fecha) return;
+  const cursoSolicitado = cursoActualAtt; // snapshot: a qué curso corresponde este pedido
 
   const grid = document.getElementById('attendance-grid');
   grid.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.4);font-size:13px">⏳ Cargando asistencia...</div>';
 
-  callWebApp({ accion: 'obtenerAsistencia', curso: cursoActualAtt, fecha: fecha }).then(res => {
+  callWebApp({ accion: 'obtenerAsistencia', curso: cursoSolicitado, fecha: fecha }).then(res => {
     if (!res.ok) { showToast('Error al cargar asistencia', '❌'); return; }
 
+    // Si mientras esperábamos la respuesta el usuario ya cambió a otro curso,
+    // esta respuesta quedó vieja — descartarla para no pisar el curso actual
+    // con datos de otro (esto es lo que causaba que aparecieran alumnos de
+    // un curso distinto al guardar).
+    if (cursoSolicitado !== cursoActualAtt) return;
+
     alumnosActuales = res.alumnos;
+    cursoDeAlumnosActuales = cursoSolicitado;
 
     if (alumnosActuales.length === 0) {
       grid.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.4);font-size:13px">⚠️ No hay alumnos cargados en este curso.<br>Completá la lista en Google Sheets primero.</div>';
@@ -4750,6 +4759,14 @@ function updateCounts(){
 }
 
 function guardarAttendance() {
+  // Si el curso seleccionado cambió y todavía no terminó de cargar su lista
+  // real de alumnos, NO guardar — evita mandar la lista de un curso con el
+  // nombre de otro (la causa de que aparecieran alumnos que nadie cargó).
+  if (cursoActualAtt !== cursoDeAlumnosActuales) {
+    showToast('Todavía está cargando ese curso — esperá un segundo y volvé a guardar', '⏳');
+    return;
+  }
+
   const fecha = document.getElementById('att-fecha').value;
   const tardes = Object.entries(attendanceState).filter(([,v])=>v==='tarde');
   const sinHora = tardes.filter(([i]) => !tardyTimes[i]);
@@ -4784,7 +4801,12 @@ function guardarAttendance() {
     lista: lista,
     docente: currentUser || 'docente'
   }).then(res => {
-    if(res.ok) showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
+    if(res.ok) {
+      showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
+      if (res.descartados && res.descartados.length > 0) {
+        showToast(`⚠️ Se descartaron ${res.descartados.length} registro/s que no pertenecían a este curso`, '⚠️');
+      }
+    }
     else showToast('Error: ' + (res.error || 'No se pudo guardar'), '❌');
   });
 }
