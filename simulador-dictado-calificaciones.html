@@ -264,16 +264,24 @@ function procesarComando(texto) {
   const esBimestral = periodo === '1BIM';
   let valor = null;
 
-  // El motor de voz confunde bastante estas siglas cortas — mapeamos las
-  // variantes que fuimos viendo en pruebas reales (se puede seguir
-  // ampliando esta lista a medida que aparezcan nuevas confusiones).
-  const TEA_VARIANTES = /\b(tea|te a)\b/;
-  const TEP_VARIANTES = /\b(tep|pep|tv|te p|de p)\b/;
-  const TED_VARIANTES = /\b(ted|te de|de d)\b/;
+  // El motor de voz confunde bastante estas siglas cortas — en pruebas
+  // reales, TEP y TED terminan transcribiéndose AMBAS como "tv", así que
+  // por texto son indistinguibles entre sí. Por eso el vocabulario
+  // principal pasa a ser la palabra completa detrás de cada sigla (mucho
+  // más distinguible), dejando la sigla como respaldo secundario.
+  const TEA_VARIANTES = /\b(avanzada|avansada|tea|te a)\b/;
+  const TEP_VARIANTES = /\b(proceso|en proceso|tep|pep)\b/;
+  const TED_VARIANTES = /\b(discontinua|discontinuada|ted|te de|de d)\b/;
 
   if (TEA_VARIANTES.test(texto)) valor = 'TEA';
   else if (TEP_VARIANTES.test(texto)) valor = 'TEP';
   else if (TED_VARIANTES.test(texto)) valor = 'TED';
+  else if (/\btv\b/.test(texto)) {
+    // "tv" es ambiguo entre TEP y TED — no lo resolvemos a ciegas, se lo
+    // avisamos al docente para que lo repita con la palabra completa.
+    log('⚠️ Sonó como "TV" — es ambiguo entre TEP y TED. Decí "proceso" o "discontinua" en vez de la sigla.');
+    return;
+  }
   else if (!esBimestral) {
     const matchDigito = texto.match(/\d+([.,]\d+)?/);
     if (matchDigito) {
