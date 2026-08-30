@@ -189,23 +189,37 @@ function toggleDictado() {
 
   recognition = new SpeechRec();
   recognition.lang = 'es-AR';
-  recognition.continuous = true;
-  recognition.interimResults = false;
+  recognition.continuous = false;   // el modo "continuous" falla mucho en Android Chrome
+  recognition.interimResults = true; // para ver en el log lo que va entendiendo en vivo
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => log('🎤 Micrófono activo, escuchando...');
+  recognition.onaudiostart = () => log('🔊 Recibiendo audio del micrófono...');
+  recognition.onspeechstart = () => log('🗣️ Detectó que empezaste a hablar');
+  recognition.onspeechend = () => log('🤐 Detectó que dejaste de hablar, procesando...');
 
   recognition.onresult = (event) => {
-    const texto = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
-    log('Escuché: "' + texto + '"');
+    const res = event.results[event.results.length - 1];
+    const texto = res[0].transcript.trim().toLowerCase();
+    if (!res.isFinal) { log('… escuchando: "' + texto + '"'); return; }
+    log('✅ Entendió (final): "' + texto + '"');
     procesarComando(texto);
   };
   recognition.onerror = (e) => {
-    if (e.error === 'no-speech' || e.error === 'aborted') return;
-    log('⚠️ Error: ' + e.error);
+    log('⚠️ Error del reconocimiento: ' + e.error);
   };
   recognition.onend = () => {
-    if (dictadoActivo) { try { recognition.start(); } catch(e){} }
+    log('🔁 Se cortó el reconocimiento — reiniciando...');
+    if (dictadoActivo) {
+      setTimeout(() => { try { recognition.start(); } catch(e){ log('⚠️ No se pudo reiniciar: ' + e.message); } }, 300);
+    }
   };
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch(e) {
+    log('⚠️ No se pudo iniciar el micrófono: ' + e.message);
+  }
   anunciarAlumno();
 }
 
