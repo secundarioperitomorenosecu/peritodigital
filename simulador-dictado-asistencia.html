@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador — Dictado de Asistencia</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    background: #f5f0e8;
+    margin: 0; padding: 20px;
+    color: #1a1a1a;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: #888; font-size: 13px; margin-bottom: 20px; line-height: 1.5; }
+  .panel { background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.06); margin-bottom: 16px; }
+  .panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  h3 { margin: 0; font-size: 15px; }
+  button { cursor: pointer; border: none; border-radius: 9px; padding: 9px 16px; font-weight: 600; font-family: inherit; font-size: 13px; }
+  .btn-dictado { background: #EDE7F6; color: #5E35B1; border: 1px solid #D1C4E9; }
+  .btn-dictado.activo { background: #5E35B1; color: #fff; }
+  .status-bar {
+    display: none; background: #5E35B1; color: #fff; padding: 12px 16px; border-radius: 10px;
+    margin-bottom: 14px; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px;
+  }
+  .status-bar button { background: rgba(255,255,255,.2); color: #fff; padding: 6px 12px; font-size: 12px; }
+  .resumen { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap }
+  .resumen span { font-size:12px; font-weight:700; padding:6px 12px; border-radius:20px }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; background: #fdf8f3; border-bottom: 2px solid #e8d5c4; font-size: 12px; color: #888; }
+  th.center, td.center { text-align: center; }
+  td { padding: 8px 10px; border-bottom: 1px solid #f0e6da; transition: background .4s; }
+  tr.recien-marcada td { background: #fff3e0; }
+  .badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; display:inline-block }
+  .badge.presente { background:#e8f5e9; color:#1a9e5c }
+  .badge.ausente { background:#ffebee; color:#c62828 }
+  .badge.tarde { background:#fff3e0; color:#e65100 }
+  .comandos { background: #fff8ee; border: 1px solid #f0e0c8; border-radius: 12px; padding: 16px; font-size: 12.5px; line-height: 1.8; }
+  .comandos b { color: #5E35B1; }
+  .log { background: #1a1a1a; color: #8fdc8f; font-family: 'Courier New', monospace; font-size: 11.5px; padding: 12px; border-radius: 8px; max-height: 160px; overflow-y: auto; margin-top: 10px; }
+  .log div { margin-bottom: 3px; }
+  .log .amb { color: #ffc107; }
+  .warn { background: #fff3e0; border: 1px solid #ffcc80; color: #e65100; padding: 12px 16px; border-radius: 10px; font-size: 12.5px; margin-bottom: 16px; display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎙️ Simulador — Dictado de Asistencia</h1>
+  <div class="sub">Todos arrancan "Presente" por defecto. Decís el apellido de quien falta y lo marca ausente — como se toma lista en la vida real. Datos de prueba, no toca nada de la app real.</div>
+
+  <div id="warn-navegador" class="warn">⚠️ Este navegador no soporta reconocimiento de voz. Anda seguro en Chrome/Edge (compu o Android).</div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h3>📋 Lista del día (simulada)</h3>
+      <button class="btn-dictado" id="btn-dictado" onclick="toggleDictado()">🎙️ Dictar ausentes</button>
+    </div>
+
+    <div class="status-bar" id="status-bar">
+      <span id="status-texto">🎙️ Decí el apellido de quien falta...</span>
+      <button onclick="toggleDictado()">Detener</button>
+    </div>
+
+    <div class="resumen">
+      <span class="badge presente" id="cont-presentes">Presentes: 8</span>
+      <span class="badge ausente" id="cont-ausentes">Ausentes: 0</span>
+      <span class="badge tarde" id="cont-tardes">Tardes: 0</span>
+    </div>
+
+    <table>
+      <thead><tr><th>Alumno</th><th class="center">Estado</th></tr></thead>
+      <tbody id="tabla-asistencia"></tbody>
+    </table>
+  </div>
+
+  <div class="comandos">
+    <b>Cómo probarlo:</b> tocá "🎙️ Dictar ausentes" y probá decir solo un apellido, por ejemplo <i>"Benítez"</i> — debería marcarlo ausente directo, sin que le digas la palabra "ausente".<br><br>
+    <b>Qué podés decir:</b><br>
+    • Un apellido solo → lo marca <b>ausente</b><br>
+    • <b>"tarde [apellido]"</b> → lo marca tarde en vez de ausente<br>
+    • <b>"presente [apellido]"</b> → lo vuelve a marcar presente (para corregir un error)<br>
+    • <b>"deshacer"</b> → revierte la última marca que hiciste<br>
+    • <b>"reiniciar"</b> → vuelve a poner a todos presentes<br>
+    • <b>"parar"</b> → termina el dictado<br><br>
+    <b>Si el apellido es ambiguo o no lo encuentra</b>, el sistema NO adivina — te lo dice en el log (en amarillo) y tenés que repetirlo o aclarar con nombre y apellido.<br><br>
+    <b>Log de reconocimiento:</b>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+// ── Datos de prueba: dos apellidos parecidos a propósito (Gómez / Gómez) para probar la ambigüedad ──
+const ALUMNOS_PRUEBA = [
+  { nombre: 'Acosta, Martina' },
+  { nombre: 'Benítez, Tomás' },
+  { nombre: 'Cabrera, Sofía' },
+  { nombre: 'Domínguez, Lucas' },
+  { nombre: 'Fernández, Camila' },
+  { nombre: 'Gómez, Nahuel' },
+  { nombre: 'Gómez, Rocío' },      // apellido repetido, a propósito, para probar ambigüedad
+  { nombre: 'Herrera, Valentina' }
+];
+
+let estados = {}; // index -> 'presente'|'ausente'|'tarde'
+let historial = []; // pila de {index, estadoAnterior} para "deshacer"
+let dictadoActivo = false;
+let recognition = null;
+
+function normalizar(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // saca acentos
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim();
+}
+
+function apellidoDe(nombreCompleto) {
+  return normalizar(nombreCompleto.split(',')[0]);
+}
+
+function log(msg, ambiguo) {
+  const el = document.getElementById('log');
+  const d = document.createElement('div');
+  if (ambiguo) d.className = 'amb';
+  d.textContent = '› ' + msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Render ──────────────────────────────────────────────────────────
+function render() {
+  const tb = document.getElementById('tabla-asistencia');
+  tb.innerHTML = ALUMNOS_PRUEBA.map((a, i) => {
+    const est = estados[i] || 'presente';
+    const label = est === 'ausente' ? 'Ausente' : est === 'tarde' ? 'Tarde' : 'Presente';
+    return `<tr id="fila-${i}"><td>${a.nombre}</td><td class="center"><span class="badge ${est}">${label}</span></td></tr>`;
+  }).join('');
+
+  const vals = Object.values(estados);
+  const ausentes = vals.filter(v => v === 'ausente').length;
+  const tardes = vals.filter(v => v === 'tarde').length;
+  const presentes = ALUMNOS_PRUEBA.length - ausentes - tardes;
+  document.getElementById('cont-presentes').textContent = 'Presentes: ' + presentes;
+  document.getElementById('cont-ausentes').textContent = 'Ausentes: ' + ausentes;
+  document.getElementById('cont-tardes').textContent = 'Tardes: ' + tardes;
+}
+
+function marcarFila(i, estado) {
+  historial.push({ index: i, estadoAnterior: estados[i] || 'presente' });
+  estados[i] = estado;
+  render();
+  const fila = document.getElementById('fila-' + i);
+  if (fila) {
+    fila.classList.add('recien-marcada');
+    setTimeout(() => fila.classList.remove('recien-marcada'), 1500);
+  }
+}
+
+// ── Reconocimiento de nombres (tolerante a errores del motor de voz) ──
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => new Array(n+1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
+// Busca a qué alumno(s) se refiere el texto dicho. Devuelve lista de índices candidatos.
+function buscarAlumnos(textoNorm) {
+  const exactos = [];
+  const parciales = [];
+  const cercanos = [];
+
+  ALUMNOS_PRUEBA.forEach((a, i) => {
+    const ape = apellidoDe(a.nombre);
+    if (textoNorm === ape) { exactos.push(i); return; }
+    if (textoNorm.includes(ape) || ape.includes(textoNorm)) { parciales.push(i); return; }
+    // tolerancia a error de tipeo/reconocimiento: distancia chica relativa al largo del apellido
+    const dist = levenshtein(textoNorm, ape);
+    if (dist <= Math.max(1, Math.floor(ape.length * 0.25))) cercanos.push(i);
+  });
+
+  if (exactos.length > 0) return exactos;
+  if (parciales.length > 0) return parciales;
+  return cercanos;
+}
+
+// ── Comandos de voz ─────────────────────────────────────────────────
+function procesarComando(textoOriginal) {
+  const texto = normalizar(textoOriginal);
+
+  if (/^(parar|terminar|listo|basta|detener)/.test(texto)) { pararDictado(); return; }
+  if (/^(deshacer|desaser|atras)/.test(texto)) {
+    const ultimo = historial.pop();
+    if (ultimo) { estados[ultimo.index] = ultimo.estadoAnterior; render(); log('↩️ Deshecho: ' + ALUMNOS_PRUEBA[ultimo.index].nombre + ' vuelve a ' + ultimo.estadoAnterior); }
+    else log('No hay nada para deshacer.');
+    return;
+  }
+  if (/^(reiniciar|resetear|todos presentes|limpiar)/.test(texto)) {
+    estados = {}; historial = []; render(); log('🔄 Todos vuelven a Presente.');
+    return;
+  }
+
+  // Prefijos de estado
+  let estadoPedido = 'ausente'; // por defecto: decir el apellido solo = ausente
+  let resto = texto;
+  if (/^tarde\s+/.test(texto)) { estadoPedido = 'tarde'; resto = texto.replace(/^tarde\s+/, ''); }
+  else if (/^presente\s+/.test(texto)) { estadoPedido = 'presente'; resto = texto.replace(/^presente\s+/, ''); }
+  else if (/^ausente\s+/.test(texto)) { estadoPedido = 'ausente'; resto = texto.replace(/^ausente\s+/, ''); }
+
+  if (!resto) { log('⚠️ No dijiste ningún apellido.', true); return; }
+
+  const candidatos = buscarAlumnos(resto);
+
+  if (candidatos.length === 0) {
+    log(`⚠️ No encontré a nadie parecido a "${resto}" — repetilo más claro.`, true);
+  } else if (candidatos.length > 1) {
+    const nombres = candidatos.map(i => ALUMNOS_PRUEBA[i].nombre).join(' / ');
+    log(`⚠️ Ambiguo: "${resto}" podría ser ${nombres} — decí nombre y apellido para aclarar.`, true);
+  } else {
+    const i = candidatos[0];
+    marcarFila(i, estadoPedido);
+    log(`✅ ${ALUMNOS_PRUEBA[i].nombre} → ${estadoPedido}`);
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance(ALUMNOS_PRUEBA[i].nombre.split(',')[0] + ' ' + estadoPedido);
+      u.lang = 'es-AR';
+      speechSynthesis.speak(u);
+    }
+  }
+}
+
+// ── Motor de reconocimiento (mismo patrón que ya probamos: single-shot + reinicio) ──
+function toggleDictado() {
+  if (dictadoActivo) { pararDictado(); return; }
+
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) { document.getElementById('warn-navegador').style.display = 'block'; return; }
+
+  dictadoActivo = true;
+  const btn = document.getElementById('btn-dictado');
+  btn.textContent = '⏹️ Detener dictado';
+  btn.classList.add('activo');
+  document.getElementById('status-bar').style.display = 'flex';
+
+  recognition = new SpeechRec();
+  recognition.lang = 'es-AR';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => log('🎤 Escuchando...');
+  recognition.onspeechend = () => log('🤐 Procesando...');
+
+  recognition.onresult = (event) => {
+    const res = event.results[event.results.length - 1];
+    const texto = res[0].transcript.trim().toLowerCase();
+    if (!res.isFinal) { log('… escuchando: "' + texto + '"'); return; }
+    log('✅ Entendió (final): "' + texto + '"');
+    procesarComando(texto);
+  };
+  recognition.onerror = (e) => log('⚠️ Error: ' + e.error);
+  recognition.onend = () => {
+    if (dictadoActivo) setTimeout(() => { try { recognition.start(); } catch(e){} }, 300);
+    else log('⏹️ Reconocimiento detenido.');
+  };
+
+  try { recognition.start(); } catch(e) { log('⚠️ No se pudo iniciar: ' + e.message); }
+}
+
+function pararDictado() {
+  dictadoActivo = false;
+  if (recognition) { try { recognition.stop(); } catch(e){} }
+  const btn = document.getElementById('btn-dictado');
+  btn.textContent = '🎙️ Dictar ausentes';
+  btn.classList.remove('activo');
+  document.getElementById('status-bar').style.display = 'none';
+  log('Dictado detenido.');
+}
+
+if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
+  document.getElementById('warn-navegador').style.display = 'block';
+}
+render();
+</script>
+</body>
+</html>
