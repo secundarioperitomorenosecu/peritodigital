@@ -169,7 +169,14 @@ function levenshtein(a, b) {
   return dp[m][n];
 }
 
+function nombreDe(nombreCompleto) {
+  const partes = nombreCompleto.split(',');
+  return normalizar(partes[1] || '');
+}
+
 // Busca a qué alumno(s) se refiere el texto dicho. Devuelve lista de índices candidatos.
+// Si el apellido solo da varios candidatos (homónimos), intenta desempatar
+// con el nombre de pila si el docente lo dijo también (ej. "Gómez Nahuel").
 function buscarAlumnos(textoNorm) {
   const exactos = [];
   const parciales = [];
@@ -184,9 +191,26 @@ function buscarAlumnos(textoNorm) {
     if (dist <= Math.max(1, Math.floor(ape.length * 0.25))) cercanos.push(i);
   });
 
-  if (exactos.length > 0) return exactos;
-  if (parciales.length > 0) return parciales;
-  return cercanos;
+  let candidatos = exactos.length > 0 ? exactos : (parciales.length > 0 ? parciales : cercanos);
+
+  // Si hay homónimos (más de un candidato con ese apellido) y el docente dijo
+  // algo más que el apellido, usar el resto del texto como nombre de pila
+  // para desempatar.
+  if (candidatos.length > 1) {
+    const desempatados = candidatos.filter(i => {
+      const ape = apellidoDe(ALUMNOS_PRUEBA[i].nombre);
+      const nom = nombreDe(ALUMNOS_PRUEBA[i].nombre);
+      // sacar el apellido del texto dicho, lo que sobra sería el nombre de pila
+      const resto = textoNorm.replace(ape, '').trim();
+      if (!resto) return false; // no dijo nada más, no se puede desempatar
+      return nom.includes(resto) || resto.includes(nom) || levenshtein(resto, nom) <= 1;
+    });
+    if (desempatados.length === 1) return desempatados;
+    // si no se pudo desempatar (o el desempate dio 0 o sigue ambiguo), se
+    // devuelven todos los candidatos originales para que se avise la ambigüedad
+  }
+
+  return candidatos;
 }
 
 // ── Comandos de voz ─────────────────────────────────────────────────
@@ -220,7 +244,8 @@ function procesarComando(textoOriginal) {
     log(`⚠️ No encontré a nadie parecido a "${resto}" — repetilo más claro.`, true);
   } else if (candidatos.length > 1) {
     const nombres = candidatos.map(i => ALUMNOS_PRUEBA[i].nombre).join(' / ');
-    log(`⚠️ Ambiguo: "${resto}" podría ser ${nombres} — decí nombre y apellido para aclarar.`, true);
+    const nombresDePila = candidatos.map(i => ALUMNOS_PRUEBA[i].nombre.split(',')[1].trim()).join(' o ');
+    log(`⚠️ Ambiguo: "${resto}" podría ser ${nombres} — decí "${resto} ${nombresDePila.split(' o ')[0]}" (o el otro nombre) para aclarar.`, true);
   } else {
     const i = candidatos[0];
     marcarFila(i, estadoPedido);
