@@ -862,6 +862,8 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <button class="btn btn-sm btn-outline" onclick="irHoy()">Hoy</button>
         </div>
         <div class="panel-body">
+          <!-- Filtro de "mis cursos" (solo visible para docentes) -->
+          <div class="curso-selector" id="cal-filtro-docente" style="display:none;margin-bottom:14px"></div>
           <!-- Leyenda -->
           <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:11px">
             <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#1a9e5c;display:inline-block"></span>Prueba/TP</span>
@@ -3590,8 +3592,10 @@ function buildBottomNav(role) {
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
-    if (isAdmin) {
+    if (isAdmin || isDocente) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
+    }
+    if (isAdmin) {
       items.push({ id: 'reportes',   icon: '📈', label: 'Reportes' });
       items.push({ id: 'usuarios',   icon: '👥', label: 'Usuarios' });
       items.push({ id: 'agenda',     icon: '📓', label: 'Agenda' });
@@ -4521,12 +4525,12 @@ function cargarDashboard() {
       const retiros   = registros.filter(r => r.estado === 'R').length;
       const total     = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
       const inasist   = ausentes + (tardes * 0.25) + (retiros * 0.5);
-      const pct       = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
+      const pct       = total > 0 ? Math.round(((total - inasist) / total) * 100) : null;
       // Color semáforo en inasistencias
       const cardInasist = document.getElementById('dash-inasistencias')?.closest('.stat-card');
       const color = inasist >= 20 ? '#1a9e5c' : inasist >= 10 ? '#FF9800' : '#4CAF50';
       if (cardInasist) cardInasist.style.setProperty('--color', color);
-      set('dash-pct-asistencia', pct + '%');
+      set('dash-pct-asistencia', pct !== null ? pct + '%' : 'Sin datos');
       set('dash-inasistencias', inasist % 1 === 0 ? inasist : inasist.toFixed(2));
       set('dash-materias-riesgo', '—'); // Se calculará cuando tengamos horarios
     });
@@ -6583,7 +6587,7 @@ function cargarMiAsistencia() {
     // Fórmula igual al dashboard: retiros = medio día
     const total   = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
     const inasist = ausentes + (tardes * 0.25) + (retiros * 0.5);
-    const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
+    const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : null;
     document.getElementById('cnt-presentes').textContent = presentesTotal;
     document.getElementById('cnt-ausentes').textContent  = ausentes;
     document.getElementById('cnt-tardes').textContent    = tardes;
@@ -6591,7 +6595,7 @@ function cargarMiAsistencia() {
     if (cntRet) cntRet.textContent = retiros;
     // Actualizar % en dashboard si existe
     const dashPct = document.getElementById('dash-pct-asistencia');
-    if (dashPct) dashPct.textContent = pct + '%';
+    if (dashPct) dashPct.textContent = pct !== null ? pct + '%' : 'Sin datos';
     const tabla = document.getElementById('mi-asistencia-tabla');
     if (registros.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin registros de asistencia aún.</div>';
@@ -7100,7 +7104,9 @@ function cambiarMes(delta) {
 }
 
 // ── Calendario ─────────────────────────────────────────────────────────
-let calEventos = []; // cache de eventos del mes
+let calEventos = []; // cache de eventos del mes (ya filtrados según el rol)
+let calEventosCrudos = []; // sin filtrar por curso, para armar los chips y re-filtrar sin pedir de nuevo al backend
+let calFiltroCurso = 'todos'; // solo aplica para docentes: 'todos' = todos sus cursos
 
 function renderCalendar() {
   document.getElementById('cal-titulo').textContent = MESES_CAL[calMonth] + ' ' + calYear;
@@ -7108,7 +7114,8 @@ function renderCalendar() {
   if (!grid) return;
 
   // Cargar eventos del backend
-  const isAdmin = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
+  const isAdmin   = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
+  const isDocenteView = ['docente','teacher'].includes(currentRole);
   // Mostrar panel nuevo evento solo a admins
   const panelEv = document.getElementById('panel-nuevo-evento');
   if (panelEv) panelEv.style.display = isAdmin ? 'block' : 'none';
@@ -7118,18 +7125,60 @@ function renderCalendar() {
     callWebApp({ accion: 'obtenerPublicaciones', curso: '', soloActivas: true }),
     callWebApp({ accion: 'obtenerEventosInstitucionales' })
   ]).then(([resMural, resEv]) => {
-    calEventos = [];
+    calEventosCrudos = [];
     if (resMural?.ok) {
       resMural.publicaciones.forEach(p => {
-        if (p.fechaEvento) calEventos.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, curso: p.curso, origen: 'mural' });
+        if (p.fechaEvento) calEventosCrudos.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, curso: p.curso, docente: p.docente, origen: 'mural' });
       });
     }
     if (resEv?.ok) {
-      resEv.eventos.forEach(e => calEventos.push({ fecha: e.fecha, titulo: e.titulo, tipo: e.tipo, origen: 'institucional' }));
+      resEv.eventos.forEach(e => calEventosCrudos.push({ fecha: e.fecha, titulo: e.titulo, tipo: e.tipo, origen: 'institucional' }));
     }
-    dibujarGrid();
-    renderEventosMes();
+
+    // Los docentes solo ven SUS PROPIAS publicaciones del Mural (no las de
+    // otros profes) + los eventos institucionales, que son para todos. Así
+    // no se mezclan pruebas/TPs de un docente con los de otro.
+    if (isDocenteView) {
+      calEventosCrudos = calEventosCrudos.filter(e => e.origen === 'institucional' || e.docente === currentNombre);
+      construirChipsCalendarioDocente();
+    } else {
+      document.getElementById('cal-filtro-docente').style.display = 'none';
+    }
+
+    aplicarFiltroCursoCalendario();
   }).catch(() => { dibujarGrid(); });
+}
+
+// Arma los chips "Todos mis cursos" + uno por cada curso donde el docente
+// tiene publicaciones — mismo patrón que el filtro de cursos en Mural.
+function construirChipsCalendarioDocente() {
+  const cont = document.getElementById('cal-filtro-docente');
+  const cursos = [...new Set(calEventosCrudos.filter(e => e.origen === 'mural' && e.curso && e.curso !== 'todos').map(e => e.curso))]
+    .sort((a,b) => a.localeCompare(b, 'es'));
+
+  if (cursos.length === 0) { cont.style.display = 'none'; return; }
+
+  cont.style.display = 'flex';
+  cont.innerHTML = `<div class="curso-chip ${calFiltroCurso==='todos'?'active':''}" onclick="filtrarCalendarioDocente('todos', this)">Todos mis cursos</div>` +
+    cursos.map(c => `<div class="curso-chip ${calFiltroCurso===c?'active':''}" onclick="filtrarCalendarioDocente('${c}', this)">${c.replace(/^(\d)([A-Z])$/, '$1°$2')}</div>`).join('');
+}
+
+function filtrarCalendarioDocente(curso, el) {
+  calFiltroCurso = curso;
+  document.querySelectorAll('#cal-filtro-docente .curso-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  aplicarFiltroCursoCalendario();
+}
+
+function aplicarFiltroCursoCalendario() {
+  if (calFiltroCurso === 'todos') {
+    calEventos = calEventosCrudos;
+  } else {
+    // Institucionales siempre visibles; del mural, solo los del curso elegido
+    calEventos = calEventosCrudos.filter(e => e.origen === 'institucional' || e.curso === calFiltroCurso);
+  }
+  dibujarGrid();
+  renderEventosMes();
 }
 
 function dibujarGrid() {
@@ -10732,8 +10781,8 @@ function _generarHTMLRITE(nombre, curso, resNotas, resAsist) {
   const presentesTotal = presentes + tardes + retiros;
   const total   = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
   const inasist = ausentes + (tardes * 0.25) + (retiros * 0.5);
-  const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : 100;
-  const pctColor = pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
+  const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : null;
+  const pctColor = pct === null ? '#888' : pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
 
   const novedades = registros.filter(r => r.estado !== 'P');
   const estadoLabel = { A:'Ausente', AP:'Ausente Pres.', T:'Llegada tarde', R:'Retiro anticipado' };
@@ -10800,7 +10849,7 @@ tr:nth-child(even){background:#f7faf8}
   <div class="alumno-info">
     <div><strong>Alumno/a:</strong> ${nombre}</div>
     <div><strong>Curso:</strong> ${curso.replace(/([0-9]+)([A-Z]+)/,'$1° $2')}</div>
-    <div><strong>% Asistencia:</strong> <span style="color:${pctColor};font-weight:700">${pct}%</span></div>
+    <div><strong>% Asistencia:</strong> <span style="color:${pctColor};font-weight:700">${pct !== null ? pct + '%' : 'Sin datos aún'}</span></div>
   </div>
   <h2>📊 Calificaciones</h2>
   <table><thead><tr><th style="text-align:left">Materia</th>${periodos.map((p,i) => `<th style="background:${colPer[i]}">${p}</th>`).join('')}<th>Estado</th></tr></thead><tbody>${filasNotas}</tbody></table>
