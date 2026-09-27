@@ -3495,7 +3495,7 @@ function loginStaff(){
 
   showToast('Verificando credenciales...','⏳');
   callWebApp({ accion:'login', usuario, contrasenia:pass }).then(res => {
-    if(res.ok){
+    if(res.ok && res.rol){
       // Si es tutor con múltiples hijos, mostrar selector
       if(res.rol === 'tutor' && res.hijos && res.hijos.length > 1) {
         mostrarSelectorHijo(res);
@@ -3506,7 +3506,7 @@ function loginStaff(){
     } else {
       showToast(res.error || 'Usuario o contraseña incorrectos','❌');
     }
-  });
+  }).catch(() => showToast('Error de conexión al iniciar sesión', '❌'));
 }
 
 function mostrarSelectorHijo(res) {
@@ -3562,6 +3562,7 @@ function buildBottomNav(role) {
     items.push({ id: 'mis-notas',     icon: '📝', label: 'Mis Notas' });
     items.push({ id: 'mural',         icon: '📋', label: 'Mural' });
     items.push({ id: 'archivos',      icon: '📁', label: 'Mis Archivos' });
+    items.push({ id: 'calendario',    icon: '📅', label: 'Calendario' });
   } else {
     items.push({ id: 'asistencia',     icon: '✅', label: 'Asistencia' });
     items.push({ id: 'calificaciones', icon: '📝', label: 'Notas' });
@@ -3570,7 +3571,7 @@ function buildBottomNav(role) {
     if (isDocente || isPreceptor)
       items.push({ id: 'subir', icon: '☁️', label: 'Subir' });
     items.push({ id: 'comunicados', icon: '📢', label: 'Comunicados' });
-    if (isAdmin || isPreceptor)
+    if (isAdmin || isPreceptor || isDocente)
       items.push({ id: 'resumen-curso', icon: '🏫', label: 'Resumen' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'banos', icon: '🚽', label: 'Baños' });
@@ -3590,7 +3591,7 @@ function buildBottomNav(role) {
       items.push({ id: 'dias-no-lectivos', icon: '📅', label: 'No Lectivos' });
     if (!isAlumno)
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
-    if (isAdmin || isEOE)
+    if (isAdmin || isEOE || isPreceptor || isDocente)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
     if (isAdmin || isDocente) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
@@ -7116,6 +7117,7 @@ function renderCalendar() {
   // Cargar eventos del backend
   const isAdmin   = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isDocenteView = ['docente','teacher'].includes(currentRole);
+  const isAlumnoView  = currentRole === 'alumno';
   // Mostrar panel nuevo evento solo a admins
   const panelEv = document.getElementById('panel-nuevo-evento');
   if (panelEv) panelEv.style.display = isAdmin ? 'block' : 'none';
@@ -7141,6 +7143,11 @@ function renderCalendar() {
     if (isDocenteView) {
       calEventosCrudos = calEventosCrudos.filter(e => e.origen === 'institucional' || e.docente === currentNombre);
       construirChipsCalendarioDocente();
+    } else if (isAlumnoView) {
+      // El alumno solo ve lo publicado para SU curso + los institucionales —
+      // nunca lo de otros cursos ni de otros docentes.
+      calEventosCrudos = calEventosCrudos.filter(e => e.origen === 'institucional' || e.curso === currentCursoAlumno);
+      document.getElementById('cal-filtro-docente').style.display = 'none';
     } else {
       document.getElementById('cal-filtro-docente').style.display = 'none';
     }
