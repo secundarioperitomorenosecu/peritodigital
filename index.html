@@ -554,6 +554,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-comunicados" onclick="showSection('comunicados',this)"><span class="nav-icon">📢</span> Comunicados <span class="nav-badge" id="badge-comunicados" style="display:none">!</span></div>
+      <div class="nav-item" id="nav-informes" onclick="showSection('informes',this)" style="display:none"><span class="nav-icon">📝</span> Informes <span id="badge-informes" style="display:none;background:#e65100;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
       <div class="nav-item" id="nav-agenda" onclick="crearSeccionAgenda();showSection('agenda',this)" style="display:none"><span class="nav-icon">📓</span> Agenda Directiva</div>
     </div>
     <div class="sidebar-footer">
@@ -3604,6 +3605,8 @@ function buildBottomNav(role) {
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE || isPreceptor || isDocente)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
+    if (['director','vicedirector'].includes(role) || isDocente)
+      items.push({ id: 'informes', icon: '📝', label: 'Informes' });
     if (isAdmin || isDocente) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
     }
@@ -3689,6 +3692,7 @@ function doLogin(name, role, usuario, res){
   const isStudent  = role === 'alumno';
   const canSeeResumen = isAdmin || isPreceptor || isDocente;
   const canSeeResumenAlumno = isAdmin || isEOE || isPreceptor || isDocente;
+  const canSeeInformes = ['director','vicedirector'].includes(role) || isDocente;
   const canSeeEOE  = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
@@ -3701,6 +3705,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-admin-section').style.display = (isAdmin || isPreceptor || isDocente || isEOE) ? 'block' : 'none';
   document.getElementById('nav-resumen-curso').style.display  = canSeeResumen ? 'flex' : 'none';
   document.getElementById('nav-resumen-alumno').style.display = canSeeResumenAlumno ? 'flex' : 'none';
+  document.getElementById('nav-informes').style.display = canSeeInformes ? 'flex' : 'none';
   const btnLupa = document.getElementById('btn-lupa-global');
   if (btnLupa) btnLupa.style.display = canSeeResumenAlumno ? 'inline-block' : 'none';
   document.getElementById('nav-alertas').style.display   = (isAdmin || isPreceptor) ? 'flex' : 'none';
@@ -3724,6 +3729,7 @@ function doLogin(name, role, usuario, res){
   const navMsg = document.getElementById('nav-mensajes');
   if (navMsg) navMsg.style.display = isStudent ? 'none' : 'flex';
   setTimeout(function(){ if(typeof actualizarBadgeMensajes==='function') actualizarBadgeMensajes(); }, 1500);
+  setTimeout(function(){ if(typeof infActualizarBadge==='function' && isDocente) infActualizarBadge(true); }, 1800);
   const navAg = document.getElementById('nav-agenda');
   if (navAg) navAg.style.display = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-alumno-section').style.display = isStudent ? 'block' : 'none';
@@ -3802,6 +3808,7 @@ function showSection(id,el){
   if(id === 'mensajes') inicializarMensajes();
   if(id === 'archivos') cargarArchivos();
   if(id === 'reportes') { generarReporte(); generarReporteAlumnos(); generarMejoresPromedios('5'); generarMejoresPromedios('6'); cargarListaAlumnosAdmin(); generarCierreCuatrimestre(); }
+  if(id === 'informes') { cargarInformes(); }
   if(id === 'gd') { gdBuscarDocentes(); }
   if(id === 'usuarios') cargarUsuarios();
 }
@@ -5727,6 +5734,433 @@ function reactivarAlumnoUI(legajo, nombre) {
     }
   }).catch(() => showToast('Error de conexión al reactivar', '❌'));
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+//  INFORMES SOBRE ALUMNOS — la dirección pide, los docentes responden
+// ═══════════════════════════════════════════════════════════════════════
+let infDetalleActual = null;   // { solicitud, docentes } de la solicitud abierta (vista dirección)
+let infSolDocente = [];        // solicitudes del docente logueado
+
+const INF_CAMPOS = [
+  { k: 'rendimiento',   label: 'Rendimiento académico',                              ph: 'Cómo viene con los contenidos, la entrega de trabajos, las evaluaciones...' },
+  { k: 'conducta',      label: 'Conducta y convivencia',                             ph: 'Actitud en clase, relación con compañeros y docentes...' },
+  { k: 'asistencia',    label: 'Asistencia y puntualidad (observada en tu materia)', ph: 'Presencia en tus clases, llegadas tarde, retiros anticipados...' },
+  { k: 'sugerencias',   label: 'Sugerencias o acciones recomendadas',                ph: 'Qué convendría hacer desde la escuela o con la familia...' },
+  { k: 'observaciones', label: 'Observaciones adicionales (espacio libre)',          ph: 'Cualquier otra información que consideres importante.' }
+];
+
+function infEsDireccion() { return ['director','vicedirector'].includes(currentRole); }
+function infEsDocente()   { return ['docente','teacher'].includes(currentRole); }
+function infEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function infCursoLindo(c) { return String(c || '').replace(/^(\d)([A-Za-z])$/, '$1°$2'); }
+function infFechaLinda(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || '');
+}
+function infChip(txt, bg, color) {
+  return `<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:${bg};color:${color};white-space:nowrap">${txt}</span>`;
+}
+const INF_LOADING = '<div style="text-align:center;padding:24px;color:rgba(0,0,0,.35);font-size:13px">⏳ Cargando...</div>';
+
+function cargarInformes() {
+  document.getElementById('inf-vista-direccion').style.display = infEsDireccion() ? 'block' : 'none';
+  document.getElementById('inf-vista-docente').style.display   = infEsDocente()   ? 'block' : 'none';
+  if (infEsDireccion()) infCargarListaDireccion();
+  else if (infEsDocente()) infCargarListaDocente();
+}
+
+// Aviso de pendientes para docentes (globito en el menú)
+function infActualizarBadge(conAviso) {
+  if (!infEsDocente()) return;
+  callWebApp({ accion: 'infSolicitudesParaDocente', usuario: currentUser }).then(res => {
+    const b = document.getElementById('badge-informes');
+    if (!b || !res || !res.ok) return;
+    if (res.pendientes > 0) {
+      b.textContent = res.pendientes; b.style.display = 'inline-block';
+      if (conAviso) showToast(`Tenés ${res.pendientes} informe${res.pendientes === 1 ? '' : 's'} pendiente${res.pendientes === 1 ? '' : 's'} de entregar`, '📝');
+    } else { b.style.display = 'none'; }
+  }).catch(() => {});
+}
+
+// ─────────────────────────── VISTA DIRECCIÓN ───────────────────────────
+function infCargarListaDireccion() {
+  document.getElementById('inf-detalle').style.display = 'none';
+  const cont = document.getElementById('inf-lista-direccion');
+  cont.style.display = 'block';
+  cont.innerHTML = INF_LOADING;
+  callWebApp({ accion: 'infListarSolicitudesDireccion', usuario: currentUser }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = `<div style="color:#F44336;padding:16px">Error: ${infEsc((res && res.error) || 'no se pudo cargar')}</div>`; return; }
+    if (!res.solicitudes.length) {
+      cont.innerHTML = '<div style="text-align:center;padding:28px;color:rgba(0,0,0,.35);font-size:13px">Todavía no pediste ningún informe. Tocá "＋ Nueva solicitud" para empezar.</div>';
+      return;
+    }
+    cont.innerHTML = '<div style="display:grid;gap:10px">' + res.solicitudes.map(s => {
+      const completo = s.entregadas >= s.totalDocentes;
+      const estadoChip = s.estado === 'Cerrada' ? infChip('🔒 Cerrada', '#eeeeee', '#666') : infChip('Abierta', '#e8f5e9', '#1a9e5c');
+      const avanceChip = infChip(`${s.entregadas}/${s.totalDocentes} entregados`, completo ? '#e8f5e9' : '#fff3e0', completo ? '#1a9e5c' : '#e65100');
+      const consigna = s.consigna.length > 110 ? s.consigna.slice(0, 110) + '…' : s.consigna;
+      return `<div onclick="infAbrirDetalle('${s.id}')" style="cursor:pointer;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+          <div style="font-weight:700;font-size:14px">${infEsc(s.alumno)} <span style="font-weight:400;font-size:12px;color:#888">· ${infCursoLindo(s.curso)}</span></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${avanceChip}${estadoChip}</div>
+        </div>
+        <div style="font-size:12.5px;color:#555;margin-top:6px">${infEsc(consigna)}</div>
+        <div style="font-size:11px;color:#999;margin-top:6px">Pedido el ${infEsc(s.fechaCreacion.split(' ')[0])}${s.fechaLimite ? ' · Límite: ' + infFechaLinda(s.fechaLimite) : ''}</div>
+      </div>`;
+    }).join('') + '</div>';
+  }).catch(() => { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión.</div>'; });
+}
+
+function infAbrirNueva() {
+  const panel = document.getElementById('inf-nueva');
+  panel.style.display = 'block';
+  const sel = document.getElementById('inf-n-curso');
+  sel.innerHTML = '<option value="">— Seleccioná —</option>' + CURSOS_TODOS.map(c => `<option value="${c}">${infCursoLindo(c)}</option>`).join('');
+  document.getElementById('inf-n-alumno').innerHTML = '<option value="">— Elegí primero el curso —</option>';
+  document.getElementById('inf-n-consigna').value = '';
+  document.getElementById('inf-n-limite').value = '';
+  document.getElementById('inf-n-datos').checked = true;
+  document.getElementById('inf-n-docentes').innerHTML = '<div style="color:rgba(0,0,0,.35);text-align:center;padding:8px">Elegí primero el curso.</div>';
+  document.getElementById('inf-n-docentes-mas').style.display = 'none';
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function infCursoCambio() {
+  const curso = document.getElementById('inf-n-curso').value;
+  const selAlu = document.getElementById('inf-n-alumno');
+  if (!curso) {
+    selAlu.innerHTML = '<option value="">— Elegí primero el curso —</option>';
+    document.getElementById('inf-n-docentes').innerHTML = '<div style="color:rgba(0,0,0,.35);text-align:center;padding:8px">Elegí primero el curso.</div>';
+    document.getElementById('inf-n-docentes-mas').style.display = 'none';
+    return;
+  }
+  selAlu.innerHTML = '<option value="">⏳ Cargando alumnos...</option>';
+  callWebApp({ accion: 'obtenerAlumnosCurso', curso }).then(res => {
+    if (!res || !res.ok || !res.alumnos || !res.alumnos.length) { selAlu.innerHTML = '<option value="">No hay alumnos en este curso</option>'; return; }
+    selAlu.innerHTML = '<option value="">— Elegí al alumno/a —</option>' +
+      res.alumnos.map(a => `<option value="${infEsc(a.legajo)}">${infEsc(a.nombre)}</option>`).join('');
+  }).catch(() => { selAlu.innerHTML = '<option value="">Error al cargar</option>'; });
+  infCargarDocentes(false);
+}
+
+function infCargarDocentes(todos) {
+  const curso = document.getElementById('inf-n-curso').value;
+  const cont = document.getElementById('inf-n-docentes');
+  if (!curso) return;
+  cont.innerHTML = '<div style="color:rgba(0,0,0,.35);text-align:center;padding:8px">⏳ Cargando docentes...</div>';
+  callWebApp({ accion: 'infDocentesDeCurso', curso, todos: !!todos }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = '<div style="color:#F44336;padding:8px">Error al cargar docentes.</div>'; return; }
+    if (!res.docentes.length) {
+      cont.innerHTML = '<div style="color:rgba(0,0,0,.45);padding:8px">No encontré docentes asignados a este curso en la planilla de Docentes. Podés mostrar a todos los docentes del colegio con el link de abajo.</div>';
+    } else {
+      cont.innerHTML = res.docentes.map(d => `
+        <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 2px;border-bottom:1px solid #f3ebe2;cursor:pointer">
+          <input type="checkbox" class="inf-n-doc-chk" value="${infEsc(d.usuario)}" ${d.delCurso ? 'checked' : ''} style="margin-top:3px">
+          <span><b>${infEsc(d.nombre)}</b><br><span style="font-size:11px;color:#888">${infEsc(d.materias || 'sin materia cargada')}${todos && !d.delCurso ? ' · no figura en este curso' : ''}</span></span>
+        </label>`).join('');
+    }
+    document.getElementById('inf-n-docentes-mas').style.display = todos ? 'none' : 'block';
+  }).catch(() => { cont.innerHTML = '<div style="color:#F44336;padding:8px">Error de conexión.</div>'; });
+}
+
+function infEnviarSolicitud() {
+  const curso = document.getElementById('inf-n-curso').value;
+  const selAlu = document.getElementById('inf-n-alumno');
+  const legajo = selAlu.value;
+  const nombreAlumno = selAlu.selectedIndex >= 0 ? selAlu.options[selAlu.selectedIndex].text : '';
+  const consigna = document.getElementById('inf-n-consigna').value.trim();
+  const limite = document.getElementById('inf-n-limite').value;
+  const docentes = Array.from(document.querySelectorAll('.inf-n-doc-chk:checked')).map(c => c.value);
+
+  if (!curso) { showToast('Elegí el curso', '⚠️'); return; }
+  if (!legajo) { showToast('Elegí al alumno/a', '⚠️'); return; }
+  if (!consigna) { showToast('Escribí qué querés saber', '⚠️'); return; }
+  if (!docentes.length) { showToast('Tildá al menos un docente', '⚠️'); return; }
+
+  const btn = document.getElementById('inf-n-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  callWebApp({
+    accion: 'infCrearSolicitud', usuario: currentUser, curso, legajo, nombreAlumno, consigna,
+    fechaLimite: limite, docentes, incluirDatos: document.getElementById('inf-n-datos').checked
+  }).then(res => {
+    btn.disabled = false; btn.textContent = 'Enviar solicitud';
+    if (res && res.ok) {
+      showToast('Solicitud enviada a los docentes ✅', '📝');
+      document.getElementById('inf-nueva').style.display = 'none';
+      infCargarListaDireccion();
+    } else { showToast('Error: ' + ((res && res.error) || 'no se pudo enviar'), '❌'); }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Enviar solicitud'; showToast('Error de conexión', '❌'); });
+}
+
+function infAbrirDetalle(id) {
+  const det = document.getElementById('inf-detalle');
+  document.getElementById('inf-lista-direccion').style.display = 'none';
+  document.getElementById('inf-nueva').style.display = 'none';
+  det.style.display = 'block';
+  det.innerHTML = INF_LOADING;
+  callWebApp({ accion: 'infDetalleSolicitud', usuario: currentUser, idSolicitud: id }).then(res => {
+    if (!res || !res.ok) { det.innerHTML = `<div style="color:#F44336;padding:16px">Error: ${infEsc((res && res.error) || 'no se pudo cargar')}</div>`; return; }
+    infDetalleActual = res;
+    infRenderDetalle();
+  }).catch(() => { det.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión.</div>'; });
+}
+
+function infRenderDetalle() {
+  const { solicitud: s, docentes } = infDetalleActual;
+  const det = document.getElementById('inf-detalle');
+  const entregadas = docentes.filter(d => d.respuesta).length;
+  const cerrada = s.estado === 'Cerrada';
+
+  let html = `<button class="btn btn-sm btn-outline" onclick="infCargarListaDireccion()" style="margin-bottom:12px">← Volver al listado</button>
+    <div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="font-weight:700;font-size:16px">${infEsc(s.alumno)} <span style="font-weight:400;font-size:13px;color:#888">· ${infCursoLindo(s.curso)}</span></div>
+        ${cerrada ? infChip('🔒 Cerrada', '#eeeeee', '#666') : infChip('Abierta', '#e8f5e9', '#1a9e5c')}
+      </div>
+      <div style="font-size:11.5px;color:#999;margin:4px 0 10px">Pedido por ${infEsc(s.creadoPor)} el ${infEsc(s.fechaCreacion)}${s.fechaLimite ? ' · Límite: ' + infFechaLinda(s.fechaLimite) : ''}</div>
+      <div style="font-size:13px;white-space:pre-wrap;line-height:1.5">${infEsc(s.consigna)}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-success btn-sm" onclick="infGenerarPDF()">📄 Generar PDF</button>
+      <button class="btn btn-sm btn-outline" onclick="infCambiarEstado('${cerrada ? 'Abierta' : 'Cerrada'}')">${cerrada ? '🔓 Reabrir' : '🔒 Cerrar solicitud'}</button>
+      <button class="btn btn-sm" style="background:#fdeaea;color:#c62828;border:1px solid #f3c6c6" onclick="infEliminar()">🗑️ Eliminar</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Respuestas (${entregadas} de ${docentes.length})</div>
+    <div style="display:grid;gap:10px">`;
+
+  docentes.forEach(d => {
+    if (!d.respuesta) {
+      html += `<div style="border:1px dashed #e0c9b5;border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div><b style="font-size:13px">${infEsc(d.nombre)}</b><div style="font-size:11px;color:#999">${infEsc(d.materias)}</div></div>
+        ${infChip('⏳ Pendiente', '#fff3e0', '#e65100')}</div>`;
+      return;
+    }
+    const r = d.respuesta;
+    html += `<div style="border:1px solid #cfe8d9;background:#f6fbf8;border-radius:12px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <div><b style="font-size:13.5px">${infEsc(r.docenteNombre)}</b><div style="font-size:11.5px;color:#666">${infEsc(r.materia || d.materias)}</div></div>
+        <div style="text-align:right">${infChip('✅ Entregado', '#e8f5e9', '#1a9e5c')}<div style="font-size:10.5px;color:#999;margin-top:3px">${infEsc(r.fechaEntrega)}${r.fechaEdicion && r.fechaEdicion !== r.fechaEntrega ? ' (editado ' + infEsc(r.fechaEdicion) + ')' : ''}</div></div>
+      </div>`;
+    INF_CAMPOS.forEach(c => {
+      if (r[c.k]) html += `<div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:#1a7a44;text-transform:uppercase;letter-spacing:.3px">${c.label}</div><div style="font-size:13px;white-space:pre-wrap;line-height:1.5">${infEsc(r[c.k])}</div></div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  det.innerHTML = html;
+}
+
+function infCambiarEstado(nuevo) {
+  callWebApp({ accion: 'infCambiarEstado', usuario: currentUser, idSolicitud: infDetalleActual.solicitud.id, estado: nuevo }).then(res => {
+    if (res && res.ok) { showToast(nuevo === 'Cerrada' ? 'Solicitud cerrada 🔒' : 'Solicitud reabierta 🔓', '📝'); infAbrirDetalle(infDetalleActual.solicitud.id); }
+    else showToast('Error: ' + ((res && res.error) || 'no se pudo cambiar'), '❌');
+  });
+}
+
+function infEliminar() {
+  const s = infDetalleActual.solicitud;
+  if (!confirm(`¿Eliminar la solicitud sobre ${s.alumno} y todas las respuestas de los docentes? Esta acción no se puede deshacer.`)) return;
+  callWebApp({ accion: 'infEliminarSolicitud', usuario: currentUser, idSolicitud: s.id }).then(res => {
+    if (res && res.ok) { showToast('Solicitud eliminada', '🗑️'); infCargarListaDireccion(); }
+    else showToast('Error: ' + ((res && res.error) || 'no se pudo eliminar'), '❌');
+  });
+}
+
+// ─────────────────────────── PDF ───────────────────────────
+function infGenerarPDF() {
+  const { solicitud: s, docentes } = infDetalleActual;
+  showToast('Armando el PDF...', '⏳');
+  const pedidos = s.incluirDatos
+    ? [callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: s.legajo, curso: s.curso, nombre: s.alumno }),
+       callWebApp({ accion: 'obtenerNotasAlumno', legajo: s.legajo, curso: s.curso, nombre: s.alumno })]
+    : [Promise.resolve(null), Promise.resolve(null)];
+  Promise.all(pedidos).then(([resAsist, resNotas]) => {
+    infAbrirPDF(infHtmlPDF(s, docentes, resAsist, resNotas), s);
+  }).catch(() => { infAbrirPDF(infHtmlPDF(s, docentes, null, null), s); });
+}
+
+function infHtmlPDF(s, docentes, resAsist, resNotas) {
+  const logoEl = document.querySelector('.login-logo img');
+  const logo = logoEl ? logoEl.src : '';
+  const hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  let datos = '';
+  if (s.incluirDatos && resAsist && resAsist.ok) {
+    const pres = resAsist.presentes || 0, aus = resAsist.ausentes || 0, tar = resAsist.tardes || 0, ret = resAsist.retiros || 0;
+    const inasist = aus + tar * 0.25 + ret * 0.5;
+    const pct = resAsist.pctAsistencia;
+    datos += `<h2>Asistencia del ciclo lectivo</h2>
+      <p class="datos">${pct !== null && pct !== undefined ? `<b>${pct}% de asistencia</b> · ` : ''}Presentes: ${pres} · Ausentes: ${aus} · Tardanzas: ${tar} · Retiros: ${ret} · Inasistencias computables: ${inasist % 1 === 0 ? inasist : inasist.toFixed(2)}</p>`;
+  }
+  if (s.incluirDatos && resNotas && resNotas.ok && resNotas.materias && resNotas.materias.length) {
+    const v = x => (x === '' || x === null || x === undefined) ? '—' : infEsc(x);
+    datos += `<h2>Calificaciones registradas</h2>
+      <table><thead><tr><th style="text-align:left">Materia</th><th>1° Bim.</th><th>1° Cuat.</th><th>3° Bim.</th><th>2° Cuat.</th><th>Dic.</th><th>Feb.</th><th>Estado final</th></tr></thead><tbody>` +
+      resNotas.materias.map(m => `<tr><td style="text-align:left">${infEsc(m.materia)}</td><td>${v(m.bim1)}</td><td>${v(m.cuat1)}</td><td>${v(m.bim3)}</td><td>${v(m.cuat2)}</td><td>${v(m.dic)}</td><td>${v(m.feb)}</td><td>${v(m.estadoFinal)}</td></tr>`).join('') +
+      '</tbody></table>';
+  }
+
+  const respondidos = docentes.filter(d => d.respuesta);
+  const pendientes = docentes.filter(d => !d.respuesta);
+  let cuerpo = respondidos.map(d => {
+    const r = d.respuesta;
+    const campos = INF_CAMPOS.filter(c => r[c.k]).map(c => `<div class="campo"><div class="lbl">${c.label}</div><div class="txt">${infEsc(r[c.k])}</div></div>`).join('');
+    return `<div class="doc"><div class="doc-h"><b>${infEsc(r.docenteNombre)}</b> — ${infEsc(r.materia || d.materias || '')}<span class="fecha">Entregado: ${infEsc(r.fechaEntrega)}</span></div>${campos}</div>`;
+  }).join('');
+  if (!respondidos.length) cuerpo = '<p class="vacio">Todavía no hay informes entregados por los docentes.</p>';
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe sobre ${infEsc(s.alumno)}</title>
+<style>
+  @page { margin: 16mm; }
+  body { font-family: Arial, Helvetica, sans-serif; color:#1a1a1a; margin:0; padding:24px; font-size:12.5px; line-height:1.5; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .head { display:flex; align-items:center; gap:14px; border-bottom:3px solid #1a9e5c; padding-bottom:12px; margin-bottom:16px; }
+  .head img { width:62px; height:62px; object-fit:contain; }
+  .head .k { font-size:10.5px; letter-spacing:2px; color:#888; text-transform:uppercase; font-weight:700; }
+  .head h1 { margin:2px 0 0; font-size:20px; font-family:Georgia,serif; }
+  table.meta { width:100%; border-collapse:collapse; margin-bottom:12px; }
+  table.meta td { padding:4px 8px; border:1px solid #e8d5c4; font-size:12px; }
+  table.meta td.l { background:#fdf8f3; font-weight:700; width:22%; }
+  .consigna { background:#fdf8f3; border-left:4px solid #1a9e5c; padding:10px 14px; margin:12px 0 16px; white-space:pre-wrap; }
+  h2 { font-size:13.5px; color:#0f6b3d; border-bottom:1px solid #e8d5c4; padding-bottom:3px; margin:18px 0 8px; text-transform:uppercase; letter-spacing:.5px; }
+  .datos { margin:0 0 6px; }
+  table { border-collapse:collapse; width:100%; font-size:11px; }
+  table th, table td { border:1px solid #e0d5c8; padding:4px 6px; text-align:center; }
+  table th { background:#fdf8f3; }
+  .doc { border:1px solid #cfe0d6; border-radius:6px; padding:10px 14px; margin-bottom:12px; page-break-inside:avoid; }
+  .doc-h { display:flex; justify-content:space-between; gap:10px; border-bottom:1px solid #e3efe8; padding-bottom:5px; margin-bottom:6px; font-size:12.5px; }
+  .doc-h .fecha { font-size:10.5px; color:#888; }
+  .campo { margin-top:7px; }
+  .lbl { font-size:10.5px; font-weight:700; color:#1a7a44; text-transform:uppercase; letter-spacing:.3px; }
+  .txt { white-space:pre-wrap; }
+  .pend { font-size:11.5px; color:#b35a00; margin-top:10px; }
+  .vacio { color:#888; font-style:italic; }
+  .pie { margin-top:22px; padding-top:8px; border-top:1px solid #e8d5c4; font-size:10px; color:#999; text-align:center; }
+  @media screen { .btn-print { display:inline-block; margin-bottom:14px; padding:8px 16px; border-radius:8px; border:1px solid #1a9e5c; background:#fff; color:#1a9e5c; cursor:pointer; font-weight:700; } }
+  @media print { .btn-print { display:none; } }
+</style></head><body>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  <div class="head">${logo ? `<img src="${logo}">` : ''}<div><div class="k">Colegio Perito Moreno</div><h1>Informe sobre el alumno/a</h1></div></div>
+  <table class="meta">
+    <tr><td class="l">Alumno/a</td><td>${infEsc(s.alumno)}</td><td class="l">Curso</td><td>${infCursoLindo(s.curso)}</td></tr>
+    <tr><td class="l">Solicitado por</td><td>${infEsc(s.creadoPor)}</td><td class="l">Fecha del pedido</td><td>${infEsc(s.fechaCreacion.split(' ')[0])}</td></tr>
+  </table>
+  <div class="consigna"><b>Consigna:</b> ${infEsc(s.consigna)}</div>
+  ${datos}
+  <h2>Informes de los docentes</h2>
+  ${cuerpo}
+  ${pendientes.length ? `<div class="pend">Sin respuesta al ${hoy}: ${pendientes.map(d => infEsc(d.nombre)).join('; ')}.</div>` : ''}
+  <div class="pie">Documento de uso interno — contiene información sobre un alumno/a. Emitido el ${hoy}.</div>
+  <script>window.onload = function(){ window.print(); }<\/script>
+</body></html>`;
+}
+
+function infAbrirPDF(html, s) {
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) {
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Informe_' + String(s.alumno).replace(/[^\wÀ-ÿ]+/g, '_') + '.html';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast('El navegador bloqueó la ventana: se descargó el informe como archivo', '⚠️');
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 20000);
+}
+
+// ─────────────────────────── VISTA DOCENTE ───────────────────────────
+function infCargarListaDocente() {
+  document.getElementById('inf-form-docente').style.display = 'none';
+  const cont = document.getElementById('inf-lista-docente');
+  cont.style.display = 'block';
+  cont.innerHTML = INF_LOADING;
+  callWebApp({ accion: 'infSolicitudesParaDocente', usuario: currentUser }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = `<div style="color:#F44336;padding:16px">Error: ${infEsc((res && res.error) || 'no se pudo cargar')}</div>`; return; }
+    infSolDocente = res.solicitudes;
+    const b = document.getElementById('badge-informes');
+    if (b) { if (res.pendientes > 0) { b.textContent = res.pendientes; b.style.display = 'inline-block'; } else b.style.display = 'none'; }
+    if (!infSolDocente.length) {
+      cont.innerHTML = '<div style="text-align:center;padding:28px;color:rgba(0,0,0,.35);font-size:13px">No tenés informes solicitados por ahora.</div>';
+      return;
+    }
+    cont.innerHTML = '<div style="display:grid;gap:10px">' + infSolDocente.map(s => {
+      let chip;
+      if (s.respuesta) chip = infChip('✅ Entregado', '#e8f5e9', '#1a9e5c');
+      else if (s.estado === 'Cerrada') chip = infChip('🔒 Cerrada', '#eeeeee', '#666');
+      else chip = infChip('⏳ Pendiente', '#fff3e0', '#e65100');
+      const consigna = s.consigna.length > 110 ? s.consigna.slice(0, 110) + '…' : s.consigna;
+      return `<div onclick="infAbrirFormDocente('${s.id}')" style="cursor:pointer;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+          <div style="font-weight:700;font-size:14px">${infEsc(s.alumno)} <span style="font-weight:400;font-size:12px;color:#888">· ${infCursoLindo(s.curso)}</span></div>${chip}
+        </div>
+        <div style="font-size:12.5px;color:#555;margin-top:6px">${infEsc(consigna)}</div>
+        <div style="font-size:11px;color:#999;margin-top:6px">Pedido por ${infEsc(s.creadoPor)} el ${infEsc(s.fechaCreacion.split(' ')[0])}${s.fechaLimite ? ' · Límite: ' + infFechaLinda(s.fechaLimite) : ''}</div>
+      </div>`;
+    }).join('') + '</div>';
+  }).catch(() => { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error de conexión.</div>'; });
+}
+
+function infAbrirFormDocente(id) {
+  const s = infSolDocente.find(x => x.id === id);
+  if (!s) return;
+  const r = s.respuesta || {};
+  const editable = s.estado === 'Abierta';
+  document.getElementById('inf-lista-docente').style.display = 'none';
+  const cont = document.getElementById('inf-form-docente');
+  cont.style.display = 'block';
+
+  let materiaHtml;
+  const mats = currentMaterias || [];
+  const estiloInput = 'width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px;box-sizing:border-box';
+  if (!editable) materiaHtml = `<div style="font-size:13px">${infEsc(r.materia || '—')}</div>`;
+  else if (mats.length > 1) materiaHtml = `<select id="inf-f-materia" style="${estiloInput}">${mats.map(m => `<option value="${infEsc(m)}" ${r.materia === m ? 'selected' : ''}>${infEsc(m)}</option>`).join('')}</select>`;
+  else materiaHtml = `<input type="text" id="inf-f-materia" value="${infEsc(r.materia || mats[0] || '')}" ${mats.length === 1 ? 'readonly' : 'placeholder="Tu materia"'} style="${estiloInput}">`;
+
+  let html = `<button class="btn btn-sm btn-outline" onclick="infCargarListaDocente()" style="margin-bottom:12px">← Volver</button>
+    <div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-weight:700;font-size:15px">${infEsc(s.alumno)} <span style="font-weight:400;font-size:12.5px;color:#888">· ${infCursoLindo(s.curso)}</span></div>
+      <div style="font-size:11.5px;color:#999;margin:3px 0 8px">Pedido por ${infEsc(s.creadoPor)}${s.fechaLimite ? ' · Límite: ' + infFechaLinda(s.fechaLimite) : ''}</div>
+      <div style="font-size:13px;white-space:pre-wrap;line-height:1.5">${infEsc(s.consigna)}</div>
+    </div>`;
+
+  if (!editable) {
+    html += `<div style="background:#eeeeee;border-radius:10px;padding:10px 14px;font-size:12.5px;color:#555;margin-bottom:12px">🔒 La solicitud está cerrada${s.respuesta ? ': esto es lo que entregaste.' : ' y no entregaste informe.'}</div>`;
+  } else {
+    html += `<div style="font-size:11.5px;color:#888;margin-bottom:12px">🔐 Tu respuesta la ve únicamente la dirección del colegio. Podés modificarla mientras la solicitud siga abierta.</div>`;
+  }
+
+  html += `<div style="margin-bottom:12px"><label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Materia</label>${materiaHtml}</div>`;
+  INF_CAMPOS.forEach(c => {
+    const label = `<label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">${c.label}</label>`;
+    html += editable
+      ? `<div style="margin-bottom:12px">${label}<textarea id="inf-f-${c.k}" rows="${c.k === 'observaciones' ? 4 : 3}" placeholder="${infEsc(c.ph)}" style="${estiloInput};resize:vertical">${infEsc(r[c.k] || '')}</textarea></div>`
+      : (r[c.k] ? `<div style="margin-bottom:12px">${label}<div style="font-size:13px;white-space:pre-wrap;line-height:1.5">${infEsc(r[c.k])}</div></div>` : '');
+  });
+  if (editable) html += `<button class="btn btn-success btn-sm" id="inf-f-enviar" onclick="infEnviarRespuesta('${s.id}')">${s.respuesta ? 'Guardar cambios' : 'Enviar informe'}</button>`;
+  cont.innerHTML = html;
+  cont.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function infEnviarRespuesta(idSolicitud) {
+  const val = k => (document.getElementById('inf-f-' + k) || {}).value || '';
+  const materia = (val('materia') || '').trim();
+  const campos = INF_CAMPOS.map(c => val(c.k).trim());
+  if (campos.every(t => !t)) { showToast('Completá al menos un campo del informe', '⚠️'); return; }
+  const btn = document.getElementById('inf-f-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  callWebApp({
+    accion: 'infGuardarRespuesta', usuario: currentUser, nombreDocente: currentNombre, idSolicitud, materia,
+    rendimiento: campos[0], conducta: campos[1], asistencia: campos[2], sugerencias: campos[3], observaciones: campos[4]
+  }).then(res => {
+    if (res && res.ok) {
+      showToast(res.editado ? 'Informe actualizado ✅' : 'Informe enviado a la dirección ✅', '📝');
+      infCargarListaDocente();
+    } else {
+      btn.disabled = false; btn.textContent = 'Enviar informe';
+      showToast('Error: ' + ((res && res.error) || 'no se pudo enviar'), '❌');
+    }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Enviar informe'; showToast('Error de conexión', '❌'); });
+}
+
 
 function generarInformeInasistencias() {
   const curso = document.getElementById('inf-inas-curso').value;
@@ -9935,6 +10369,73 @@ function crearSeccionAgenda() {
   const tiposOptions = AGENDA_TIPOS.map(t => `<option value="${t}">${t}</option>`).join('');
 
   const secHtml = `
+    <!-- INFORMES SOBRE ALUMNOS -->
+    <div id="sec-informes" class="section">
+
+      <!-- Vista Dirección (Director / Vicedirector) -->
+      <div id="inf-vista-direccion" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>📝 Informes solicitados a docentes</h3>
+            <button class="btn btn-success btn-sm" onclick="infAbrirNueva()">＋ Nueva solicitud</button>
+          </div>
+          <div class="panel-body">
+
+            <div id="inf-nueva" style="display:none;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:16px;margin-bottom:18px">
+              <h4 style="margin:0 0 12px;font-size:14px">Nueva solicitud de informe</h4>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+                  <select id="inf-n-curso" onchange="infCursoCambio()" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px"></select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Alumno/a</label>
+                  <select id="inf-n-alumno" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px"><option value="">— Elegí primero el curso —</option></select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha límite (opcional)</label>
+                  <input type="date" id="inf-n-limite" style="width:100%;padding:8px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px;box-sizing:border-box">
+                </div>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">¿Qué querés saber? (consigna para los docentes)</label>
+                <textarea id="inf-n-consigna" rows="3" placeholder="Ej: Necesito conocer el desempeño y la conducta del alumno durante el último bimestre." style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid #e8d5c4;font-family:inherit;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Docentes a los que se lo pedís</label>
+                <div id="inf-n-docentes" style="max-height:200px;overflow-y:auto;border:1px solid #e8d5c4;border-radius:9px;padding:10px;background:#fff;font-size:12.5px">
+                  <div style="color:rgba(0,0,0,.35);text-align:center;padding:8px">Elegí primero el curso.</div>
+                </div>
+                <div id="inf-n-docentes-mas" style="display:none;margin-top:6px"><a href="javascript:void(0)" onclick="infCargarDocentes(true)" style="font-size:12px;color:#1565C0">＋ Mostrar todos los docentes del colegio</a></div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:14px;cursor:pointer">
+                <input type="checkbox" id="inf-n-datos" checked> Incluir en el PDF la asistencia y las calificaciones del alumno/a
+              </label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-success btn-sm" id="inf-n-enviar" onclick="infEnviarSolicitud()">Enviar solicitud</button>
+                <button class="btn btn-sm btn-outline" onclick="document.getElementById('inf-nueva').style.display='none'">Cancelar</button>
+              </div>
+            </div>
+
+            <div id="inf-lista-direccion"></div>
+            <div id="inf-detalle" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Docente -->
+      <div id="inf-vista-docente" style="display:none">
+        <div class="panel">
+          <div class="panel-header"><h3>📝 Informes que te solicitaron</h3></div>
+          <div class="panel-body">
+            <div id="inf-lista-docente"></div>
+            <div id="inf-form-docente" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
 <div class="section" id="sec-agenda">
   <div class="panel" style="margin-bottom:16px">
     <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
