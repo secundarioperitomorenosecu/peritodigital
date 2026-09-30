@@ -925,6 +925,73 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
     </div>
 
+    <!-- INFORMES SOBRE ALUMNOS -->
+    <div id="sec-informes" class="section">
+
+      <!-- Vista Dirección (Director / Vicedirector) -->
+      <div id="inf-vista-direccion" style="display:none">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>📝 Informes solicitados a docentes</h3>
+            <button class="btn btn-success btn-sm" onclick="infAbrirNueva()">＋ Nueva solicitud</button>
+          </div>
+          <div class="panel-body">
+
+            <div id="inf-nueva" style="display:none;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:16px;margin-bottom:18px">
+              <h4 style="margin:0 0 12px;font-size:14px">Nueva solicitud de informe</h4>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+                  <select id="inf-n-curso" onchange="infCursoCambio()" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px"></select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Alumno/a</label>
+                  <select id="inf-n-alumno" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px"><option value="">— Elegí primero el curso —</option></select>
+                </div>
+                <div>
+                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha límite (opcional)</label>
+                  <input type="date" id="inf-n-limite" style="width:100%;padding:8px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px;box-sizing:border-box">
+                </div>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">¿Qué querés saber? (consigna para los docentes)</label>
+                <textarea id="inf-n-consigna" rows="3" placeholder="Ej: Necesito conocer el desempeño y la conducta del alumno durante el último bimestre." style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid #e8d5c4;font-family:inherit;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+              </div>
+              <div style="margin-bottom:12px">
+                <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Docentes a los que se lo pedís</label>
+                <div id="inf-n-docentes" style="max-height:200px;overflow-y:auto;border:1px solid #e8d5c4;border-radius:9px;padding:10px;background:#fff;font-size:12.5px">
+                  <div style="color:rgba(0,0,0,.35);text-align:center;padding:8px">Elegí primero el curso.</div>
+                </div>
+                <div id="inf-n-docentes-mas" style="display:none;margin-top:6px"><a href="javascript:void(0)" onclick="infCargarDocentes(true)" style="font-size:12px;color:#1565C0">＋ Mostrar todos los docentes del colegio</a></div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:14px;cursor:pointer">
+                <input type="checkbox" id="inf-n-datos" checked> Incluir en el PDF la asistencia y las calificaciones del alumno/a
+              </label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-success btn-sm" id="inf-n-enviar" onclick="infEnviarSolicitud()">Enviar solicitud</button>
+                <button class="btn btn-sm btn-outline" onclick="document.getElementById('inf-nueva').style.display='none'">Cancelar</button>
+              </div>
+            </div>
+
+            <div id="inf-lista-direccion"></div>
+            <div id="inf-detalle" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Docente -->
+      <div id="inf-vista-docente" style="display:none">
+        <div class="panel">
+          <div class="panel-header"><h3>📝 Informes que te solicitaron</h3></div>
+          <div class="panel-body">
+            <div id="inf-lista-docente"></div>
+            <div id="inf-form-docente" style="display:none"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
     <!-- COMUNICADOS -->
     <div id="sec-comunicados" class="section">
       <div class="panel" style="margin-bottom:18px" id="panel-nuevo-comunicado">
@@ -3605,7 +3672,7 @@ function buildBottomNav(role) {
       items.push({ id: 'mensajes', icon: '💬', label: 'Mensajes' });
     if (isAdmin || isEOE || isPreceptor || isDocente)
       items.push({ id: 'resumen-alumno', icon: '👤', label: 'x Alumno' });
-    if (['director','vicedirector'].includes(role) || isDocente)
+    if (['director','vicedirector'].includes(role) || isDocente || isEOE)
       items.push({ id: 'informes', icon: '📝', label: 'Informes' });
     if (isAdmin || isDocente) {
       items.push({ id: 'calendario', icon: '📅', label: 'Calendario' });
@@ -3692,7 +3759,7 @@ function doLogin(name, role, usuario, res){
   const isStudent  = role === 'alumno';
   const canSeeResumen = isAdmin || isPreceptor || isDocente;
   const canSeeResumenAlumno = isAdmin || isEOE || isPreceptor || isDocente;
-  const canSeeInformes = ['director','vicedirector'].includes(role) || isDocente;
+  const canSeeInformes = ['director','vicedirector'].includes(role) || isDocente || isEOE;
   const canSeeEOE  = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
@@ -5750,6 +5817,8 @@ const INF_CAMPOS = [
 ];
 
 function infEsDireccion() { return ['director','vicedirector'].includes(currentRole); }
+function infEsEOE()       { return currentRole === 'eoe'; }
+function infPuedeVer()    { return infEsDireccion() || infEsEOE(); }
 function infEsDocente()   { return ['docente','teacher'].includes(currentRole); }
 function infEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function infCursoLindo(c) { return String(c || '').replace(/^(\d)([A-Za-z])$/, '$1°$2'); }
@@ -5763,9 +5832,15 @@ function infChip(txt, bg, color) {
 const INF_LOADING = '<div style="text-align:center;padding:24px;color:rgba(0,0,0,.35);font-size:13px">⏳ Cargando...</div>';
 
 function cargarInformes() {
-  document.getElementById('inf-vista-direccion').style.display = infEsDireccion() ? 'block' : 'none';
-  document.getElementById('inf-vista-docente').style.display   = infEsDocente()   ? 'block' : 'none';
-  if (infEsDireccion()) infCargarListaDireccion();
+  document.getElementById('inf-vista-direccion').style.display = infPuedeVer() ? 'block' : 'none';
+  document.getElementById('inf-vista-docente').style.display   = infEsDocente() ? 'block' : 'none';
+
+  // EOE ve la misma pantalla que Dirección, pero solo de lectura: no puede
+  // crear solicitudes nuevas (el botón queda oculto).
+  const btnNueva = document.querySelector('#inf-vista-direccion .panel-header button');
+  if (btnNueva) btnNueva.style.display = infEsDireccion() ? 'inline-flex' : 'none';
+
+  if (infPuedeVer()) infCargarListaDireccion();
   else if (infEsDocente()) infCargarListaDocente();
 }
 
@@ -5922,8 +5997,8 @@ function infRenderDetalle() {
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
       <button class="btn btn-success btn-sm" onclick="infGenerarPDF()">📄 Generar PDF</button>
-      <button class="btn btn-sm btn-outline" onclick="infCambiarEstado('${cerrada ? 'Abierta' : 'Cerrada'}')">${cerrada ? '🔓 Reabrir' : '🔒 Cerrar solicitud'}</button>
-      <button class="btn btn-sm" style="background:#fdeaea;color:#c62828;border:1px solid #f3c6c6" onclick="infEliminar()">🗑️ Eliminar</button>
+      ${infEsDireccion() ? `<button class="btn btn-sm btn-outline" onclick="infCambiarEstado('${cerrada ? 'Abierta' : 'Cerrada'}')">${cerrada ? '🔓 Reabrir' : '🔒 Cerrar solicitud'}</button>
+      <button class="btn btn-sm" style="background:#fdeaea;color:#c62828;border:1px solid #f3c6c6" onclick="infEliminar()">🗑️ Eliminar</button>` : ''}
     </div>
     <div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Respuestas (${entregadas} de ${docentes.length})</div>
     <div style="display:grid;gap:10px">`;
@@ -10369,73 +10444,6 @@ function crearSeccionAgenda() {
   const tiposOptions = AGENDA_TIPOS.map(t => `<option value="${t}">${t}</option>`).join('');
 
   const secHtml = `
-    <!-- INFORMES SOBRE ALUMNOS -->
-    <div id="sec-informes" class="section">
-
-      <!-- Vista Dirección (Director / Vicedirector) -->
-      <div id="inf-vista-direccion" style="display:none">
-        <div class="panel">
-          <div class="panel-header">
-            <h3>📝 Informes solicitados a docentes</h3>
-            <button class="btn btn-success btn-sm" onclick="infAbrirNueva()">＋ Nueva solicitud</button>
-          </div>
-          <div class="panel-body">
-
-            <div id="inf-nueva" style="display:none;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:12px;padding:16px;margin-bottom:18px">
-              <h4 style="margin:0 0 12px;font-size:14px">Nueva solicitud de informe</h4>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">
-                <div>
-                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
-                  <select id="inf-n-curso" onchange="infCursoCambio()" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px"></select>
-                </div>
-                <div>
-                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Alumno/a</label>
-                  <select id="inf-n-alumno" style="width:100%;padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px"><option value="">— Elegí primero el curso —</option></select>
-                </div>
-                <div>
-                  <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Fecha límite (opcional)</label>
-                  <input type="date" id="inf-n-limite" style="width:100%;padding:8px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fff;font-family:inherit;font-size:13px;box-sizing:border-box">
-                </div>
-              </div>
-              <div style="margin-bottom:12px">
-                <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">¿Qué querés saber? (consigna para los docentes)</label>
-                <textarea id="inf-n-consigna" rows="3" placeholder="Ej: Necesito conocer el desempeño y la conducta del alumno durante el último bimestre." style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid #e8d5c4;font-family:inherit;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
-              </div>
-              <div style="margin-bottom:12px">
-                <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Docentes a los que se lo pedís</label>
-                <div id="inf-n-docentes" style="max-height:200px;overflow-y:auto;border:1px solid #e8d5c4;border-radius:9px;padding:10px;background:#fff;font-size:12.5px">
-                  <div style="color:rgba(0,0,0,.35);text-align:center;padding:8px">Elegí primero el curso.</div>
-                </div>
-                <div id="inf-n-docentes-mas" style="display:none;margin-top:6px"><a href="javascript:void(0)" onclick="infCargarDocentes(true)" style="font-size:12px;color:#1565C0">＋ Mostrar todos los docentes del colegio</a></div>
-              </div>
-              <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:14px;cursor:pointer">
-                <input type="checkbox" id="inf-n-datos" checked> Incluir en el PDF la asistencia y las calificaciones del alumno/a
-              </label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-success btn-sm" id="inf-n-enviar" onclick="infEnviarSolicitud()">Enviar solicitud</button>
-                <button class="btn btn-sm btn-outline" onclick="document.getElementById('inf-nueva').style.display='none'">Cancelar</button>
-              </div>
-            </div>
-
-            <div id="inf-lista-direccion"></div>
-            <div id="inf-detalle" style="display:none"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Vista Docente -->
-      <div id="inf-vista-docente" style="display:none">
-        <div class="panel">
-          <div class="panel-header"><h3>📝 Informes que te solicitaron</h3></div>
-          <div class="panel-body">
-            <div id="inf-lista-docente"></div>
-            <div id="inf-form-docente" style="display:none"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
 <div class="section" id="sec-agenda">
   <div class="panel" style="margin-bottom:16px">
     <div class="panel-header" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
