@@ -3093,104 +3093,103 @@ function dnlFeedback(msg, ok) {
 </script>
 
 
+<style>
+  .msg-app { display: flex; background: #fff; border-radius: 14px; overflow: hidden; min-height: 560px; border: 1px solid #e8d5c4; }
+  .msg-sidebar { width: 220px; flex-shrink: 0; background: #fdf8f3; border-right: 1px solid #e8d5c4; padding: 14px 10px; }
+  .msg-btn-redactar { width: 100%; background: #1a9e5c; color: #fff; border: none; border-radius: 20px; padding: 11px; font-weight: 700; font-size: 13.5px; cursor: pointer; margin-bottom: 16px; font-family: inherit; }
+  .msg-folder { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 8px; cursor: pointer; font-size: 13.5px; color: #444; margin-bottom: 2px; }
+  .msg-folder.active { background: #e8f5e9; color: #0f6b3d; font-weight: 700; }
+  .msg-cnt { background: #1a9e5c; color: #fff; font-size: 10.5px; font-weight: 700; border-radius: 10px; padding: 1px 7px; }
+  .msg-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .msg-main-head { padding: 14px 20px; border-bottom: 1px solid #e8d5c4; font-weight: 700; font-size: 14px; }
+  .msg-thread-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #f0e6da; cursor: pointer; }
+  .msg-thread-row:hover { background: #fdf8f3; }
+  .msg-thread-row .dot { width: 8px; height: 8px; border-radius: 50%; background: #1a9e5c; flex-shrink: 0; }
+  .msg-thread-row .dot.read { background: transparent; }
+  .msg-thread-row .who { width: 190px; flex-shrink: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msg-thread-row .who.unread { font-weight: 700; }
+  .msg-thread-row .mid { flex: 1; min-width: 0; display: flex; gap: 8px; font-size: 13px; overflow: hidden; }
+  .msg-thread-row .subj { font-weight: 700; flex-shrink: 0; }
+  .msg-thread-row .subj.unread { color: #0f6b3d; }
+  .msg-thread-row .snippet { color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msg-thread-row .fecha { font-size: 11.5px; color: #999; width: 80px; text-align: right; flex-shrink: 0; }
+  .msg-grupo-tag { background: #EDE7F6; color: #5E35B1; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+  .msg-thread-view { padding: 20px; overflow-y: auto; flex: 1; }
+  .msg-thread-subject { font-size: 19px; font-weight: 700; margin-bottom: 14px; }
+  .msg-card { border: 1px solid #e8d5c4; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
+  .msg-card-head { display: flex; justify-content: space-between; align-items: center; background: #fdf8f3; padding: 10px 16px; font-size: 12.5px; }
+  .msg-card-head .de { font-weight: 700; }
+  .msg-card-head .para { color: #888; font-size: 11.5px; margin-top: 2px; }
+  .msg-card-body { padding: 14px 16px; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
+  .msg-archivo-adjunto { margin-top: 8px; display: flex; align-items: center; gap: 8px; background: #f6fbf8; border: 1px solid #cfe8d9; border-radius: 9px; padding: 8px 12px; font-size: 12.5px; width: fit-content; }
+  .msg-archivo-adjunto a { color: #0f6b3d; text-decoration: none; font-weight: 600; }
+  .msg-btn-responder { background: #fff; border: 1.5px solid #1a9e5c; color: #1a9e5c; font-weight: 700; padding: 9px 18px; border-radius: 20px; cursor: pointer; font-size: 13px; font-family: inherit; }
+  .msg-compose { padding: 20px; }
+  .msg-field { margin-bottom: 12px; }
+  .msg-field label { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 5px; }
+  .msg-chips-box { border: 1px solid #e8d5c4; border-radius: 9px; padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 42px; }
+  .msg-chip { background: #e8f5e9; color: #0f6b3d; border-radius: 14px; padding: 4px 10px 4px 12px; font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+  .msg-chip.grupo { background: #EDE7F6; color: #5E35B1; }
+  .msg-chip .x { cursor: pointer; font-weight: 700; opacity: .6; }
+  .msg-chip .x:hover { opacity: 1; }
+  .msg-picker-input { border: none; outline: none; flex: 1; min-width: 140px; font-size: 13px; font-family: inherit; padding: 4px; }
+  .msg-picker-list { position: relative; }
+  .msg-picker-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #e8d5c4; border-radius: 9px; box-shadow: 0 6px 18px rgba(0,0,0,.1); z-index: 20; max-height: 220px; overflow-y: auto; margin-top: 4px; }
+  .msg-picker-opt { padding: 8px 12px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .msg-picker-opt:hover { background: #fdf8f3; }
+  .msg-picker-opt .tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; flex-shrink: 0; }
+  .msg-picker-opt .tag.persona { background: #e8f5e9; color: #0f6b3d; }
+  .msg-picker-opt .tag.grupo { background: #EDE7F6; color: #5E35B1; }
+  .msg-compose input[type=text], .msg-compose textarea, .msg-thread-view textarea { width: 100%; padding: 10px 12px; border-radius: 9px; border: 1px solid #e8d5c4; font-family: inherit; font-size: 13.5px; box-sizing: border-box; }
+  .msg-compose textarea { resize: vertical; }
+  .msg-btn-enviar { background: #1a9e5c; color: #fff; border: none; border-radius: 20px; padding: 10px 22px; font-weight: 700; font-size: 13.5px; cursor: pointer; font-family: inherit; }
+  .msg-btn-cancelar { background: none; border: none; color: #888; padding: 10px 14px; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .msg-empty { text-align: center; color: rgba(0,0,0,.3); padding: 60px 20px; font-size: 13.5px; }
+  .msg-btn-volver { display: none; background: none; border: none; color: #1a9e5c; font-weight: 700; font-size: 13.5px; cursor: pointer; padding: 4px 0 10px; font-family: inherit; }
+  .msg-adjuntar-zona { border: 2px dashed #e8d5c4; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; background: #fdf8f3; }
+  .msg-adjuntar-zona:hover { background: #fbf1e6; border-color: #d8b892; }
+  .msg-adjuntar-zona .icono { font-size: 22px; }
+  .msg-adjuntar-zona .txt { font-size: 12.5px; font-weight: 700; margin-top: 4px; }
+  .msg-adjuntar-zona .sub { font-size: 11px; color: #999; margin-top: 2px; }
+  .msg-archivo-chip { display: flex; align-items: center; justify-content: space-between; background: #e8f5e9; border: 1px solid #cfe8d9; border-radius: 9px; padding: 8px 12px; font-size: 12.5px; margin-top: 8px; }
+  .msg-archivo-chip .nom { display: flex; align-items: center; gap: 8px; overflow: hidden; }
+  .msg-archivo-chip .nom b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .msg-archivo-chip .peso { color: #888; flex-shrink: 0; margin-left: 8px; }
+  .msg-archivo-chip .x { cursor: pointer; font-weight: 700; opacity: .6; margin-left: 10px; flex-shrink: 0; }
+  .msg-archivo-chip .x:hover { opacity: 1; }
+
+  @media (max-width: 760px) {
+    .msg-app { min-height: calc(100vh - 220px); border-radius: 10px; }
+    .msg-sidebar { width: 100%; display: flex; align-items: center; gap: 8px; padding: 10px; border-right: none; border-bottom: 1px solid #e8d5c4; overflow-x: auto; }
+    .msg-btn-redactar { width: auto; flex-shrink: 0; margin-bottom: 0; padding: 9px 16px; white-space: nowrap; }
+    .msg-folder { flex-shrink: 0; white-space: nowrap; margin-bottom: 0; }
+    .msg-app { flex-direction: column; }
+    .msg-app.msg-vista-completa .msg-sidebar { display: none; }
+    .msg-app.msg-vista-completa .msg-btn-volver { display: inline-block; }
+    .msg-main-head { padding: 10px 14px; font-size: 13px; }
+    .msg-thread-row { padding: 12px 14px; flex-wrap: wrap; }
+    .msg-thread-row .who { width: auto; max-width: 55%; }
+    .msg-thread-row .mid { width: 100%; order: 3; margin-top: 4px; }
+    .msg-thread-row .fecha { margin-left: auto; }
+    .msg-compose, .msg-thread-view { padding: 14px; }
+    .msg-thread-subject { font-size: 16px; }
+    .msg-chips-box { min-height: 46px; }
+  }
+</style>
 <div id="sec-mensajes" class="section">
-  <div style="display:flex;height:calc(100vh - 120px);min-height:500px;overflow:hidden">
-
-    <!-- Columna izquierda: canales + conversaciones -->
-    <div id="msg-sidebar" style="width:260px;min-width:200px;border-right:0.5px solid var(--color-border-secondary);display:flex;flex-direction:column;background:var(--color-background-secondary);flex-shrink:0">
-
-      <!-- Canales grupales -->
-      <div style="padding:12px 14px 6px;font-size:10px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px">Canales</div>
-      <div id="msg-canales" style="flex-shrink:0"></div>
-
-      <!-- Mensajes privados -->
-      <div style="padding:12px 14px 6px;font-size:10px;font-weight:700;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.5px;display:flex;justify-content:space-between;align-items:center">
-        <span>Privados</span>
-        <button onclick="abrirNuevoPrivado()" title="Nuevo mensaje privado"
-          style="background:none;border:none;cursor:pointer;color:#1a9e5c;font-size:16px;padding:0;line-height:1">+</button>
-      </div>
-      <div id="msg-privados" style="flex:1;overflow-y:auto"></div>
+  <div class="msg-app" id="msg-app-box">
+    <div class="msg-sidebar">
+      <button class="msg-btn-redactar" onclick="msgMostrarCompose()">✏️ Redactar</button>
+      <div class="msg-folder active" id="msg-folder-recibidos" onclick="msgMostrarFolder('recibidos')">📥 Recibidos <span class="msg-cnt" id="msg-cnt-no-leidos" style="display:none">0</span></div>
+      <div class="msg-folder" id="msg-folder-enviados" onclick="msgMostrarFolder('enviados')">📤 Enviados</div>
     </div>
-
-    <!-- Columna derecha: chat activo -->
-    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
-
-      <!-- Header del chat -->
-      <div id="msg-chat-header" style="padding:12px 16px;border-bottom:0.5px solid var(--color-border-secondary);display:flex;align-items:center;gap:10px;background:var(--color-background-primary);flex-shrink:0">
-        <div id="msg-chat-icon" style="font-size:20px">💬</div>
-        <div>
-          <div id="msg-chat-title" style="font-weight:600;font-size:14px;color:var(--color-text-primary)">Seleccioná una conversación</div>
-          <div id="msg-chat-sub" style="font-size:11px;color:var(--color-text-tertiary)"></div>
-        </div>
-      </div>
-
-      <!-- Mensajes -->
-      <div id="msg-chat-body" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
-        <div style="text-align:center;color:var(--color-text-tertiary);font-size:13px;margin:auto">
-          Seleccioná un canal o conversación para empezar.
-        </div>
-      </div>
-
-      <!-- Input mensaje -->
-      <div id="msg-input-wrap" style="padding:12px 16px;border-top:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);display:none">
-        <!-- Link adjunto (opcional) -->
-        <div id="msg-link-wrap" style="display:none;margin-bottom:8px;display:flex;gap:8px;align-items:center">
-          <input type="text" id="msg-link-input" placeholder="🔗 Pegá un link de Drive, OneDrive, etc. (opcional)"
-            style="flex:1;font-size:12px;padding:6px 10px;border-radius:8px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
-          <button onclick="document.getElementById('msg-link-wrap').style.display='none';document.getElementById('msg-link-input').value=''"
-            style="background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:16px">✕</button>
-        </div>
-        <!-- Texto + botones -->
-        <div style="display:flex;gap:8px;align-items:flex-end">
-          <div style="flex:1;position:relative">
-            <textarea id="msg-texto" placeholder="Escribí tu mensaje…" rows="1"
-              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
-              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarMensaje();}"
-              style="width:100%;padding:10px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;resize:none;box-sizing:border-box;line-height:1.4"></textarea>
-          </div>
-          <!-- Emoji picker trigger -->
-          <div style="position:relative">
-            <button id="btn-emoji" onclick="toggleEmojiPicker()"
-              style="padding:9px 10px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;font-size:16px;line-height:1">😊</button>
-            <div id="emoji-picker" style="display:none;position:absolute;bottom:44px;right:0;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:12px;padding:8px;width:220px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.15)">
-              <div style="display:flex;flex-wrap:wrap;gap:4px">
-                <script>
-                ['😊','😂','👍','❤️','👏','🙏','✅','⚠️','📌','📎','📄','📅','🏫','✏️','📚','💡','🔔','📢','👋','😅','🤔','💪','🎉','😔','🙄','😤','👀','🤝','📞','💬'].forEach(e => {
-                  document.write('<button onclick="insertEmoji(\''+e+'\')" style="background:none;border:none;cursor:pointer;font-size:18px;padding:3px;border-radius:6px;line-height:1" onmouseover="this.style.background=\'var(--color-background-secondary)\'" onmouseout="this.style.background=\'none\'">'+e+'</button>');
-                });
-                </script>
-              </div>
-            </div>
-          </div>
-          <!-- Adjuntar link -->
-          <button onclick="document.getElementById('msg-link-wrap').style.display='flex'"
-            style="padding:9px 10px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);cursor:pointer;font-size:16px;line-height:1" title="Adjuntar link">🔗</button>
-          <!-- Enviar -->
-          <button onclick="enviarMensaje()" id="btn-enviar-msg"
-            style="padding:9px 16px;border-radius:10px;border:none;background:#1a9e5c;color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;line-height:1">Enviar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal nuevo privado -->
-  <div id="modal-nuevo-privado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center">
-    <div style="background:var(--color-background-primary);border-radius:16px;padding:24px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-      <h3 style="margin:0 0 16px;font-size:16px;color:var(--color-text-primary)">Nuevo mensaje privado</h3>
-      <label style="font-size:11px;font-weight:600;color:var(--color-text-secondary);display:block;margin-bottom:6px">Para</label>
-      <input type="text" id="buscar-usuario-privado" placeholder="Buscar por nombre…" oninput="filtrarUsuariosPrivado()"
-        style="width:100%;padding:9px 12px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-family:inherit;font-size:13px;box-sizing:border-box;margin-bottom:8px"/>
-      <div id="lista-usuarios-privado" style="max-height:220px;overflow-y:auto;border:0.5px solid var(--color-border-secondary);border-radius:10px"></div>
-      <div style="display:flex;justify-content:flex-end;margin-top:16px">
-        <button onclick="cerrarNuevoPrivado()" style="padding:8px 18px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:none;color:var(--color-text-primary);cursor:pointer;font-family:inherit;font-size:13px">Cancelar</button>
-      </div>
+    <div class="msg-main">
+      <div class="msg-main-head" id="msg-main-head">📥 Recibidos</div>
+      <div id="msg-main-content"></div>
     </div>
   </div>
 </div>
 
-  <!-- ══════════════════════════════════════════════════════════
-       SECCIÓN BIBLIOTECA
-  ══════════════════════════════════════════════════════════ -->
   <div id="sec-biblioteca" class="section">
     <style>
       #sec-biblioteca .bib-tab-bar{display:flex;gap:6px;padding:14px 16px 0;border-bottom:0.5px solid var(--color-border-secondary);background:var(--color-background-primary)}
@@ -6235,6 +6234,273 @@ function infEnviarRespuesta(idSolicitud) {
     }
   }).catch(() => { btn.disabled = false; btn.textContent = 'Enviar informe'; showToast('Error de conexión', '❌'); });
 }
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//  MENSAJERÍA v2 — estilo correo (hilos, varios destinatarios, grupos,
+//  adjuntos). Reemplaza al chat anterior.
+// ═══════════════════════════════════════════════════════════════════════
+let msgFolderActual = 'recibidos';
+let msgDestinatariosCompose = [];
+let msgArchivoComposeActual = null; // { file, nombre, pesoTexto }
+let msgContactosCache = null;
+let msgGruposCache = null;
+
+function msgEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function msgFormatearPeso(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+}
+const MSG_LOADING = '<div class="msg-empty">⏳ Cargando...</div>';
+
+function msgMostrarFolder(folder) {
+  msgFolderActual = folder;
+  document.getElementById('msg-app-box').classList.remove('msg-vista-completa');
+  document.getElementById('msg-folder-recibidos').classList.toggle('active', folder === 'recibidos');
+  document.getElementById('msg-folder-enviados').classList.toggle('active', folder === 'enviados');
+  document.getElementById('msg-main-head').textContent = folder === 'recibidos' ? '📥 Recibidos' : '📤 Enviados';
+
+  const cont = document.getElementById('msg-main-content');
+  cont.innerHTML = MSG_LOADING;
+  callWebApp({ accion: 'msgListarHilos', usuario: currentUser, carpeta: folder }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = `<div class="msg-empty" style="color:#F44336">Error: ${msgEsc((res && res.error) || 'no se pudo cargar')}</div>`; return; }
+    if (!res.hilos.length) { cont.innerHTML = `<div class="msg-empty">No hay mensajes acá todavía.</div>`; return; }
+
+    cont.innerHTML = res.hilos.map(h => {
+      const remitente = folder === 'recibidos' ? h.deUltimo : 'Para: ' + h.paraLabelUltimo;
+      const unread = folder === 'recibidos' && !h.leido;
+      return `<div class="msg-thread-row" onclick="msgAbrirThread('${folder}','${h.idHilo}')">
+        <div class="dot ${unread ? '' : 'read'}"></div>
+        <div class="who ${unread ? 'unread' : ''}">${msgEsc(remitente)}${h.esGrupo ? '<span class="msg-grupo-tag">grupo</span>' : ''}</div>
+        <div class="mid">
+          <span class="subj ${unread ? 'unread' : ''}">${msgEsc(h.asunto)}</span>
+          <span class="snippet">— ${msgEsc(h.snippet)}</span>
+        </div>
+        <div class="fecha">${msgEsc(h.fecha)}</div>
+      </div>`;
+    }).join('');
+  }).catch(() => { cont.innerHTML = `<div class="msg-empty" style="color:#F44336">Error de conexión.</div>`; });
+}
+
+function msgAbrirThread(folder, idHilo) {
+  document.getElementById('msg-app-box').classList.add('msg-vista-completa');
+  const cont = document.getElementById('msg-main-content');
+  cont.innerHTML = MSG_LOADING;
+  callWebApp({ accion: 'msgAbrirHilo', usuario: currentUser, idHilo: idHilo }).then(res => {
+    if (!res || !res.ok) { cont.innerHTML = `<div class="msg-empty" style="color:#F44336">Error: ${msgEsc((res && res.error) || 'no se pudo abrir')}</div>`; return; }
+    if (folder === 'recibidos') actualizarBadgeMensajes();
+
+    let html = `<div class="msg-thread-view"><button class="msg-btn-volver" onclick="msgMostrarFolder('${folder}')">← Volver</button><div class="msg-thread-subject">${msgEsc(res.asunto)}</div>`;
+    res.mensajes.forEach(m => {
+      html += `<div class="msg-card">
+        <div class="msg-card-head">
+          <div><div class="de">${msgEsc(m.deNombre)}</div><div class="para">Para: ${msgEsc(m.paraLabel)}</div></div>
+          <div style="color:#999">${msgEsc(m.fecha)}</div>
+        </div>
+        <div class="msg-card-body">${msgEsc(m.cuerpo)}${m.archivoURL ? `<div class="msg-archivo-adjunto">📎 <a href="${m.archivoURL}" target="_blank">${msgEsc(m.archivoNombre)}</a></div>` : ''}</div>
+      </div>`;
+    });
+    html += `<button class="msg-btn-responder" onclick="msgAbrirRespuesta('${idHilo}')">↩️ Responder</button><div id="msg-respuesta-box"></div></div>`;
+    cont.innerHTML = html;
+  }).catch(() => { cont.innerHTML = `<div class="msg-empty" style="color:#F44336">Error de conexión.</div>`; });
+}
+
+function msgAbrirRespuesta(idHilo) {
+  document.getElementById('msg-respuesta-box').innerHTML = `
+    <div style="margin-top:14px;border-top:1px solid #e8d5c4;padding-top:14px">
+      <div class="msg-field"><textarea id="msg-resp-cuerpo" rows="4" placeholder="Escribí tu respuesta..."></textarea></div>
+      <button class="msg-btn-enviar" id="msg-resp-btn" onclick="msgEnviarRespuesta('${idHilo}')">Enviar respuesta</button>
+    </div>`;
+  document.getElementById('msg-resp-cuerpo').focus();
+}
+
+function msgEnviarRespuesta(idHilo) {
+  const cuerpo = document.getElementById('msg-resp-cuerpo').value.trim();
+  if (!cuerpo) { showToast('Escribí algo antes de enviar', '⚠️'); return; }
+
+  // Responder: mismos destinatarios que el hilo (se resuelve del lado del
+  // servidor con el último mensaje recibido — acá mandamos "responder" con
+  // el remitente/participantes ya conocidos a través del hilo abierto).
+  const btn = document.getElementById('msg-resp-btn');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  callWebApp({ accion: 'msgAbrirHilo', usuario: currentUser, idHilo: idHilo }).then(resHilo => {
+    if (!resHilo || !resHilo.ok || !resHilo.mensajes.length) { showToast('No se pudo responder', '❌'); btn.disabled = false; btn.textContent = 'Enviar respuesta'; return; }
+    const ultimo = resHilo.mensajes[resHilo.mensajes.length - 1];
+    const destinatarios = ultimo.de === currentUser ? ultimo.paraUsuarios : [ultimo.de];
+    return callWebApp({
+      accion: 'msgEnviar', usuario: currentUser, nombreUsuario: currentNombre,
+      destinatarios: destinatarios, asunto: resHilo.asunto, cuerpo: cuerpo,
+      idHiloExistente: idHilo
+    });
+  }).then(res => {
+    if (res && res.ok) { showToast('Respuesta enviada ✅', '✉️'); msgAbrirThread(msgFolderActual, idHilo); }
+    else { btn.disabled = false; btn.textContent = 'Enviar respuesta'; showToast('Error: ' + ((res && res.error) || 'no se pudo enviar'), '❌'); }
+  }).catch(() => { btn.disabled = false; btn.textContent = 'Enviar respuesta'; showToast('Error de conexión', '❌'); });
+}
+
+// ─────────────────────────── Redactar ───────────────────────────
+function msgMostrarCompose() {
+  msgDestinatariosCompose = [];
+  msgArchivoComposeActual = null;
+  document.getElementById('msg-app-box').classList.add('msg-vista-completa');
+  document.getElementById('msg-folder-recibidos').classList.remove('active');
+  document.getElementById('msg-folder-enviados').classList.remove('active');
+  document.getElementById('msg-main-head').textContent = '✏️ Redactar';
+  document.getElementById('msg-main-content').innerHTML = `
+    <div class="msg-compose">
+      <button class="msg-btn-volver" onclick="msgMostrarFolder('${msgFolderActual}')">← Volver</button>
+      <div class="msg-field">
+        <label>Para</label>
+        <div class="msg-picker-list">
+          <div class="msg-chips-box" id="msg-chips-box" onclick="document.getElementById('msg-picker-input').focus()">
+            <input type="text" class="msg-picker-input" id="msg-picker-input" placeholder="Buscar persona o grupo..." oninput="msgFiltrarPicker(this.value)" onfocus="msgFiltrarPicker(this.value)">
+          </div>
+          <div class="msg-picker-dropdown" id="msg-picker-dropdown" style="display:none"></div>
+        </div>
+      </div>
+      <div class="msg-field"><label>Asunto</label><input type="text" id="msg-compose-asunto" placeholder="Asunto del mensaje"></div>
+      <div class="msg-field"><label>Mensaje</label><textarea id="msg-compose-cuerpo" rows="6" placeholder="Escribí tu mensaje..."></textarea></div>
+      <div class="msg-field">
+        <label>Adjuntar archivo (opcional)</label>
+        <div id="msg-compose-archivo-zona"></div>
+        <input type="file" id="msg-compose-archivo-input" style="display:none" onchange="msgArchivoSeleccionado(this)">
+      </div>
+      <button class="msg-btn-enviar" id="msg-btn-enviar-nuevo" onclick="msgEnviarNuevo()">Enviar</button>
+      <button class="msg-btn-cancelar" onclick="msgMostrarFolder('${msgFolderActual}')">Cancelar</button>
+    </div>`;
+  msgRenderArchivoZona();
+
+  if (msgContactosCache) return; // ya cargados en esta sesión
+  callWebApp({ accion: 'msgContactosYGrupos', usuario: currentUser }).then(res => {
+    if (res && res.ok) { msgContactosCache = res.personas; msgGruposCache = res.grupos; }
+  });
+}
+
+function msgNombrePorId(id) {
+  if (String(id).indexOf('g-') === 0) {
+    const g = (msgGruposCache || []).find(x => x.id === id);
+    return '👥 ' + (g ? g.nombre : id);
+  }
+  const p = (msgContactosCache || []).find(x => x.id === id);
+  return p ? p.nombre : id;
+}
+
+function msgFiltrarPicker(q) {
+  q = q.toLowerCase().trim();
+  const dd = document.getElementById('msg-picker-dropdown');
+  if (!msgContactosCache) { dd.style.display = 'none'; return; }
+  const yaElegidos = msgDestinatariosCompose;
+  const opciones = [
+    ...(msgGruposCache || []).filter(g => yaElegidos.indexOf(g.id) === -1).map(g => ({ id: g.id, nombre: g.nombre, tipo: 'grupo' })),
+    ...(msgContactosCache || []).filter(c => yaElegidos.indexOf(c.id) === -1).map(c => ({ id: c.id, nombre: c.nombre + (c.rol ? ' — ' + c.rol : ''), tipo: 'persona' }))
+  ].filter(o => o.nombre.toLowerCase().indexOf(q) !== -1);
+
+  if (opciones.length === 0) { dd.style.display = 'none'; return; }
+  dd.innerHTML = opciones.map(o => `<div class="msg-picker-opt" onclick="msgElegirDestinatario('${o.id}')"><span class="tag ${o.tipo}">${o.tipo === 'grupo' ? '👥 grupo' : 'persona'}</span> ${msgEsc(o.nombre)}</div>`).join('');
+  dd.style.display = 'block';
+}
+
+function msgElegirDestinatario(id) {
+  msgDestinatariosCompose.push(id);
+  document.getElementById('msg-picker-input').value = '';
+  document.getElementById('msg-picker-dropdown').style.display = 'none';
+  msgRenderChips();
+}
+
+function msgQuitarDestinatario(id) {
+  msgDestinatariosCompose = msgDestinatariosCompose.filter(x => x !== id);
+  msgRenderChips();
+}
+
+function msgRenderChips() {
+  const box = document.getElementById('msg-chips-box');
+  const input = document.getElementById('msg-picker-input');
+  box.querySelectorAll('.msg-chip').forEach(c => c.remove());
+  msgDestinatariosCompose.forEach(id => {
+    const esGrupo = String(id).indexOf('g-') === 0;
+    const chip = document.createElement('div');
+    chip.className = 'msg-chip' + (esGrupo ? ' grupo' : '');
+    chip.innerHTML = `${msgEsc(msgNombrePorId(id))} <span class="x" onclick="msgQuitarDestinatario('${id}')">✕</span>`;
+    box.insertBefore(chip, input);
+  });
+}
+
+function msgArchivoSeleccionado(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('El archivo supera los 10MB', '❌'); input.value = ''; return; }
+  msgArchivoComposeActual = { file: file, nombre: file.name, pesoTexto: msgFormatearPeso(file.size) };
+  msgRenderArchivoZona();
+}
+
+function msgQuitarArchivoCompose() {
+  msgArchivoComposeActual = null;
+  const input = document.getElementById('msg-compose-archivo-input');
+  if (input) input.value = '';
+  msgRenderArchivoZona();
+}
+
+function msgRenderArchivoZona() {
+  const cont = document.getElementById('msg-compose-archivo-zona');
+  if (!cont) return;
+  if (!msgArchivoComposeActual) {
+    cont.innerHTML = `<div class="msg-adjuntar-zona" onclick="document.getElementById('msg-compose-archivo-input').click()">
+      <div class="icono">📎</div><div class="txt">Hacé click para seleccionar un archivo</div>
+      <div class="sub">PDF, Word, Excel, imágenes — máx. 10MB</div>
+    </div>`;
+  } else {
+    cont.innerHTML = `<div class="msg-archivo-chip">
+      <div class="nom"><span>📄</span><b>${msgEsc(msgArchivoComposeActual.nombre)}</b></div>
+      <div style="display:flex;align-items:center"><span class="peso">${msgArchivoComposeActual.pesoTexto}</span><span class="x" onclick="msgQuitarArchivoCompose()">✕</span></div>
+    </div>`;
+  }
+}
+
+function msgEnviarNuevo() {
+  if (msgDestinatariosCompose.length === 0) { showToast('Elegí al menos un destinatario', '⚠️'); return; }
+  const asunto = document.getElementById('msg-compose-asunto').value.trim();
+  const cuerpo = document.getElementById('msg-compose-cuerpo').value.trim();
+  if (!asunto) { showToast('Escribí un asunto', '⚠️'); return; }
+  if (!cuerpo) { showToast('Escribí el mensaje', '⚠️'); return; }
+
+  const btn = document.getElementById('msg-btn-enviar-nuevo');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
+  const destinatarios = msgDestinatariosCompose.slice();
+  const terminarEnvio = (archivoNombre, archivoURL) => {
+    callWebApp({
+      accion: 'msgEnviar', usuario: currentUser, nombreUsuario: currentNombre,
+      destinatarios: destinatarios, asunto: asunto, cuerpo: cuerpo,
+      archivoNombre: archivoNombre || '', archivoURL: archivoURL || ''
+    }).then(res => {
+      btn.disabled = false; btn.textContent = 'Enviar';
+      if (res && res.ok) { showToast('Mensaje enviado ✅', '✉️'); msgMostrarFolder('enviados'); }
+      else { showToast('Error: ' + ((res && res.error) || 'no se pudo enviar'), '❌'); }
+    }).catch(() => { btn.disabled = false; btn.textContent = 'Enviar'; showToast('Error de conexión', '❌'); });
+  };
+
+  if (!msgArchivoComposeActual) { terminarEnvio('', ''); return; }
+
+  btn.textContent = 'Subiendo adjunto...';
+  const reader = new FileReader();
+  reader.onload = () => {
+    const base64 = reader.result.split(',')[1];
+    callWebApp({ accion: 'msgSubirArchivo', contenido: base64, nombre: msgArchivoComposeActual.nombre, mime: msgArchivoComposeActual.file.type || 'application/octet-stream' })
+      .then(resArch => {
+        if (resArch && resArch.ok) { btn.textContent = 'Enviando...'; terminarEnvio(resArch.nombre, resArch.url); }
+        else { btn.disabled = false; btn.textContent = 'Enviar'; showToast('Error al subir el adjunto: ' + ((resArch && resArch.error) || ''), '❌'); }
+      }).catch(() => { btn.disabled = false; btn.textContent = 'Enviar'; showToast('Error de conexión al subir el adjunto', '❌'); });
+  };
+  reader.onerror = () => { btn.disabled = false; btn.textContent = 'Enviar'; showToast('Error al leer el archivo', '❌'); };
+  reader.readAsDataURL(msgArchivoComposeActual.file);
+}
+
+// Cerrar el desplegable de destinatarios si se hace click afuera
+document.addEventListener('click', (e) => {
+  const dd = document.getElementById('msg-picker-dropdown');
+  if (dd && dd.style.display !== 'none' && !e.target.closest('.msg-picker-list')) dd.style.display = 'none';
+});
 
 
 function generarInformeInasistencias() {
@@ -9323,36 +9589,11 @@ const MSG_CANALES = [
 ];
 
 function inicializarMensajes() {
-  renderCanales();
-  cargarUsuariosMensajeria();
-  cargarConversacionesPrivadas();
+  msgMostrarFolder('recibidos');
   actualizarBadgeMensajes();
-  // Abrir conversación desde link de email (#msg:tipo:conv_id:nombre)
-  const hash = window.location.hash;
-  if (hash.startsWith('#msg:')) {
-    const partes = hash.substring(5).split(':');
-    const tipo   = partes[0]; // 'canal' o 'privado'
-    const convId = partes[1];
-    const nombre = (partes[2]||'').replace(/_/g,' ');
-    setTimeout(() => {
-      if (tipo === 'canal') {
-        abrirConvCanal(convId);
-      } else if (tipo === 'privado' && convId) {
-        // Extraer el usuario del conv_id (priv_userA_userB)
-        const ids = convId.replace('priv_','').split('_');
-        const otroId = ids.find(id => id !== currentUser) || ids[1];
-        abrirConvPrivada(convId, nombre || otroId, otroId);
-      }
-      // Limpiar hash de la URL
-      history.replaceState(null, '', window.location.pathname);
-    }, 1500); // esperar a que cargue la sesión
-  }
-  // Polling cada 30 seg mientras el tab está abierto
+  // Avisos de no leídos cada 30 seg mientras el tab está abierto
   if (_msgPollTimer) clearInterval(_msgPollTimer);
-  _msgPollTimer = setInterval(() => {
-    if (_msgConvActual) cargarMensajesActual(false);
-    actualizarBadgeMensajes();
-  }, 30000);
+  _msgPollTimer = setInterval(() => { actualizarBadgeMensajes(); }, 30000);
 }
 
 function rolEnCanal(canal) {
