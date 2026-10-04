@@ -546,6 +546,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-usuarios" onclick="showSection('usuarios',this)"><span class="nav-icon">👥</span> Usuarios</div>
       <div class="nav-item" id="nav-migracion" onclick="showSection('migracion',this)" style="display:none"><span class="nav-icon">🔄</span> Migración Ciclo Lectivo</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
+      <div class="nav-item" id="nav-trayectoria" onclick="showSection('trayectoria',this)" style="display:none"><span class="nav-icon">🎓</span> Trayectoria educativa</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
       <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this);if(!bibCargado)inicializarBiblioteca()" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
@@ -1805,6 +1806,65 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
 
     </div><!-- fin sec-eoe -->
+
+    <!-- TRAYECTORIA EDUCATIVA — registro acumulativo del alumno (6 años) -->
+    <div id="sec-trayectoria" class="section">
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-header"><h3>🎓 Trayectoria educativa</h3></div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+            <div class="form-group">
+              <label>Curso</label>
+              <select id="tray-curso" onchange="trayCargarAlumnos()" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"></select>
+            </div>
+            <div class="form-group">
+              <label>Alumno</label>
+              <select id="tray-alumno" onchange="trayElegirAlumno()" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px">
+                <option value="">— Primero seleccioná el curso —</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Formulario de carga rápida: aparece al elegir alumno -->
+          <div id="tray-form" style="display:none;margin-top:14px;padding-top:14px;border-top:1px dashed #e8d5c4">
+            <div id="tray-puede-cargar">
+              <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">¿Qué querés registrar?</div>
+              <div id="tray-chips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+              <textarea id="tray-desc" rows="3" placeholder="Escribí lo que sea importante para acompañar su trayectoria…" style="width:100%;padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px;resize:vertical"></textarea>
+              <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:10px">
+                <label id="tray-lbl-reservada" style="display:none;align-items:center;gap:6px;font-size:12px;color:#8a5a00;cursor:pointer">
+                  <input type="checkbox" id="tray-reservada"> 🔒 Reservada <span style="color:#aaa">(la ven Dirección, Vicedirección y EOE)</span>
+                </label>
+                <button class="btn-primary" onclick="trayGuardar()" style="max-width:180px;margin-left:auto">Guardar →</button>
+              </div>
+              
+            </div>
+            <div id="tray-solo-lectura" style="display:none;font-size:12px;color:#888">Tu rol puede consultar la trayectoria, pero no cargar registros.</div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px dashed #e8d5c4;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+              <button class="btn-primary" onclick="trayGenerarInforme()" style="max-width:220px">📄 Generar informe</button>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer"><input type="checkbox" id="tray-inf-res"> Incluir reservadas</label>
+              <label id="tray-inf-eoe-lbl" style="display:none;align-items:center;gap:6px;font-size:12px;color:#666;cursor:pointer"><input type="checkbox" id="tray-inf-eoe"> Incluir detalle del EOE</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Línea de tiempo del alumno -->
+      <div id="tray-filtros" style="display:none;margin-bottom:12px;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="tray-filtro-cat" onchange="trayRender()" style="padding:8px 14px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px">
+          <option value="">Todas las categorías</option>
+          <option value="convivencia">🤝 Convivencia / conducta</option>
+          <option value="familiar">👨‍👩‍👧 Situación familiar</option>
+          <option value="academico">📚 Académico / pedagógico</option>
+          <option value="logro">🏆 Logro o reconocimiento</option>
+        </select>
+        <span id="tray-contador" style="font-size:12px;color:#888"></span>
+      </div>
+      <div id="tray-lista">
+        <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">Elegí un curso y un alumno para ver o cargar su trayectoria.</div>
+      </div>
+    </div><!-- fin sec-trayectoria -->
+
 
   <div id="sec-banos" class="section">
   <style>
@@ -3474,8 +3534,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -3683,6 +3743,8 @@ function buildBottomNav(role) {
     }
     if (isAdmin || isEOE)
       items.push({ id: 'eoe', icon: '🧠', label: 'EOE' });
+    if (['preceptor','director','vicedirector','secretary','secretario','eoe'].includes(role))
+      items.push({ id: 'trayectoria', icon: '🎓', label: 'Trayectoria' });
   }
 
   const inner = document.getElementById('bottom-nav-inner');
@@ -3781,6 +3843,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-usuarios').style.display  = isAdmin ? 'flex' : 'none';
   document.getElementById('nav-migracion').style.display = isDirectorEstricto ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
+  document.getElementById('nav-trayectoria').style.display = ['preceptor','director','vicedirector','secretary','secretario','eoe'].includes(role) ? 'flex' : 'none';
   document.getElementById('nav-banos').style.display     = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navSeg = document.getElementById('nav-seguimiento-faltas');
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
@@ -3844,6 +3907,7 @@ function showSection(id,el){
   if(id === 'asistencia') setupAsistencia();
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
+  if(id === 'trayectoria') trayInicializar();
   if(id === 'seguimiento-faltas') inicializarSeguimiento();
   if(id === 'agenda') { renderizarAgenda(); }
   const btnSubir = document.getElementById('btn-subir-topbar');
@@ -3945,6 +4009,331 @@ function filtrarMural(curso, el) {
         </div>
       </div>`).join('');
   });
+}
+
+// ── TRAYECTORIA EDUCATIVA ──────────────────────────────────────────────
+const TRAY_CATS = {
+  convivencia: { label:'🤝 Convivencia / conducta',   color:'#e3f2fd' },
+  familiar:    { label:'👨‍👩‍👧 Situación familiar',      color:'#f3e5f5' },
+  academico:   { label:'📚 Académico / pedagógico',   color:'#fff3e0' },
+  logro:       { label:'🏆 Logro o reconocimiento',   color:'#e8f5e9' }
+};
+let _trayCat = 'convivencia';
+let _trayRegistros = [];
+let _trayAlumnoSel = null;
+
+function _trayEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function trayPuedeCargar()    { return ['preceptor','director','vicedirector','secretary','secretario'].includes(currentRole); }
+function trayPuedeVer()       { return trayPuedeCargar() || currentRole === 'eoe'; }
+function trayEsDireccion()    { return ['director','vicedirector'].includes(currentRole); }
+
+function trayInicializar() {
+  const selC = document.getElementById('tray-curso');
+  if (selC && selC.options.length === 0) {
+    const TODOS = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+    const cursos = (currentRole === 'preceptor' && currentCursos.length) ? currentCursos.map(c => String(c).replace(/[°\s]/g,'').toUpperCase()) : TODOS;
+    selC.innerHTML = '<option value="">— Seleccioná —</option>' + cursos.map(c => `<option value="${c}">${c.charAt(0)}°${c.slice(1)}</option>`).join('');
+  }
+  const chips = document.getElementById('tray-chips');
+  if (chips && !chips.children.length) {
+    chips.innerHTML = Object.keys(TRAY_CATS).map(k =>
+      `<button type="button" data-cat="${k}" onclick="trayElegirCat('${k}')" style="padding:7px 12px;border-radius:99px;border:1.5px solid #ddd;background:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer">${TRAY_CATS[k].label}</button>`).join('');
+  }
+  trayElegirCat(_trayCat);
+  const lblEoe = document.getElementById('tray-inf-eoe-lbl');
+  if (lblEoe) lblEoe.style.display = trayVeEOEenInforme() ? 'flex' : 'none';
+  const lbl = document.getElementById('tray-lbl-reservada');
+  if (lbl) lbl.style.display = trayPuedeCargar() ? 'flex' : 'none';
+  const cargar = document.getElementById('tray-puede-cargar');
+  const lect = document.getElementById('tray-solo-lectura');
+  if (cargar) cargar.style.display = trayPuedeCargar() ? 'block' : 'none';
+  if (lect) lect.style.display = trayPuedeCargar() ? 'none' : 'block';
+  const chk = document.getElementById('tray-reservada');
+  if (chk && !chk._bound) {
+    chk._bound = true;
+    chk.addEventListener('change', () => {
+      const av = document.getElementById('tray-aviso-reservada');
+      if (av) av.style.display = 'none';
+    });
+  }
+}
+
+function trayElegirCat(k) {
+  _trayCat = k;
+  document.querySelectorAll('#tray-chips button').forEach(b => {
+    const on = b.dataset.cat === k;
+    b.style.background  = on ? TRAY_CATS[k].color : '#fff';
+    b.style.borderColor = on ? '#555' : '#ddd';
+  });
+}
+
+function trayCargarAlumnos() {
+  const curso = document.getElementById('tray-curso').value;
+  const sel = document.getElementById('tray-alumno');
+  _trayAlumnoSel = null;
+  document.getElementById('tray-form').style.display = 'none';
+  document.getElementById('tray-filtros').style.display = 'none';
+  if (!curso) { sel.innerHTML = '<option value="">— Primero seleccioná el curso —</option>'; trayListarCurso(); return; }
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  callWebApp({ accion:'obtenerAlumnosCurso', curso }).then(res => {
+    if (!res?.ok || !res.alumnos?.length) { sel.innerHTML = '<option value="">Sin alumnos para este curso</option>'; return; }
+    window._trayAlumnos = res.alumnos;
+    sel.innerHTML = '<option value="">— Seleccioná alumno —</option>' +
+      res.alumnos.map((a, i) => `<option value="${i}">${_trayEsc(a.nombre)}</option>`).join('');
+  }).catch(() => { sel.innerHTML = '<option value="">Error al cargar</option>'; });
+  trayListarCurso();
+}
+
+function trayElegirAlumno() {
+  const idx = document.getElementById('tray-alumno').value;
+  const form = document.getElementById('tray-form');
+  if (idx === '' || !window._trayAlumnos?.[idx]) { _trayAlumnoSel = null; form.style.display = 'none'; trayListarCurso(); return; }
+  _trayAlumnoSel = window._trayAlumnos[idx];
+  form.style.display = 'block';
+  trayInicializar();
+  trayCargarAlumno();
+}
+
+function trayCargarAlumno() {
+  const lista = document.getElementById('tray-lista');
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando trayectoria…</div>';
+  callWebApp({ accion:'obtenerTrayectoriaAlumno', legajo:_trayAlumnoSel.legajo, nombre:_trayAlumnoSel.nombre, rol:currentRole, usuario:currentUser }).then(res => {
+    if (!res?.ok) { lista.innerHTML = `<div style="text-align:center;padding:30px;color:#c62828;font-size:13px">${_trayEsc(res?.error || 'Error al cargar')}</div>`; return; }
+    _trayRegistros = res.registros || [];
+    document.getElementById('tray-filtros').style.display = 'flex';
+    trayRender();
+  }).catch(() => { lista.innerHTML = '<div style="text-align:center;padding:30px;color:#c62828;font-size:13px">Error de conexión</div>'; });
+}
+
+// Vista general del curso (cuando todavía no se eligió alumno)
+function trayListarCurso() {
+  const curso = document.getElementById('tray-curso')?.value || '';
+  const lista = document.getElementById('tray-lista');
+  if (!curso) { lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">Elegí un curso y un alumno para ver o cargar su trayectoria.</div>'; return; }
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando últimos registros del curso…</div>';
+  callWebApp({ accion:'listarTrayectoria', curso, categoria:'', anio:'', rol:currentRole, usuario:currentUser }).then(res => {
+    if (_trayAlumnoSel) return;
+    _trayRegistros = res?.registros || [];
+    document.getElementById('tray-filtros').style.display = 'flex';
+    trayRender(true);
+  });
+}
+
+function trayRender(vistaCurso) {
+  const lista = document.getElementById('tray-lista');
+  const cat = document.getElementById('tray-filtro-cat')?.value || '';
+  const regs = _trayRegistros.filter(r => !cat || r.categoria === cat);
+  const ctr = document.getElementById('tray-contador');
+  if (ctr) ctr.textContent = regs.length + ' registro(s)' + (_trayAlumnoSel ? ' · todos los años' : ' · últimos del curso');
+  if (!regs.length) { lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">📋 Todavía no hay registros.</div>'; return; }
+
+  const porAnio = {};
+  regs.forEach(r => { const a = r.anio || (r.fecha || '').slice(0,4) || 's/año'; (porAnio[a] = porAnio[a] || []).push(r); });
+  const anios = Object.keys(porAnio).sort((a,b) => b.localeCompare(a));
+
+  lista.innerHTML = anios.map(a => `
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+        <span style="background:#111;color:#fff;border-radius:99px;padding:2px 10px">${_trayEsc(a)}</span>
+        <span style="color:#aaa;font-weight:500">${[...new Set(porAnio[a].map(r => r.curso))].map(c => '' + _trayEsc(c)).join(' · ')}</span>
+      </div>
+      ${porAnio[a].map(r => {
+        const c = TRAY_CATS[r.categoria] || { label:r.categoria, color:'#fafafa' };
+        const f = r.fecha ? new Date(r.fecha + 'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+        const puedeTocar = trayPuedeCargar() && (r.autor === currentUser || trayEsDireccion());
+        return `<div class="tray-card" data-id="${_trayEsc(r.id)}" style="background:#fff;border:1px solid ${r.reservada ? '#ffcc80' : '#e8e8e8'};border-radius:10px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+            <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:${c.color};color:#555;font-weight:600">${c.label}</span>
+            ${r.reservada ? '<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#fff3e0;color:#8a5a00;font-weight:700">🔒 Reservada</span>' : ''}
+            ${vistaCurso ? `<span style="font-size:11px;font-weight:600;color:#333">${_trayEsc(r.alumno)}</span>` : ''}
+            <span style="font-size:10px;padding:2px 8px;border-radius:99px;background:#eee;color:#666;font-weight:600">${_trayEsc(String(r.curso).charAt(0))}°${_trayEsc(String(r.curso).slice(1))}</span>
+            ${puedeTocar ? `<span style="margin-left:auto;display:flex;gap:2px">
+              <button onclick="trayEditar('${_trayEsc(r.id)}')" title="Editar" style="padding:2px 6px;border:none;background:transparent;color:#888;font-size:12px;cursor:pointer">✏️</button>
+              <button onclick="trayEliminar('${_trayEsc(r.id)}')" title="Eliminar" style="padding:2px 6px;border:none;background:transparent;color:#e53935;font-size:12px;cursor:pointer">🗑️</button></span>` : ''}
+          </div>
+          <div style="font-size:13px;color:#222;line-height:1.6;white-space:pre-wrap">${_trayEsc(r.descripcion)}</div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px">
+            <span style="font-size:10px;color:#aaa">${_trayEsc(r.autorNombre || r.autor || '—')}</span>
+            <span style="font-size:10px;color:#bbb">${f}</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function trayGuardar() {
+  if (!_trayAlumnoSel) { showToast('Elegí el alumno','⚠️'); return; }
+  const curso = document.getElementById('tray-curso').value;
+  const desc = (document.getElementById('tray-desc').value || '').trim();
+  const reservada = !!document.getElementById('tray-reservada')?.checked;
+  if (!desc) { showToast('Escribí la descripción','⚠️'); return; }
+  showToast('Guardando...','⏳');
+  callWebApp({ accion:'crearTrayectoria', datos: {
+    legajo:_trayAlumnoSel.legajo, alumno:_trayAlumnoSel.nombre, curso, categoria:_trayCat, descripcion:desc,
+    reservada, autor:currentUser, autorNombre:currentNombre, rol:currentRole } }).then(res => {
+    if (res?.ok) {
+      showToast('Registrado en la trayectoria ✓','✅');
+      document.getElementById('tray-desc').value = '';
+      const chk = document.getElementById('tray-reservada'); if (chk) { chk.checked = false; chk.dispatchEvent(new Event('change')); }
+      trayCargarAlumno();
+    } else { showToast(res?.error || 'Error al guardar','❌'); }
+  }).catch(() => showToast('Error de conexión','❌'));
+}
+
+function trayEditar(id) {
+  const r = _trayRegistros.find(x => x.id === id);
+  const card = document.querySelector(`.tray-card[data-id="${id}"]`);
+  if (!r || !card) return;
+  const opts = Object.keys(TRAY_CATS).map(k => `<option value="${k}" ${k===r.categoria?'selected':''}>${TRAY_CATS[k].label}</option>`).join('');
+  card.innerHTML = `
+    <select id="tray-e-cat-${id}" style="width:100%;margin-bottom:8px;padding:6px 10px;border-radius:7px;border:1px solid #e0e0e0;font-family:inherit;font-size:12px;background:#fdf8f3">${opts}</select>
+    <textarea id="tray-e-desc-${id}" rows="4" style="width:100%;padding:8px 10px;border-radius:7px;border:1px solid #e0e0e0;font-family:inherit;font-size:13px;resize:vertical;background:#fdf8f3">${_trayEsc(r.descripcion)}</textarea>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#8a5a00;margin:8px 0"><input type="checkbox" id="tray-e-res-${id}" ${r.reservada?'checked':''}> 🔒 Reservada</label>
+    <div style="display:flex;gap:8px">
+      <button onclick="trayGuardarEdicion('${id}')" style="padding:6px 14px;border-radius:7px;border:none;background:#1a9e5c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Guardar</button>
+      <button onclick="trayRender(${!_trayAlumnoSel})" style="padding:6px 14px;border-radius:7px;border:none;background:#eee;color:#555;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+    </div>`;
+}
+
+function trayGuardarEdicion(id) {
+  const categoria = document.getElementById('tray-e-cat-'+id).value;
+  const descripcion = document.getElementById('tray-e-desc-'+id).value.trim();
+  const reservada = document.getElementById('tray-e-res-'+id).checked;
+  if (!descripcion) { showToast('La descripción no puede quedar vacía','⚠️'); return; }
+  callWebApp({ accion:'editarTrayectoria', id, categoria, descripcion, reservada, usuario:currentUser, rol:currentRole }).then(res => {
+    if (res?.ok) { showToast('Registro actualizado ✅','✏️'); _trayAlumnoSel ? trayCargarAlumno() : trayListarCurso(); }
+    else showToast(res?.error || 'No se pudo editar','❌');
+  });
+}
+
+function trayEliminar(id) {
+  if (!confirm('¿Eliminar este registro de la trayectoria?')) return;
+  callWebApp({ accion:'eliminarTrayectoria', id, usuario:currentUser, rol:currentRole }).then(res => {
+    if (res?.ok) { showToast('Registro eliminado ✅','🗑️'); _trayAlumnoSel ? trayCargarAlumno() : trayListarCurso(); }
+    else showToast(res?.error || 'No se pudo eliminar','❌');
+  });
+}
+
+// ── Informe combinado (Trayectoria + EOE) ──────────────────────────────
+const TRAY_EOE_TIPOS = {
+  convivencia:'🤝 Convivencia', academica:'📚 Problemática académica', familiar:'👨‍👩‍👧 Situación familiar',
+  salud:'🏥 Salud / Discapacidad', conducta:'⚠️ Conducta', cud:'♿ CUD / Terapia', otro:'📌 Otro'
+};
+function trayVeEOEenInforme() { return ['director','vicedirector','eoe'].includes(currentRole); }
+
+function trayGenerarInforme() {
+  if (!_trayAlumnoSel) { showToast('Elegí el alumno','⚠️'); return; }
+  const curso = document.getElementById('tray-curso').value;
+  const incRes = !!document.getElementById('tray-inf-res')?.checked;
+  const incEoe = !!document.getElementById('tray-inf-eoe')?.checked;
+  showToast('Preparando informe...','⏳');
+  callWebApp({ accion:'informeTrayectoriaAlumno', legajo:_trayAlumnoSel.legajo, nombre:_trayAlumnoSel.nombre, curso,
+               rol:currentRole, usuario:currentUser, incluirReservadas:incRes, incluirEOE:incEoe }).then(res => {
+    if (!res?.ok) { showToast(res?.error || 'No se pudo generar el informe','❌'); return; }
+    infAbrirPDF(trayHtmlInforme(res, _trayAlumnoSel, curso, incEoe), { alumno:_trayAlumnoSel.nombre });
+  }).catch(() => showToast('Error de conexión','❌'));
+}
+
+function trayHtmlInforme(res, alumno, curso, incEoe) {
+  const e = _trayEsc;
+  const hoy = new Date().toLocaleDateString('es-AR', { day:'numeric', month:'long', year:'numeric' });
+  const logo = typeof PM_LOGO !== 'undefined' ? PM_LOGO : '';
+  const cursoLindo = String(curso || '').replace(/([0-9]+)([A-Za-z]+)/, '$1° $2');
+  const fmt = f => f ? new Date(f + 'T12:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+  const tray = res.trayectoria || [];
+  const eoe = res.eoe || { permitido:false };
+  const aniosTray = [...new Set(tray.map(r => r.anio || (r.fecha || '').slice(0,4)).filter(Boolean))].sort();
+
+  const resumenTray = tray.length
+    ? `<span class="si">SÍ</span> — ${tray.length} registro(s)${aniosTray.length ? ' · años: ' + aniosTray.map(e).join(', ') : ''}`
+    : `<span class="no">NO</span> — sin registros`;
+  let filasResumen = `<tr><td class="l">Trayectoria educativa</td><td>${resumenTray}</td></tr>`;
+  if (eoe.permitido) {
+    const resumenEoe = eoe.cantidad
+      ? `<span class="si">SÍ</span> — ${eoe.cantidad} intervención(es)${eoe.anios.length ? ' · años: ' + eoe.anios.map(e).join(', ') : ''}`
+      : `<span class="no">NO</span> — sin seguimiento registrado`;
+    filasResumen += `<tr><td class="l">Seguimiento del EOE</td><td>${resumenEoe}</td></tr>`;
+  }
+
+  // Trayectoria agrupada por año (del más antiguo al más reciente)
+  const porAnio = {};
+  tray.forEach(r => { const a = r.anio || (r.fecha || '').slice(0,4) || 's/año'; (porAnio[a] = porAnio[a] || []).push(r); });
+  const bloqueTray = tray.length
+    ? Object.keys(porAnio).sort().map(a => `
+        <div class="anio"><span>${e(a)}</span></div>
+        ${porAnio[a].map(r => {
+          const c = TRAY_CATS[r.categoria] || { label: r.categoria };
+          return `<div class="reg">
+            <div class="reg-h"><b>${c.label}</b>${r.reservada ? ' <span class="res">🔒 Reservada</span>' : ''}
+              <span class="meta">${e(String(r.curso).charAt(0))}° ${e(String(r.curso).slice(1))} · ${fmt(r.fecha)}</span></div>
+            <div class="txt">${e(r.descripcion)}</div>
+            <div class="aut">Cargado por ${e(r.autorNombre || r.autor || '—')}</div>
+          </div>`;
+        }).join('')}`).join('')
+    : '<p class="vacio">No hay registros cargados en la trayectoria educativa de este alumno/a.</p>';
+
+  let bloqueEoe = '';
+  if (eoe.permitido) {
+    if (!eoe.cantidad) {
+      bloqueEoe = '<h2>Seguimiento del Equipo de Orientación Escolar</h2><p class="vacio">El alumno/a no tiene seguimiento registrado por el EOE.</p>';
+    } else if (incEoe && eoe.legajos?.length) {
+      bloqueEoe = '<h2>Seguimiento del Equipo de Orientación Escolar</h2>' + eoe.legajos.map(l => `
+        <div class="reg eoe">
+          <div class="reg-h"><b>${TRAY_EOE_TIPOS[l.tipo] || e(l.tipo)}</b><span class="meta">${e(l.anio)} · ${fmt(l.fecha)}</span></div>
+          <div class="txt">${e(l.descripcion)}</div>
+          <div class="aut">Registrado por ${e(l.autorNombre || '—')}</div>
+        </div>`).join('');
+    } else {
+      bloqueEoe = '<h2>Seguimiento del Equipo de Orientación Escolar</h2><p class="vacio">El alumno/a cuenta con seguimiento del EOE. El detalle no se incluye en este informe.</p>';
+    }
+  }
+
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Informe de trayectoria — ${e(alumno.nombre)}</title>
+<style>
+  @page { margin: 16mm; }
+  * { box-sizing:border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color:#1a1a1a; margin:0 auto; padding:24px; max-width:800px; font-size:12.5px; line-height:1.5; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .head { display:flex; align-items:center; gap:16px; border-bottom:3px solid #1a9e5c; padding-bottom:14px; margin-bottom:16px; }
+  .head img { width:70px; height:70px; object-fit:contain; }
+  .head h1 { margin:0 0 2px; font-size:17px; color:#1a9e5c; }
+  .head p { margin:0; font-size:12px; color:#777; }
+  .head .t { font-size:13px; font-weight:700; color:#333; margin-top:4px; }
+  table.meta, table.res { width:100%; border-collapse:collapse; margin-bottom:12px; }
+  table.meta td, table.res td { padding:6px 10px; border:1px solid #e8d5c4; font-size:12px; }
+  td.l { background:#fdf8f3; font-weight:700; width:26%; }
+  .si { color:#1a7a44; font-weight:700; } .no { color:#999; font-weight:700; }
+  h2 { font-size:13.5px; color:#1a9e5c; border-bottom:1px solid #e0f2e9; padding-bottom:4px; margin:20px 0 10px; text-transform:uppercase; letter-spacing:.5px; }
+  .anio { margin:14px 0 6px; } .anio span { background:#111; color:#fff; border-radius:99px; padding:2px 12px; font-size:11px; font-weight:700; }
+  .reg { border:1px solid #cfe0d6; border-radius:6px; padding:9px 13px; margin-bottom:8px; page-break-inside:avoid; }
+  .reg.eoe { border-color:#d9c9e8; }
+  .reg-h { display:flex; justify-content:space-between; gap:10px; margin-bottom:4px; font-size:12px; }
+  .meta { font-size:10.5px; color:#888; } .res { font-size:10.5px; background:#fff3e0; color:#8a5a00; padding:1px 8px; border-radius:99px; font-weight:700; }
+  .txt { white-space:pre-wrap; } .aut { font-size:10px; color:#aaa; margin-top:4px; text-align:right; }
+  .vacio { color:#888; font-style:italic; }
+  .pie { margin-top:24px; padding-top:10px; border-top:1px solid #eee; font-size:10.5px; color:#999; text-align:center; }
+  .btn-print { margin-bottom:14px; padding:8px 16px; border-radius:8px; border:1px solid #1a9e5c; background:#fff; color:#1a9e5c; cursor:pointer; font-weight:700; }
+  @media print { .btn-print { display:none; } }
+</style></head><body>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+  <div class="head">
+    ${logo ? `<img src="${logo}" alt="Logo" onerror="this.style.display='none'">` : ''}
+    <div>
+      <h1>Colegio Secundario "Perito Moreno"</h1>
+      <p>Tomás Valle 5662 — González Catán</p>
+      <p class="t">Informe de trayectoria del alumno/a — ${hoy}</p>
+    </div>
+  </div>
+  <table class="meta"><tr><td class="l">Alumno/a</td><td>${e(alumno.nombre)}</td><td class="l">Curso actual</td><td>${e(cursoLindo)}</td></tr>
+    ${alumno.legajo ? `<tr><td class="l">Legajo</td><td colspan="3">${e(alumno.legajo)}</td></tr>` : ''}</table>
+  <h2>Resumen</h2>
+  <table class="res">${filasResumen}</table>
+  <h2>Trayectoria educativa</h2>
+  ${bloqueTray}
+  ${bloqueEoe}
+  <div class="pie">Documento confidencial de uso interno — contiene información sobre un alumno/a. Emitido el ${hoy} por ${e(currentNombre || currentUser)}.</div>
+</body></html>`;
 }
 
 // ── EOE — Equipo de Orientación Escolar ────────────────────────────────
