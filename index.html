@@ -547,6 +547,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="nav-item" id="nav-migracion" onclick="showSection('migracion',this)" style="display:none"><span class="nav-icon">🔄</span> Migración Ciclo Lectivo</div>
       <div class="nav-item" id="nav-eoe" onclick="showSection('eoe',this)" style="display:none"><span class="nav-icon">🧠</span> Legajos EOE</div>
       <div class="nav-item" id="nav-trayectoria" onclick="showSection('trayectoria',this)" style="display:none"><span class="nav-icon">🎓</span> Trayectoria educativa</div>
+      <div class="nav-item" id="nav-ctrlasist" onclick="showSection('ctrlasist',this)" style="display:none"><span class="nav-icon">🗓️</span> Control de Asistencia</div>
       <div class="nav-item" id="nav-banos" onclick="showSection('banos',this)" style="display:none"><span class="nav-icon">🚽</span> Control de Baños</div>
       <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this);if(!bibCargado)inicializarBiblioteca()" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
@@ -1864,6 +1865,30 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         <div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">Elegí un curso y un alumno para ver o cargar su trayectoria.</div>
       </div>
     </div><!-- fin sec-trayectoria -->
+
+    <!-- CONTROL DE ASISTENCIA TOMADA — qué días tomó asistencia cada curso -->
+    <div id="sec-ctrlasist" class="section">
+      <div class="panel" style="margin-bottom:18px">
+        <div class="panel-header"><h3>🗓️ Control de asistencia tomada</h3></div>
+        <div class="panel-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+            <div class="form-group" style="margin:0"><label>Desde</label>
+              <input type="date" id="ct-desde" style="padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px"></div>
+            <div class="form-group" style="margin:0"><label>Hasta</label>
+              <input type="date" id="ct-hasta" style="padding:10px 13px;background:#fdf8f3;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px"></div>
+            <button class="btn-primary" onclick="ctCargar()" style="max-width:130px">Ver</button>
+            <button class="btn-primary" onclick="ctTodoElAnio()" style="max-width:150px;background:#fff;color:#1a9e5c;border:1px solid #1a9e5c">Todo el año</button>
+            <button class="btn-primary" onclick="ctImprimir()" style="max-width:190px;background:#fff;color:#1a9e5c;border:1px solid #1a9e5c">🖨️ Imprimir / PDF</button>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#666;margin-top:12px;cursor:pointer"><input type="checkbox" id="ct-solo" checked onchange="ctRerender()"> Mostrar en el detalle solo los días con diferencias</label>
+          <div style="font-size:11.5px;color:#888;margin-top:8px;line-height:1.6">
+            Se toma como <b>día de referencia</b> cada día hábil en que al menos la mitad de los cursos tomó asistencia (≥ 80% de los alumnos).
+            A cada curso se le marca como <b style="color:#c62828">falta</b> cada día de referencia que no tomó. Los días no lectivos cargados no cuentan.
+          </div>
+        </div>
+      </div>
+      <div id="ct-contenido"><div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">Elegí un rango de fechas.</div></div>
+    </div><!-- fin sec-ctrlasist -->
 
 
   <div id="sec-banos" class="section">
@@ -3534,8 +3559,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -3844,6 +3869,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-migracion').style.display = isDirectorEstricto ? 'flex' : 'none';
   document.getElementById('nav-eoe').style.display       = canSeeEOE ? 'flex' : 'none';
   document.getElementById('nav-trayectoria').style.display = ['preceptor','director','vicedirector','secretary','secretario','eoe'].includes(role) ? 'flex' : 'none';
+  document.getElementById('nav-ctrlasist').style.display = ['preceptor','director','vicedirector','secretary','secretario'].includes(role) ? 'flex' : 'none';
   document.getElementById('nav-banos').style.display     = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navSeg = document.getElementById('nav-seguimiento-faltas');
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
@@ -3908,6 +3934,7 @@ function showSection(id,el){
   if(id === 'subir') setupSubir();
   if(id === 'eoe') cargarLegajosEOE();
   if(id === 'trayectoria') trayInicializar();
+  if(id === 'ctrlasist') ctInicializar();
   if(id === 'seguimiento-faltas') inicializarSeguimiento();
   if(id === 'agenda') { renderizarAgenda(); }
   const btnSubir = document.getElementById('btn-subir-topbar');
@@ -4214,6 +4241,144 @@ function trayEliminar(id) {
     if (res?.ok) { showToast('Registro eliminado ✅','🗑️'); _trayAlumnoSel ? trayCargarAlumno() : trayListarCurso(); }
     else showToast(res?.error || 'No se pudo eliminar','❌');
   });
+}
+
+// ── CONTROL DE ASISTENCIA TOMADA ───────────────────────────────────────
+let _ctDatos = null;
+function _ctEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _ctISO(d) { const p = n => ('0' + n).slice(-2); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function _ctAR(iso) { const [y, m, d] = iso.split('-'); return d + '/' + m + '/' + y; }
+function _ctInicioCiclo() { const hoy = new Date(); return new Date(hoy.getMonth() < 2 ? hoy.getFullYear() - 1 : hoy.getFullYear(), 2, 1); }
+
+function ctInicializar() {
+  const d = document.getElementById('ct-desde'), h = document.getElementById('ct-hasta');
+  if (d && !d.value) { d.value = _ctISO(_ctInicioCiclo()); h.value = _ctISO(new Date()); }
+  ctCargar();
+}
+function ctTodoElAnio() {
+  document.getElementById('ct-desde').value = _ctISO(_ctInicioCiclo());
+  document.getElementById('ct-hasta').value = _ctISO(new Date());
+  ctCargar();
+}
+function ctRerender() { if (_ctDatos) document.getElementById('ct-contenido').innerHTML = ctHtml(_ctDatos, { solo: !!document.getElementById('ct-solo')?.checked }); }
+
+function ctCargar() {
+  const d = document.getElementById('ct-desde')?.value, h = document.getElementById('ct-hasta')?.value;
+  const cont = document.getElementById('ct-contenido');
+  if (!d || !h) { showToast('Elegí las dos fechas', '⚠️'); return; }
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.35);font-size:13px">⏳ Revisando las planillas de todos los cursos…</div>';
+  callWebApp({ accion: 'informeFechasAsistencia', desde: _ctAR(d), hasta: _ctAR(h), rol: currentRole }).then(res => {
+    if (!res?.ok) { cont.innerHTML = `<div style="text-align:center;padding:30px;color:#c62828;font-size:13px">${_ctEsc(res?.error || 'No se pudo generar el informe')}</div>`; return; }
+    _ctDatos = res;
+    ctRerender();
+  }).catch(() => { cont.innerHTML = '<div style="text-align:center;padding:30px;color:#c62828;font-size:13px">Error de conexión</div>'; });
+}
+
+// Agrupa fechas consecutivas (según los días de referencia) en bloques: "01/04 a 29/05"
+function _ctBloques(fechas, res) {
+  const orden = res.filas.filter(x => x.tipo === 'ref').map(x => x.fecha).reverse();
+  const idx = {}; orden.forEach((f, i) => idx[f] = i);
+  const items = fechas.map(s => ({ f: s.slice(0, 10), txt: s })).filter(x => idx[x.f] !== undefined).sort((a, b) => idx[a.f] - idx[b.f]);
+  const out = []; let k = 0;
+  while (k < items.length) {
+    let e = k; while (e + 1 < items.length && idx[items[e + 1].f] === idx[items[e].f] + 1 && !items[e + 1].txt.includes('parcial') && !items[k].txt.includes('parcial')) e++;
+    out.push(e === k ? items[k].txt.replace(/^(\d\d\/\d\d)\/\d{4}/, '$1') : items[k].f.slice(0, 5) + ' a ' + items[e].f.slice(0, 5) + ' (' + (e - k + 1) + ' días)');
+    k = e + 1;
+  }
+  return out;
+}
+
+function ctHtml(res, opts) {
+  opts = opts || {};
+  const solo = opts.solo !== false;
+  const L = c => c.charAt(0) + '°' + c.slice(1);
+  const th = 'padding:6px 8px;border:1px solid #e0e0e0;background:#fdf8f3;font-size:12px;text-align:center';
+  const td = 'padding:5px 8px;border:1px solid #eee;font-size:12px;text-align:center;white-space:nowrap';
+  const caja = (color, bg, borde, html) => `<div style="font-size:12px;color:${color};background:${bg};border:1px solid ${borde};border-radius:8px;padding:8px 12px;margin:8px 0;line-height:1.6">${html}</div>`;
+
+  // 1) Resumen por curso (explica por qué los totales difieren)
+  const tabla = `<table style="border-collapse:collapse;margin:6px 0"><tr>
+      <th style="${th}">Curso</th><th style="${th}" title="Columnas de fecha que hay en la planilla">Columnas en la planilla</th><th style="${th}">Fechas distintas</th><th style="${th}">Repetidas</th>
+      <th style="${th}">Días completos</th><th style="${th}">Parciales</th><th style="${th}">Faltan</th><th style="${th}">En feriado / fin de semana</th></tr>` +
+    res.cursos.map(c => { const r = res.resumen[c];
+      return `<tr><td style="${td};font-weight:700">${L(c)}</td><td style="${td}">${r.columnas}</td><td style="${td}">${r.distintas}</td>
+        <td style="${td};${r.repetidas ? 'background:#fff3e0;color:#b26a00;font-weight:700' : 'color:#bbb'}">${r.repetidas || 0}</td>
+        <td style="${td};color:#1a7a44;font-weight:700">${r.completas}</td><td style="${td};color:#b26a00">${r.parciales || ''}</td>
+        <td style="${td};${r.faltan ? 'background:#ffebee;color:#c62828;font-weight:700' : 'color:#bbb'}">${r.faltan || 0}</td>
+        <td style="${td};${r.extraFechas.length ? 'background:#fff3e0;color:#b26a00;font-weight:700' : 'color:#bbb'}">${r.extraFechas.length || 0}</td></tr>`; }).join('') + '</table>';
+
+  // 2) Qué fechas faltan en cada curso
+  const conFaltas = res.cursos.filter(c => res.resumen[c].faltanFechas.length);
+  const faltas = conFaltas.length
+    ? conFaltas.map(c => `<div style="margin:5px 0;font-size:12.5px"><b>${L(c)}</b> <span style="color:#c62828">(${res.resumen[c].faltan + res.resumen[c].parciales})</span>: ${_ctBloques(res.resumen[c].faltanFechas, res).map(_ctEsc).join(' · ')}</div>`).join('')
+    : '<div style="color:#1a7a44;font-size:12.5px">✓ Todos los cursos tomaron asistencia todos los días de referencia.</div>';
+
+  // 3) Avisos
+  const extras = res.cursos.filter(c => res.resumen[c].extraFechas.length);
+  const avisoExtras = extras.length ? caja('#8a5a00', '#fff8e1', '#ffe082',
+    '⚠️ <b>Asistencia tomada en feriado, día no lectivo o fin de semana</b> (puede ser una fecha mal cargada):<br>' +
+    extras.map(c => `<b>${L(c)}</b>: ${res.resumen[c].extraFechas.map(f => _ctEsc(f.slice(0, 5))).join(', ')}`).join('<br>')) : '';
+  const avisoDud = res.dudosas.length ? caja('#1565c0', '#e3f2fd', '#90caf9',
+    '🔎 <b>Fechas que tomaron muy pocos cursos</b> (¿fecha mal cargada, o solo tuvieron clase esos cursos?):<br>' +
+    res.dudosas.slice().reverse().map(d => `${_ctEsc(d.dia)} ${_ctEsc(d.fecha.slice(0, 5))} → ${d.cursos.map(L).join(', ')}`).join('<br>')) : '';
+  const avisoNadie = res.sinRegistro.length ? caja('#555', '#f5f5f5', '#ddd',
+    '⚪ <b>Días hábiles en que ningún curso tomó asistencia</b>: ' + res.sinRegistro.map(f => _ctEsc(f.slice(0, 5))).join(', ') +
+    '. Si fueron feriados o días sin clases, cargalos en Días No Lectivos.') : '';
+
+  // 4) Detalle día por día
+  const cabecera = `<tr><th style="${th};text-align:left">Día</th>${res.cursos.map(c => `<th style="${th}">${L(c)}</th>`).join('')}</tr>`;
+  const celda = (x, tipo) => {
+    if (tipo === 'ref') {
+      if (x.e === 'C') return `<td style="${td};background:#e8f5e9;color:#1a7a44;font-weight:700">✓</td>`;
+      if (x.e === 'P') return `<td style="${td};background:#fff3e0;color:#b26a00;font-weight:700">${x.n}/${x.t}</td>`;
+      return `<td style="${td};background:#ffebee;color:#c62828;font-weight:700">—</td>`;
+    }
+    if (x.e === 'C') return `<td style="${td};background:#e3f2fd;color:#1565c0;font-weight:700">✓</td>`;
+    if (x.e === 'P') return `<td style="${td};background:#e3f2fd;color:#1565c0">${x.n}/${x.t}</td>`;
+    return `<td style="${td};background:#fafafa;color:#ccc">—</td>`;
+  };
+  const filas = res.filas.map(f => {
+    const rot = `${_ctEsc(f.dia)} ${_ctEsc(f.fecha.slice(0, 5))}`;
+    if (f.tipo === 'nolectivo') {
+      if (!f.conDatos.length && solo) return '';
+      return `<tr><td style="${td};text-align:left;background:#f5f5f5;color:#888">${rot}</td><td colspan="${res.cursos.length}" style="${td};background:#f5f5f5;color:#888;text-align:left">🚫 No lectivo${f.motivo ? ' — ' + _ctEsc(f.motivo) : ''}${f.conDatos.length ? ` · <b style="color:#b26a00">tomaron asistencia igual: ${f.conDatos.map(L).join(', ')}</b>` : ''}</td></tr>`;
+    }
+    if (f.tipo === 'ref' && solo && res.cursos.every(c => f.celdas[c].e === 'C')) return '';
+    const etiqueta = f.tipo === 'finde' ? ' <span style="color:#c62828;font-weight:400">(fin de semana)</span>' : f.tipo === 'dudoso' ? ' <span style="color:#1565c0;font-weight:400">· dudoso</span>' : f.tipo === 'nadie' ? ' <span style="color:#999;font-weight:400">· ningún curso</span>' : '';
+    return `<tr><td style="${td};text-align:left;font-weight:600">${rot}${etiqueta}</td>${res.cursos.map(c => celda(f.celdas[c], f.tipo)).join('')}</tr>`;
+  }).join('');
+  const detalle = filas ? `<div style="overflow-x:auto"><table style="border-collapse:collapse">${cabecera}${filas}</table></div>` : '<div style="color:#1a7a44;font-size:12.5px">✓ No hay días con diferencias en este período.</div>';
+
+  return `<div class="panel"><div class="panel-body">
+    <div style="font-size:13px;font-weight:700">Resumen del período ${_ctEsc(res.desde)} al ${_ctEsc(res.hasta)}</div>
+    <div style="font-size:12px;color:#666;margin:4px 0 6px"><b>${res.diasRef}</b> días de referencia (hábiles, con asistencia completa en al menos ${res.minRef} de ${res.cursos.length} cursos). Cada curso debería tener ese mismo total.</div>
+    ${tabla}
+    <div style="font-size:13px;font-weight:700;margin:16px 0 6px">Fechas que faltan en cada curso</div>${faltas}
+    ${avisoExtras}${avisoDud}${avisoNadie}
+    <div style="font-size:13px;font-weight:700;margin:16px 0 8px">Detalle día por día${solo ? ' (solo con diferencias)' : ''}</div>${detalle}
+  </div></div>`;
+}
+
+function ctImprimir() {
+  if (!_ctDatos) { showToast('Primero tocá "Ver"', '⚠️'); return; }
+  const logo = typeof PM_LOGO !== 'undefined' ? PM_LOGO : '';
+  const hoy = new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Control de asistencia tomada</title><style>
+    @page { size: A4 landscape; margin: 12mm; } * { box-sizing:border-box; }
+    body { font-family: Arial, Helvetica, sans-serif; color:#1a1a1a; margin:0 auto; padding:18px; font-size:12px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .head { display:flex; align-items:center; gap:14px; border-bottom:3px solid #1a9e5c; padding-bottom:10px; margin-bottom:12px; }
+    .head img { width:56px; height:56px; object-fit:contain; } .head h1 { margin:0 0 2px; font-size:16px; color:#1a9e5c; } .head p { margin:0; font-size:11.5px; color:#777; }
+    .btn-print { margin-bottom:12px; padding:7px 14px; border-radius:8px; border:1px solid #1a9e5c; background:#fff; color:#1a9e5c; cursor:pointer; font-weight:700; }
+    @media print { .btn-print { display:none; } } tr { page-break-inside:avoid; } .panel { border:none; box-shadow:none; }
+    .pie { margin-top:14px; font-size:10px; color:#999; text-align:center; }
+  </style></head><body>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+    <div class="head">${logo ? `<img src="${logo}" alt="Logo" onerror="this.style.display='none'">` : ''}
+      <div><h1>Colegio Secundario "Perito Moreno"</h1><p>Control de asistencia tomada por curso — ${_ctEsc(_ctDatos.desde)} al ${_ctEsc(_ctDatos.hasta)}</p></div></div>
+    ${ctHtml(_ctDatos, { solo: !!document.getElementById('ct-solo')?.checked })}
+    <div class="pie">✓ completa · n/t parcial · — falta · Emitido el ${hoy} por ${_ctEsc(currentNombre || currentUser)}</div>
+  </body></html>`;
+  infAbrirPDF(html, { alumno: 'Control_asistencia' });
 }
 
 // ── Informe combinado (Trayectoria + EOE) ──────────────────────────────
