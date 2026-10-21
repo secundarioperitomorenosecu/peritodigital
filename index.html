@@ -601,7 +601,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       <div class="stats-grid" id="dash-alumno" style="display:none">
         <div class="stat-card" style="--color:#4CAF50"><div class="stat-icon">✅</div><div class="stat-value" id="dash-pct-asistencia">—</div><div class="stat-label">Asistencia</div></div>
         <div class="stat-card" style="--color:#1a9e5c"><div class="stat-icon">❌</div><div class="stat-value" id="dash-inasistencias">—</div><div class="stat-label">Inasistencias</div></div>
-        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value" id="dash-materias-riesgo">—</div><div class="stat-label">Materias en riesgo</div></div>
+        <div class="stat-card" style="--color:#FF9800"><div class="stat-icon">⚠️</div><div class="stat-value" id="dash-materias-riesgo">—</div><div class="stat-label">Materias a intensificar</div></div>
         <div class="stat-card" style="--color:#2196F3"><div class="stat-icon">📢</div><div class="stat-value" id="dash-comunicados">—</div><div class="stat-label">Comunicados</div></div>
       </div>
       <!-- Generador de Acta de Accidente — solo staff -->
@@ -1694,7 +1694,21 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           <div id="mi-asistencia-resumen" style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
             <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:120px"><div class="stat-icon">✅</div><div class="stat-value" id="cnt-presentes">—</div><div class="stat-label">Presentes</div></div>
             <div class="stat-card" style="--color:#F44336;flex:1;min-width:120px"><div class="stat-icon">❌</div><div class="stat-value" id="cnt-ausentes">—</div><div class="stat-label">Ausentes</div></div>
+            <div class="stat-card" style="--color:#7B1FA2;flex:1;min-width:120px"><div class="stat-icon">🟣</div><div class="stat-value" id="ma-cnt-ap">—</div><div class="stat-label">Aus. con presencia</div></div>
             <div class="stat-card" style="--color:#FF9800;flex:1;min-width:120px"><div class="stat-icon">🕐</div><div class="stat-value" id="cnt-tardes">—</div><div class="stat-label">Tardanzas</div></div>
+            <div class="stat-card" style="--color:#424242;flex:1;min-width:120px"><div class="stat-icon">🚪</div><div class="stat-value" id="cnt-retiros">—</div><div class="stat-label">Retiros</div></div>
+          </div>
+          <!-- Mi asistencia por materia (solo los datos del propio alumno) -->
+          <div id="mi-materias" style="margin-bottom:22px">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+              <div style="font-size:15px;font-weight:700">📚 Mi asistencia por materia</div>
+              <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
+                <button id="mm-btn-anio" style="padding:6px 12px;border-radius:99px;border:1px solid #ddd;background:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" onclick="cargarMisMaterias('anio')">Todo el año</button>
+                <button id="mm-btn-q1" style="padding:6px 12px;border-radius:99px;border:1px solid #ddd;background:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" onclick="cargarMisMaterias('q1')">1° cuatrimestre</button>
+                <button id="mm-btn-q2" style="padding:6px 12px;border-radius:99px;border:1px solid #ddd;background:#fff;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer" onclick="cargarMisMaterias('q2')">2° cuatrimestre</button>
+              </div>
+            </div>
+            <div id="mm-contenido" style="color:rgba(0,0,0,.4);text-align:center;padding:20px">⏳ Cargando...</div>
           </div>
           <div id="mi-asistencia-tabla" style="color:rgba(0,0,0,.4);text-align:center;padding:30px">⏳ Cargando...</div>
         </div>
@@ -2726,7 +2740,7 @@ function audRegistrarTodos() {
   <div style="padding:16px 16px 0">
     <h2 style="font-size:18px;font-weight:500;margin-bottom:4px">📊 Informe de Asistencia por Materia</h2>
     <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:16px">
-      % de asistencia de cada alumno en cada materia. Las clases con docente ausente o días no lectivos no se contabilizan.
+      % de asistencia de cada alumno en cada materia. Las clases con docente ausente o días no lectivos no se contabilizan, y los ausentes con presencia (AP), las llegadas tarde y los retiros tampoco restan en las materias.
     </p>
 
     <!-- Filtros -->
@@ -2896,7 +2910,7 @@ function infRenderTabla(alumnos) {
       <thead>
         <tr style="background:var(--color-background-secondary)">
           <th style="padding:10px 12px;text-align:left;font-weight:600;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-secondary);position:sticky;left:0;background:var(--color-background-secondary);min-width:180px;z-index:1">Alumno</th>
-          ${materias.map(m => `<th style="padding:8px 6px;text-align:center;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-secondary);min-width:100px;font-size:10px;line-height:1.3">${m}</th>`).join('')}
+          ${materias.map(m => { const sd = (_infData.clasesSinDocentePorMateria || {})[m]; return `<th style="padding:8px 6px;text-align:center;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-secondary);min-width:100px;font-size:10px;line-height:1.3"${sd ? ` title="${sd} clase(s) sin docente (docente ausente): no se cuentan"` : ''}>${m}${sd ? `<div style="font-size:9px;font-weight:400;color:#8a5a00">${sd} sin docente</div>` : ''}</th>`; }).join('')}
         </tr>
       </thead>
       <tbody>`;
@@ -2914,6 +2928,7 @@ function infRenderTabla(alumnos) {
         <div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:6px;padding:5px 4px;display:inline-block;min-width:72px">
           <div style="font-size:14px;font-weight:700;color:${c.color}">${m.porcentaje}%</div>
           <div style="font-size:9px;color:${c.color};opacity:.8">${m.clases_total - m.clases_ausente}/${m.clases_total} clases</div>
+          ${m.ausente_sin_docente > 0 ? `<div title="Faltó a ${m.ausente_sin_docente} clase(s) en las que el docente estuvo ausente: no se computan" style="font-size:9px;color:#8a5a00;margin-top:2px;cursor:help">ⓘ ${m.ausente_sin_docente} sin docente</div>` : ''}
         </div>
       </td>`;
     });
@@ -2926,6 +2941,7 @@ function infRenderTabla(alumnos) {
       Período: ${document.getElementById('inf-desde').value.split('-').reverse().join('/')} 
       al ${document.getElementById('inf-hasta').value.split('-').reverse().join('/')}
       ${_infData.clasesSinDocenteCount > 0 ? ' · ' + _infData.clasesSinDocenteCount + ' clase(s) sin docente descontadas' : ''}
+      <br/><span style="color:#8a5a00">ⓘ sin docente: el alumno faltó ese día, pero el docente de la materia también estaba ausente. Esa clase no se cuenta (ni como asistencia ni como falta) y no afecta el porcentaje.</span>
       ${_infData.diasNoLectivosCount > 0 ? ' · ' + _infData.diasNoLectivosCount + ' día(s) no lectivo(s) excluidos' : ''}
     </p>`;
 
@@ -2961,7 +2977,7 @@ function infExportarPDF() {
   <table>
     <thead><tr>
       <th style="${thStyle};text-align:left;min-width:150px">Alumno</th>
-      ${materias.map(m=>`<th style="${thStyle}">${m}</th>`).join('')}
+      ${materias.map(m=>{ const sd=(_infData.clasesSinDocentePorMateria||{})[m]; return `<th style="${thStyle}">${m}${sd?`<br/><span style="font-weight:400;font-size:8px">${sd} sin docente</span>`:''}</th>`; }).join('')}
     </tr></thead><tbody>`;
 
   alumnos.forEach((a,i) => {
@@ -2972,6 +2988,7 @@ function infExportarPDF() {
       html += `<td style="${tdStyle};text-align:center;background:${colores[m.estado]}">
         <span class="chip" style="color:${colorTxt[m.estado]}">${m.porcentaje}%</span>
         <div style="font-size:8px;color:${colorTxt[m.estado]}">${m.clases_total - m.clases_ausente}/${m.clases_total}</div>
+        ${m.ausente_sin_docente > 0 ? `<div style="font-size:8px;color:#8a5a00">ⓘ ${m.ausente_sin_docente} sin docente</div>` : ''}
       </td>`;
     });
     html += '</tr>';
@@ -2983,6 +3000,7 @@ function infExportarPDF() {
     <span style="background:#fff8e1;padding:2px 6px;border-radius:3px;margin-right:6px">Amarillo: Alerta (65-74%)</span>
     <span style="background:#ffebee;padding:2px 6px;border-radius:3px">Rojo: Riesgo (menos del 65%)</span>
     ${_infData.clasesSinDocenteCount > 0 ? '<br/>* ' + _infData.clasesSinDocenteCount + ' clase(s) sin docente no contabilizadas.' : ''}
+    <br/>ⓘ sin docente: el alumno faltó ese día, pero el docente de la materia también estaba ausente. Esa clase no se cuenta (ni como asistencia ni como falta) y no afecta el porcentaje.
   </div>
   <\/body></html>`;
 
@@ -3565,6 +3583,7 @@ let attendanceState={};
 let currentUser = '';
 let currentRole = '';
 let currentNombre = '';
+let currentToken = '';   // código de sesión del alumno (lo entrega el servidor al ingresar)
 let currentMateria = '';
 let currentMaterias = [];
 let currentCursos = [];
@@ -3800,6 +3819,8 @@ function doLogin(name, role, usuario, res){
   currentUser    = usuario || name;
   currentRole    = role;
   currentNombre  = name;
+  currentToken   = (res && res.token) ? res.token : '';   // solo el alumno que ingresó con su clave lo recibe
+  _mmCache = {};
   if(res && res.materias && res.materias !== 'TODAS') {
     const mats = res.materias.split(',').map(m => m.trim()).filter(Boolean);
     currentMateria = mats.length === 1 ? mats[0] : mats.join(',');
@@ -3899,6 +3920,7 @@ function doLogin(name, role, usuario, res){
 }
 
 function logout(){
+  currentToken = ''; _mmCache = {};
   document.getElementById('app').style.display='none';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('hamburger').style.display='none';
@@ -5128,6 +5150,26 @@ function eliminarPost(id, autorOriginal) {
   });
 }
 
+// ── CRITERIO ÚNICO DE ASISTENCIA (igual en todas las pantallas y perfiles) ──
+// Ausente = 1 · Ausente con presencia (AP) = 1 · Retiro anticipado = 0,5 · Tarde = 0,25
+// % de asistencia = (días con registro − inasistencias) / días con registro
+function calcAsistencia(c) {
+  const presentes = c.presentes || 0, ausentes = c.ausentes || 0, tardes = c.tardes || 0, retiros = c.retiros || 0;
+  const total = presentes + ausentes + tardes + retiros;
+  const inasist = ausentes + tardes * 0.25 + retiros * 0.5;
+  return { presentes, ausentes, tardes, retiros, total, inasist, pct: total > 0 ? Math.round(((total - inasist) / total) * 100) : null };
+}
+function contarRegistrosAsistencia(registros) {
+  const r = registros || [];
+  return {
+    presentes: r.filter(x => x.estado === 'P').length,
+    ausentes:  r.filter(x => x.estado === 'A' || x.estado === 'AP').length,   // el AP suma en el total de inasistencias
+    ausentesPresencia: r.filter(x => x.estado === 'AP').length,                // y se muestra aparte
+    tardes:    r.filter(x => x.estado === 'T').length,
+    retiros:   r.filter(x => x.estado === 'R').length
+  };
+}
+
 function cargarDashboard() {
   const role     = (currentRole || '').toLowerCase();
   const isAdmin  = ['director','vicedirector','secretary','secretario','legal','secretario/a'].some(r => role.includes(r));
@@ -5159,19 +5201,14 @@ function cargarDashboard() {
     callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
       if (!res || !res.ok) return;
       const registros = res.registros || [];
-      const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'J' || r.estado === 'AM').length;
-      const tardes    = registros.filter(r => r.estado === 'T').length;
-      const retiros   = registros.filter(r => r.estado === 'R').length;
-      const total     = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
-      const inasist   = ausentes + (tardes * 0.25) + (retiros * 0.5);
-      const pct       = total > 0 ? Math.round(((total - inasist) / total) * 100) : null;
+      const { inasist, pct } = calcAsistencia(contarRegistrosAsistencia(registros));
       // Color semáforo en inasistencias
       const cardInasist = document.getElementById('dash-inasistencias')?.closest('.stat-card');
       const color = inasist >= 20 ? '#1a9e5c' : inasist >= 10 ? '#FF9800' : '#4CAF50';
       if (cardInasist) cardInasist.style.setProperty('--color', color);
       set('dash-pct-asistencia', pct !== null ? pct + '%' : 'Sin datos');
       set('dash-inasistencias', inasist % 1 === 0 ? inasist : inasist.toFixed(2));
-      set('dash-materias-riesgo', '—'); // Se calculará cuando tengamos horarios
+      mmActualizarTarjeta();   // materias con menos de 75% de asistencia
     });
     // Comunicados sin leer
     callWebApp({ accion: 'obtenerComunicados', usuario: currentUser, rol: currentRole, curso: currentCursoAlumno }).then(res => {
@@ -6614,11 +6651,12 @@ function infHtmlPDF(s, docentes, resAsist, resNotas) {
 
   let datos = '';
   if (s.incluirDatos && resAsist && resAsist.ok) {
-    const pres = resAsist.presentes || 0, aus = resAsist.ausentes || 0, tar = resAsist.tardes || 0, ret = resAsist.retiros || 0;
-    const inasist = aus + tar * 0.25 + ret * 0.5;
-    const pct = resAsist.pctAsistencia;
+    const pres = resAsist.presentes || 0, aus = resAsist.ausentes || 0, tar = resAsist.tardes || 0, ret = resAsist.retiros || 0, apP = resAsist.ausentesPresencia || 0;
+    const calcP = calcAsistencia({ presentes: pres, ausentes: aus, tardes: tar, retiros: ret });
+    const inasist = calcP.inasist;
+    const pct = calcP.pct;
     datos += `<h2>Asistencia del ciclo lectivo</h2>
-      <p class="datos">${pct !== null && pct !== undefined ? `<b>${pct}% de asistencia</b> · ` : ''}Presentes: ${pres} · Ausentes: ${aus} · Tardanzas: ${tar} · Retiros: ${ret} · Inasistencias computables: ${inasist % 1 === 0 ? inasist : inasist.toFixed(2)}</p>`;
+      <p class="datos">${pct !== null && pct !== undefined ? `<b>${pct}% de asistencia</b> · ` : ''}Presentes: ${pres} · Ausentes: ${aus - apP}${apP ? ' · Ausentes con presencia: ' + apP : ''} · Tardanzas: ${tar} · Retiros: ${ret} · Inasistencias computables: ${inasist % 1 === 0 ? inasist : inasist.toFixed(2)}</p>`;
   }
   if (s.incluirDatos && resNotas && resNotas.ok && resNotas.materias && resNotas.materias.length) {
     const v = x => (x === '' || x === null || x === undefined) ? '—' : infEsc(x);
@@ -7522,18 +7560,21 @@ function cargarResumenCurso() {
           <th style="text-align:left;padding:8px 12px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Alumno</th>
           <th style="text-align:center;padding:8px;color:#4CAF50;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Presentes</th>
           <th style="text-align:center;padding:8px;color:#F44336;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Ausentes</th>
+          <th style="text-align:center;padding:8px;color:#7B1FA2;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Aus. c/ presencia</th>
           <th style="text-align:center;padding:8px;color:#FF9800;font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">Tardanzas</th>
           <th style="text-align:center;padding:8px;color:rgba(0,0,0,.5);font-size:11px;border-bottom:1px solid rgba(255,255,255,.1)">% Asistencia</th>
         </tr></thead>
         <tbody>${res.alumnos.map(a => {
-          const total = a.presentes + a.ausentes + a.tardes + ((a.retiros||0) * 0.5);
-          const inasist1 = a.ausentes + (a.tardes * 0.25) + ((a.retiros||0) * 0.5);
-          const pct = total > 0 ? Math.round(((total - inasist1) / total) * 100) : 0;
+          const calcA = calcAsistencia(a);
+          const total = calcA.total;
+          const inasist1 = calcA.inasist;
+          const pct = calcA.pct !== null ? calcA.pct : 0;
           const color = pct >= 85 ? '#4CAF50' : pct >= 70 ? '#FF9800' : '#F44336';
           return `<tr>
             <td style="padding:8px 12px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.05)">${a.nombre}</td>
             <td style="text-align:center;padding:8px;font-size:13px;color:#4CAF50;border-bottom:1px solid rgba(255,255,255,.05)">${a.presentes + a.tardes + (a.retiros||0)}</td>
-            <td style="text-align:center;padding:8px;font-size:13px;color:#F44336;border-bottom:1px solid rgba(255,255,255,.05)">${a.ausentes}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#F44336;border-bottom:1px solid rgba(255,255,255,.05)">${a.ausentes - (a.ausentesPresencia||0)}</td>
+            <td style="text-align:center;padding:8px;font-size:13px;color:#7B1FA2;border-bottom:1px solid rgba(255,255,255,.05)">${a.ausentesPresencia||0}</td>
             <td style="text-align:center;padding:8px;font-size:13px;color:#FF9800;border-bottom:1px solid rgba(255,255,255,.05)">${a.tardes}</td>
             <td style="text-align:center;padding:8px;border-bottom:1px solid rgba(255,255,255,.05)">
               <span style="color:${color};font-weight:700;font-size:13px">${pct}%</span>
@@ -7658,7 +7699,15 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
     const filas = a.detalle.map((d, di) => {
       const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : d.estado === 'AP' ? ('Aus. con Presencia' + (d.horaLlegada ? ' (ingresó ' + d.horaLlegada + ')' : '')) : 'Retiro';
       const estColor = d.estado === 'A' ? '#c62828' : d.estado === 'T' ? '#e65100' : d.estado === 'AP' ? '#7B1FA2' : '#607D8B';
-      const matsHtml = d.materias.length
+      const sdHtml = (d.materiasSinDocente || []).map(m =>
+        `<tr style="background:#f5f5f5">
+          <td style="padding:5px 10px;font-size:12px;border:1px solid #eee">${d.fecha}</td>
+          <td style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:${estColor};font-weight:700">${estLabel}</td>
+          <td style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:#8a5a00">${m.materia}</td>
+          <td style="text-align:center;padding:5px 10px;font-size:12px;border:1px solid #eee;color:#8a5a00">${m.modulos}</td>
+          <td style="text-align:center;padding:5px 10px;font-size:11px;border:1px solid #eee;color:#8a5a00">Docente ausente: no cuenta</td>
+        </tr>`).join('');
+      const matsHtml = (d.materias.length || sdHtml)
         ? d.materias.map(m =>
             `<tr style="background:${di%2===0?'#fafafa':'#fff'}">
               ${di===0||true?'':''} 
@@ -7668,11 +7717,11 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
               <td style="text-align:center;padding:5px 10px;font-size:12px;border:1px solid #eee">${m.modulos}</td>
               <td style="text-align:center;padding:5px 10px;font-size:12px;border:1px solid #eee;font-weight:700;color:${m.inasistencias>=1?'#c62828':'#e65100'}">${m.inasistencias % 1 === 0 ? m.inasistencias : m.inasistencias.toFixed(2)}</td>
             </tr>`
-          ).join('')
+          ).join('') + sdHtml
         : `<tr style="background:${di%2===0?'#fafafa':'#fff'}">
             <td style="padding:5px 10px;font-size:12px;border:1px solid #eee">${d.fecha}</td>
             <td style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:${estColor};font-weight:700">${estLabel}</td>
-            <td colspan="3" style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:#999">Sin materias asignadas ese día</td>
+            <td colspan="3" style="padding:5px 10px;font-size:12px;border:1px solid #eee;color:#999">${d.estado === 'A' ? 'Sin materias asignadas ese día' : 'No afecta el % por materia'}</td>
           </tr>`;
       return matsHtml;
     }).join('');
@@ -7712,7 +7761,7 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
     ${seccionesAlumnos || '<p style="color:#999">Sin inasistencias registradas.</p>'}
     <div class="leyenda">
       Las inasistencias por materia se calculan según los módulos del horario ese día.<br>
-      Ausente = 1 inasistencia por módulo · Aus. con Presencia = proporcional al tiempo ausente · Tarde = 0.25 · Retiro = 0.5
+      Por materia solo cuenta el Ausente (1 inasistencia por módulo). Aus. con Presencia, Tarde y Retiro se muestran pero no restan en las materias. Las materias en gris son clases en que el docente estuvo ausente: no cuentan. En el total de inasistencias del día valen: Ausente 1 · Aus. con Presencia 1 · Retiro 0.5 · Tarde 0.25
     </div>
   </body></html>`;
 
@@ -7857,12 +7906,14 @@ function cargarResumenAlumno() {
   ]).then(([resAtt, resNot]) => {
     const registros = resAtt.registros || [];
     const presentes = registros.filter(r=>r.estado==='P').length;
-    const ausentes  = registros.filter(r=>r.estado==='A').length;
+    const ausentes  = registros.filter(r=>r.estado==='A' || r.estado==='AP').length;
+    const apVer     = registros.filter(r=>r.estado==='AP').length;
     const tardes    = registros.filter(r=>r.estado==='T').length;
     const retiros   = registros.filter(r=>r.estado==='R').length;
-    const total     = presentes + ausentes + tardes + (retiros * 0.5);
-    const inasistTotal = ausentes + (tardes * 0.25) + (retiros * 0.5);
-    const pct       = total > 0 ? Math.round(((total - inasistTotal) / total) * 100) : 0;
+    const calcAl    = calcAsistencia({ presentes, ausentes, tardes, retiros });
+    const total     = calcAl.total;
+    const inasistTotal = calcAl.inasist;
+    const pct       = calcAl.pct !== null ? calcAl.pct : 0;
     const pctColor  = pct>=85?'#4CAF50':pct>=70?'#FF9800':'#F44336';
     const materias  = resNot.materias || [];
     const periodos  = ['1°Bim','1°Cuat','3°Bim','2°Cuat','Dic','Feb'];
@@ -7871,7 +7922,8 @@ function cargarResumenAlumno() {
       <h3 style="margin-bottom:16px;font-size:16px">${nombre} — ${curso}</h3>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
         <div class="stat-card" style="--color:#4CAF50;flex:1;min-width:100px"><div class="stat-icon">✅</div><div class="stat-value">${presentes + tardes + retiros}</div><div class="stat-label">Presentes</div></div>
-        <div class="stat-card" style="--color:#F44336;flex:1;min-width:100px"><div class="stat-icon">❌</div><div class="stat-value">${ausentes}</div><div class="stat-label">Ausentes</div></div>
+        <div class="stat-card" style="--color:#F44336;flex:1;min-width:100px"><div class="stat-icon">❌</div><div class="stat-value">${ausentes - apVer}</div><div class="stat-label">Ausentes</div></div>
+        <div class="stat-card" style="--color:#7B1FA2;flex:1;min-width:100px"><div class="stat-icon">🟣</div><div class="stat-value">${apVer}</div><div class="stat-label">Aus. c/ presencia</div></div>
         <div class="stat-card" style="--color:#FF9800;flex:1;min-width:100px"><div class="stat-icon">🕐</div><div class="stat-value">${tardes}</div><div class="stat-label">Tardanzas</div></div>
         <div class="stat-card" style="--color:#424242;flex:1;min-width:100px"><div class="stat-icon">🚪</div><div class="stat-value">${retiros}</div><div class="stat-label">Retiros</div></div>
         <div class="stat-card" style="--color:${pctColor};flex:1;min-width:100px"><div class="stat-icon">📊</div><div class="stat-value" style="color:${pctColor}">${pct}%</div><div class="stat-label">Asistencia</div></div>
@@ -7992,7 +8044,78 @@ function abrirResumenDesdeGlobal(legajo, curso, nombre) {
 // ── Funciones para alumnos ────────────────────────────────────────────
 let currentCursoAlumno = '';
 
+// ── MI ASISTENCIA POR MATERIA (ficha del alumno) ───────────────────────
+// El servidor deduce de quién se trata a partir del código de sesión: el alumno nunca elige un legajo.
+let _mmPeriodo = 'anio';
+let _mmCache = {};
+function _mmEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _mmRango(tipo) {
+  const hoy = new Date(), p = n => ('0' + n).slice(-2);
+  const anio = hoy.getMonth() < 2 ? hoy.getFullYear() - 1 : hoy.getFullYear();   // el ciclo lectivo empieza en marzo
+  if (tipo === 'q1') return [`01/03/${anio}`, `31/07/${anio}`];
+  if (tipo === 'q2') return [`01/08/${anio}`, `15/12/${anio}`];
+  return [`01/03/${anio}`, `${p(hoy.getDate())}/${p(hoy.getMonth() + 1)}/${hoy.getFullYear()}`];
+}
+function _mmPedir(tipo) {
+  if (_mmCache[tipo] && Date.now() - _mmCache[tipo].t < 300000) return Promise.resolve(_mmCache[tipo].res);
+  const [d, h] = _mmRango(tipo);
+  return callWebApp({ accion: 'asistenciaMateriasAlumno', token: currentToken, desde: d, hasta: h }).then(res => {
+    if (res && res.ok) _mmCache[tipo] = { t: Date.now(), res };
+    return res;
+  });
+}
+function mmActualizarTarjeta() {
+  const el = document.getElementById('dash-materias-riesgo');
+  if (!el) return;
+  if (!currentToken) { el.textContent = '—'; return; }
+  _mmPedir('anio').then(res => { el.textContent = (res && res.ok) ? res.materias.filter(m => m.estado !== 'OK').length : '—'; })
+                  .catch(() => { el.textContent = '—'; });
+}
+function cargarMisMaterias(tipo) {
+  tipo = tipo || _mmPeriodo; _mmPeriodo = tipo;
+  ['anio', 'q1', 'q2'].forEach(k => {
+    const b = document.getElementById('mm-btn-' + k); if (!b) return;
+    b.style.background = k === tipo ? '#1a9e5c' : '#fff'; b.style.color = k === tipo ? '#fff' : ''; b.style.borderColor = k === tipo ? '#1a9e5c' : '#ddd';
+  });
+  const cont = document.getElementById('mm-contenido'); if (!cont) return;
+  if (!currentToken) {
+    cont.innerHTML = '<div style="padding:14px;color:#8a5a00;background:#fff8e1;border-radius:10px;font-size:13px">Para ver el porcentaje por materia, el alumno tiene que ingresar con su propio usuario y clave.</div>';
+    return;
+  }
+  cont.innerHTML = '<div style="padding:20px;color:rgba(0,0,0,.4);text-align:center">⏳ Calculando...</div>';
+  _mmPedir(tipo).then(res => renderMisMaterias(res))
+    .catch(() => { cont.innerHTML = '<div style="padding:14px;color:#c62828;font-size:13px">No se pudo cargar. Probá de nuevo en un momento.</div>'; });
+}
+function renderMisMaterias(res) {
+  const cont = document.getElementById('mm-contenido'); if (!cont) return;
+  if (!res || !res.ok) { cont.innerHTML = `<div style="padding:14px;color:#c62828;font-size:13px">${_mmEsc((res && res.error) || 'No se pudo cargar')}</div>`; return; }
+  const mats = (res.materias || []).slice().sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia));
+  if (!mats.length) { cont.innerHTML = '<div style="padding:14px;color:#777;font-size:13px">Todavía no hay clases registradas en este período.</div>'; return; }
+  const col = { OK: ['#e8f5e9', '#1a7a44', '#a5d6a7'], ALERTA: ['#fff8e1', '#b26a00', '#ffe082'], RIESGO: ['#ffebee', '#c62828', '#ef9a9a'] };
+  const etq = { OK: 'OK', ALERTA: 'Alerta', RIESGO: 'Riesgo' };
+  const intens = mats.filter(m => m.estado !== 'OK');
+  const aviso = intens.length
+    ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px">⚠️ <b>Materias a intensificar</b> (menos de 75% de asistencia): ${intens.map(m => _mmEsc(m.materia)).join(', ')}.</div>`
+    : '<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px">✅ Tenés 75% o más de asistencia en todas las materias.</div>';
+  const tarjetas = mats.map(m => {
+    const c = col[m.estado] || col.OK, asist = m.clases_total - m.clases_ausente;
+    return `<div style="background:${c[0]};border:1.5px solid ${c[2]};border-radius:12px;padding:12px 14px">
+      <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:.3px;min-height:28px">${_mmEsc(m.materia)}</div>
+      <div style="font-size:26px;font-weight:800;color:${c[1]};line-height:1.2">${m.porcentaje}%</div>
+      <div style="font-size:11px;color:${c[1]}">${asist}/${m.clases_total} clases · ${etq[m.estado] || ''}</div>
+      ${m.ausente_sin_docente > 0 ? `<div title="Faltaste a ${m.ausente_sin_docente} clase(s) en las que el docente también estuvo ausente: no se computan" style="font-size:10px;color:#8a5a00;margin-top:4px;cursor:help">ⓘ ${m.ausente_sin_docente} sin docente</div>` : ''}
+    </div>`;
+  }).join('');
+  cont.innerHTML = aviso + `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px">${tarjetas}</div>
+    <div style="font-size:11px;color:#888;margin-top:12px;line-height:1.6">
+      <b style="color:#1a7a44">OK</b> 75% o más · <b style="color:#b26a00">Alerta</b> 65 a 74% · <b style="color:#c62828">Riesgo</b> menos de 65%.<br>
+      Se calcula con tu asistencia diaria y el horario del curso. En las materias solo cuenta el <b>ausente</b>: el ausente con presencia, las llegadas tarde y los retiros se ven en tus totales pero no restan acá.<br>
+      <span style="color:#8a5a00">ⓘ sin docente</span>: faltaste ese día, pero el docente de la materia también estaba ausente. Esa clase no se cuenta (ni como asistencia ni como falta).
+    </div>`;
+}
+
 function cargarMiAsistencia() {
+  if (currentRole === 'alumno') cargarMisMaterias(_mmPeriodo);
   if (!currentCursoAlumno) return;
   callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
     if (!res.ok) return;
@@ -8003,12 +8126,13 @@ function cargarMiAsistencia() {
     const retiros   = registros.filter(r => r.estado === 'R').length;
     const diasHab   = registros.length;
     const presentesTotal = presentes + tardes + retiros;
-    // Fórmula igual al dashboard: retiros = medio día
-    const total   = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
-    const inasist = ausentes + (tardes * 0.25) + (retiros * 0.5);
-    const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : null;
+    // Criterio único de asistencia (igual en todas las pantallas)
+    const { inasist, pct } = calcAsistencia({ presentes, ausentes, tardes, retiros });
     document.getElementById('cnt-presentes').textContent = presentesTotal;
-    document.getElementById('cnt-ausentes').textContent  = ausentes;
+    const apMi = registros.filter(r => r.estado === 'AP').length;
+    document.getElementById('cnt-ausentes').textContent  = ausentes - apMi;   // Ausentes reales (sin los AP)
+    const cntAp = document.getElementById('ma-cnt-ap');
+    if (cntAp) cntAp.textContent = apMi;
     document.getElementById('cnt-tardes').textContent    = tardes;
     const cntRet = document.getElementById('cnt-retiros');
     if (cntRet) cntRet.textContent = retiros;
@@ -8020,8 +8144,8 @@ function cargarMiAsistencia() {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin registros de asistencia aún.</div>';
       return;
     }
-    const estadoLabel = { P:'Presente', A:'Ausente', AP:'Ausente Pres.', T:'Llegada tarde', R:'Retiro anticipado' };
-    const colores     = { P:'#E8F5E9', A:'#FFEBEE', AP:'#FFEBEE', T:'#FFF8E1', R:'#F3E5F5' };
+    const estadoLabel = { P:'Presente', A:'Ausente', AP:'Ausente con presencia', T:'Llegada tarde', R:'Retiro anticipado' };
+    const colores     = { P:'#E8F5E9', A:'#FFEBEE', AP:'#EDE7F6', T:'#FFF8E1', R:'#F3E5F5' };
     const novedades   = registros.filter(r => r.estado !== 'P');
     tabla.innerHTML = `<table style="width:100%;border-collapse:collapse">
       <thead><tr>
@@ -9413,15 +9537,16 @@ function cargarEvolucion() {
     if (Object.keys(asist).length > 0) {
       html += '<div style="margin-bottom:24px"><h4 style="margin:0 0 12px;color:#1a9e5c;font-size:14px">📅 Asistencia por Año/Curso</h4><div style="display:grid;gap:8px">';
       Object.entries(asist).forEach(([curso, d]) => {
-        const inasistD = d.ausentes + ((d.tardanzas||0) * 0.25) + ((d.retiros||0) * 0.5);
-        const totalEquiv = (d.total - (d.retiros||0)) + ((d.retiros||0) * 0.5);
-        const pct = totalEquiv > 0 ? Math.round(((totalEquiv - inasistD) / totalEquiv) * 100) : 0;
+        const calcE = calcAsistencia({ presentes: d.presentes, ausentes: d.ausentes, tardes: d.tardanzas, retiros: d.retiros });
+        const inasistD = calcE.inasist;
+        const totalEquiv = calcE.total;
+        const pct = calcE.pct !== null ? calcE.pct : 0;
         const color = pct >= 75 ? '#4CAF50' : pct >= 60 ? '#FF9800' : '#F44336';
         html += `<div style="background:#fdf8f3;border:1px solid #e8d5c4;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
           <div style="font-weight:600;font-size:13px">Curso ${curso}</div>
           <div style="display:flex;gap:16px;font-size:12px;color:#666">
             <span>✅ ${d.presentes + d.tardanzas + (d.retiros||0)} P</span>
-            <span>❌ ${d.ausentes} A</span>
+            <span>❌ ${d.ausentes - (d.ausentesPresencia||0)} A</span>${d.ausentesPresencia ? ` <span style="color:#7B1FA2">🟣 ${d.ausentesPresencia} AP</span>` : ''}
             <span>⏰ ${d.tardanzas} T</span>
             <span>🚪 ${d.retiros||0} R</span>
             <span style="font-weight:700;color:${color}">${pct}%</span>
@@ -12175,18 +12300,17 @@ function _generarHTMLRITE(nombre, curso, resNotas, resAsist) {
 
   const presentes = registros.filter(r => r.estado === 'P').length;
   const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP').length;
+  const apRite    = registros.filter(r => r.estado === 'AP').length;
   const tardes    = registros.filter(r => r.estado === 'T').length;
   const retiros   = registros.filter(r => r.estado === 'R').length;
   const diasHab   = registros.length;
   const presentesTotal = presentes + tardes + retiros;
-  const total   = registros.filter(r => r.estado !== 'R').length + (retiros * 0.5);
-  const inasist = ausentes + (tardes * 0.25) + (retiros * 0.5);
-  const pct     = total > 0 ? Math.round(((total - inasist) / total) * 100) : null;
+  const { total, inasist, pct } = calcAsistencia({ presentes, ausentes, tardes, retiros });
   const pctColor = pct === null ? '#888' : pct >= 85 ? '#1a7a44' : pct >= 70 ? '#b8860b' : '#c0392b';
 
   const novedades = registros.filter(r => r.estado !== 'P');
-  const estadoLabel = { A:'Ausente', AP:'Ausente Pres.', T:'Llegada tarde', R:'Retiro anticipado' };
-  const estadoColor = { A:'#c0392b', AP:'#c0392b', T:'#b8860b', R:'#7d3c98' };
+  const estadoLabel = { A:'Ausente', AP:'Ausente con presencia', T:'Llegada tarde', R:'Retiro anticipado' };
+  const estadoColor = { A:'#c0392b', AP:'#7B1FA2', T:'#b8860b', R:'#7d3c98' };
 
   const filasAsist = novedades.length
     ? novedades.map(r => `<tr><td>${r.fecha}</td><td style="color:${estadoColor[r.estado]||'#333'};font-weight:700">${estadoLabel[r.estado]||r.estado}</td><td>${r.horaLlegada||'—'}</td></tr>`).join('')
@@ -12257,7 +12381,8 @@ tr:nth-child(even){background:#f7faf8}
   <h2>📅 Asistencia</h2>
   <div class="resumen-asist">
     <div class="badge" style="background:#d8f3dc;color:#1a7a44">✅ ${presentesTotal}<br><span style="font-weight:400;font-size:10px">Presentes</span></div>
-    <div class="badge" style="background:#fef0f0;color:#c0392b">❌ ${ausentes}<br><span style="font-weight:400;font-size:10px">Ausentes</span></div>
+    <div class="badge" style="background:#fef0f0;color:#c0392b">❌ ${ausentes - apRite}<br><span style="font-weight:400;font-size:10px">Ausentes</span></div>
+      <div class="badge" style="background:#f3e5f5;color:#7B1FA2">🟣 ${apRite}<br><span style="font-weight:400;font-size:10px">Aus. con presencia</span></div>
     <div class="badge" style="background:#fffbe6;color:#b8860b">🕐 ${tardes}<br><span style="font-weight:400;font-size:10px">Tardanzas</span></div>
     <div class="badge" style="background:#f3e5f5;color:#7d3c98">🚪 ${retiros}<br><span style="font-weight:400;font-size:10px">Retiros</span></div>
     <div class="badge" style="background:#e8e8e8;color:#555">📅 ${diasHab}<br><span style="font-weight:400;font-size:10px">Días hábiles</span></div>
