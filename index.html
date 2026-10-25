@@ -1638,6 +1638,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <select id="ra-alumno" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarResumenAlumno()">
               <option value="">— Seleccioná un alumno —</option>
             </select>
+            <button onclick="descargarRITEStaff()" style="padding:8px 16px;border-radius:9px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">📄 Descargar informe (RITE)</button>
           </div>
           <div id="resumen-alumno-contenido" style="color:rgba(0,0,0,.3);text-align:center;padding:30px">Seleccioná un curso y un alumno.</div>
         </div>
@@ -8068,7 +8069,7 @@ function mmActualizarTarjeta() {
   const el = document.getElementById('dash-materias-riesgo');
   if (!el) return;
   if (!currentToken) { el.textContent = '—'; return; }
-  _mmPedir('anio').then(res => { el.textContent = (res && res.ok) ? res.materias.filter(m => m.estado !== 'OK').length : '—'; })
+  _mmPedir('anio').then(res => { el.textContent = (res && res.ok && res.excedioLimite) ? res.materias.filter(m => m.estado !== 'OK').length : '—'; })   // solo si excedió el límite de 28
                   .catch(() => { el.textContent = '—'; });
 }
 function cargarMisMaterias(tipo) {
@@ -8091,25 +8092,31 @@ function renderMisMaterias(res) {
   if (!res || !res.ok) { cont.innerHTML = `<div style="padding:14px;color:#c62828;font-size:13px">${_mmEsc((res && res.error) || 'No se pudo cargar')}</div>`; return; }
   const mats = (res.materias || []).slice().sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia));
   if (!mats.length) { cont.innerHTML = '<div style="padding:14px;color:#777;font-size:13px">Todavía no hay clases registradas en este período.</div>'; return; }
-  const col = { OK: ['#e8f5e9', '#1a7a44', '#a5d6a7'], ALERTA: ['#fff8e1', '#b26a00', '#ffe082'], RIESGO: ['#ffebee', '#c62828', '#ef9a9a'] };
-  const etq = { OK: 'OK', ALERTA: 'Alerta', RIESGO: 'Riesgo' };
-  const intens = mats.filter(m => m.estado !== 'OK');
-  const aviso = intens.length
-    ? `<div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px">⚠️ <b>Materias a intensificar</b> (menos de 75% de asistencia): ${intens.map(m => _mmEsc(m.materia)).join(', ')}.</div>`
-    : '<div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px">✅ Tenés 75% o más de asistencia en todas las materias.</div>';
+  const excedio = !!res.excedioLimite, lim = res.limiteInasistencias || 28;
+  const num = n => (Math.round((n || 0) * 100) / 100).toString().replace('.', ',');
+  // Resolución 1650/24, Anexo IV: la asistencia por materia solo se aplica si se excedió el límite de inasistencias institucionales
+  const col = excedio ? { OK: ['#e8f5e9', '#1a7a44', '#a5d6a7'], ALERTA: ['#fff8e1', '#b26a00', '#ffe082'], RIESGO: ['#ffebee', '#c62828', '#ef9a9a'] } : null;
+  const neutro = ['#f5f7fa', '#455a64', '#cfd8dc'];
+  const etq = { OK: 'Alcanza el 75%', ALERTA: 'A intensificar', RIESGO: 'A intensificar' };
+  const intens = excedio ? mats.filter(m => m.estado !== 'OK') : [];
+  const aviso = excedio
+    ? `<div style="background:#ffebee;border:1px solid #ef9a9a;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;line-height:1.6">⚠️ <b>Excediste el límite</b> de inasistencias institucionales (${num(res.inasistencias)} de ${lim}). Tenés que seguir asistiendo con las mismas obligaciones: eso puede mejorar tu asistencia por materia.<br>
+        <b>Materias a intensificar</b> por no alcanzar el 75% de asistencia: ${intens.length ? intens.map(m => _mmEsc(m.materia)).join(', ') : 'ninguna, estás con 75% o más en todas'}.<br>
+        Además, hay que intensificar las materias con calificación menor a 7 en algún cuatrimestre (lo ves en el informe R.I.T.E. que podés descargar).</div>`
+    : `<div style="background:#e3f2fd;border:1px solid #90caf9;border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:12px;line-height:1.6">ℹ️ Tenés <b>${num(res.inasistencias)} de ${lim}</b> inasistencias institucionales: <b>no excediste el límite</b>. La asistencia por materia solo se aplica si se excede ese límite (Resolución 1650/24, Anexo IV), por eso estos porcentajes son <b>informativos</b>.</div>`;
   const tarjetas = mats.map(m => {
-    const c = col[m.estado] || col.OK, asist = m.clases_total - m.clases_ausente;
+    const c = excedio ? (col[m.estado] || col.OK) : neutro, asist = m.clases_total - m.clases_ausente;
     return `<div style="background:${c[0]};border:1.5px solid ${c[2]};border-radius:12px;padding:12px 14px">
       <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:.3px;min-height:28px">${_mmEsc(m.materia)}</div>
       <div style="font-size:26px;font-weight:800;color:${c[1]};line-height:1.2">${m.porcentaje}%</div>
-      <div style="font-size:11px;color:${c[1]}">${asist}/${m.clases_total} clases · ${etq[m.estado] || ''}</div>
+      <div style="font-size:11px;color:${c[1]}">${asist}/${m.clases_total} clases${excedio ? ' · ' + (etq[m.estado] || '') : ''}</div>
       ${m.ausente_sin_docente > 0 ? `<div title="Faltaste a ${m.ausente_sin_docente} clase(s) en las que el docente también estuvo ausente: no se computan" style="font-size:10px;color:#8a5a00;margin-top:4px;cursor:help">ⓘ ${m.ausente_sin_docente} sin docente</div>` : ''}
     </div>`;
   }).join('');
   cont.innerHTML = aviso + `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px">${tarjetas}</div>
     <div style="font-size:11px;color:#888;margin-top:12px;line-height:1.6">
-      <b style="color:#1a7a44">OK</b> 75% o más · <b style="color:#b26a00">Alerta</b> 65 a 74% · <b style="color:#c62828">Riesgo</b> menos de 65%.<br>
-      Se calcula con tu asistencia diaria y el horario del curso. En las materias solo cuenta el <b>ausente</b>: el ausente con presencia, las llegadas tarde y los retiros se ven en tus totales pero no restan acá.<br>
+      Para cumplir hace falta el <b>75%</b> de las clases efectivamente dictadas, y se computa al finalizar el ciclo lectivo: estos porcentajes corresponden a hoy y pueden variar.<br>
+      En las materias solo cuenta el <b>ausente</b>: el ausente con presencia, las llegadas tarde y los retiros se ven en tus totales pero no restan acá.<br>
       <span style="color:#8a5a00">ⓘ sin docente</span>: faltaste ese día, pero el docente de la materia también estaba ausente. Esa clase no se cuenta (ni como asistencia ni como falta).
     </div>`;
 }
@@ -12247,9 +12254,28 @@ function descargarInformeAlumno() {
   showToast('Generando informe...', '⏳');
   Promise.all([
     callWebApp({ accion: 'obtenerNotasAlumno',      legajo: currentUser, curso, nombre }),
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre })
-  ]).then(([resNotas, resAsist]) => {
-    _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist);
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre }),
+    (currentToken ? _mmPedir('anio') : Promise.resolve(null)).catch(() => null)   // % por materia del propio alumno
+  ]).then(([resNotas, resAsist, resMat]) => {
+    _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMat);
+    _riteNombrePendiente = nombre;
+    _riteCursoPendiente  = curso;
+    _mostrarModalRITE(nombre);
+  }).catch(() => showToast('Error al generar el informe', '❌'));
+}
+
+// Informe RITE de un alumno elegido, para el equipo de conducción
+function descargarRITEStaff() {
+  const legajo = window._raLegajo, curso = String(window._raCurso || '').replace(/[°\s]/g, ''), nombre = window._raNombre || '';
+  if (!legajo || !curso) { showToast('Elegí un curso y un alumno', '⚠️'); return; }
+  showToast('Generando informe...', '⏳');
+  const [d, h] = _mmRango('anio');
+  Promise.all([
+    callWebApp({ accion: 'obtenerNotasAlumno',      legajo, curso, nombre }),
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso, nombre }),
+    callWebApp({ accion: 'asistenciaMateriasPorLegajo', legajo, curso, desde: d, hasta: h, rol: currentRole })
+  ]).then(([resNotas, resAsist, resMat]) => {
+    _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMat);
     _riteNombrePendiente = nombre;
     _riteCursoPendiente  = curso;
     _mostrarModalRITE(nombre);
@@ -12292,7 +12318,60 @@ function _ejecutarDescargaRITE() {
   }
 }
 
-function _generarHTMLRITE(nombre, curso, resNotas, resAsist) {
+// ── Materias a intensificar en el RITE (Resolución 1650/24, Anexo IV) ──
+const RITE_LIMITE = 28;   // inasistencias institucionales por año; "excedió" = más de 28
+function _riteEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _riteNum(n) { return (Math.round((n || 0) * 100) / 100).toString().replace('.', ','); }
+function _riteClave(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim(); }
+
+const RITE_NOTA = `
+  <div style="border:1px solid #cfe0d6;border-radius:8px;padding:12px 16px;margin:14px 0;font-size:11.5px;line-height:1.65;background:#fbfdfb">
+    <div style="font-weight:700;color:#1a7a44;margin-bottom:6px">Nota sobre la asistencia — Resolución 1650/24, Anexo IV</div>
+    <ul style="margin:0;padding-left:18px">
+      <li>La asistencia institucional se regula por turno completo, con un máximo de <b>28 (veintiocho) inasistencias institucionales</b> en el año. Se computa una (1) inasistencia por día de ausencia; el ingreso con un retraso de hasta veinte (20) minutos computa un cuarto (¼) de inasistencia.</li>
+      <li>La/el estudiante que <b>excedió el límite</b> de inasistencias debe seguir concurriendo a clases manteniendo las mismas obligaciones escolares. Seguir asistiendo es importante: puede mejorar su asistencia por materia.</li>
+      <li>La <b>asistencia por materia</b> se aplica únicamente cuando se excedió el límite de inasistencias institucionales. Se computa al finalizar el ciclo lectivo, sobre las clases efectivamente dictadas en el año, y debe alcanzar el <b>75%</b>. Por eso los porcentajes de este informe corresponden a la fecha de emisión y pueden variar hasta el cierre del ciclo. Mientras no se exceda el límite, el porcentaje por materia es solo informativo.</li>
+      <li><b>Si se comunica a la familia que la/el estudiante excedió el límite de inasistencias</b>, las materias que deberá intensificar son las que figuran en este informe por no alcanzar el 75% de asistencia, <b>además de aquellas cuya calificación numérica sea menor a 7 en cualquier cuatrimestre</b>. Deberá participar de los períodos de intensificación de la enseñanza y el estudio en esas materias.</li>
+      <li>En el cálculo por materia solo se computan las ausencias: no se computan las llegadas tarde, los retiros anticipados ni las ausencias con presencia. Tampoco se cuentan las clases en que el docente estuvo ausente ni los días no lectivos.</li>
+    </ul>
+  </div>`;
+
+function riteSeccionIntensificar(inasist, resMaterias, resNotas) {
+  const esc = _riteEsc;
+  const excedio = inasist > RITE_LIMITE;
+  const mats = (resMaterias && resMaterias.ok) ? (resMaterias.materias || []).slice().sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia)) : null;
+  const bajoAsist = mats ? mats.filter(m => m.estado !== 'OK') : [];                         // menos de 75% de las clases dictadas
+  const bajoNota = ((resNotas && resNotas.materias) || []).map(m => {                        // menos de 7 en algún cuatrimestre
+    const bajos = [];
+    [['1° cuatrimestre', m.cuat1], ['2° cuatrimestre', m.cuat2]].forEach(([c, v]) => { const n = parseFloat(String(v).replace(',', '.')); if (v !== '' && v != null && !isNaN(n) && n < 7) bajos.push(c + ': ' + _riteNum(n)); });
+    return bajos.length ? { materia: m.materia, bajos } : null;
+  }).filter(Boolean);
+  const todas = new Set([...bajoAsist.map(m => _riteClave(m.materia)), ...bajoNota.map(m => _riteClave(m.materia))]);
+
+  const estado = `<div style="font-size:13px;margin:8px 0"><b>Inasistencias institucionales:</b> <span style="font-weight:700;color:${excedio ? '#c0392b' : '#1a7a44'}">${_riteNum(inasist)} de ${RITE_LIMITE}</span> — ${excedio ? '<b>excedió el límite</b>.' : 'no excedió el límite.'}</div>`;
+
+  let intens = '';
+  if (excedio) {
+    const li = (arr, f) => arr.length ? `<ul style="margin:4px 0 8px;padding-left:18px">${arr.map(f).join('')}</ul>` : '<div style="margin:4px 0 8px;color:#555">Ninguna.</div>';
+    intens = `<h2>📌 Materias a intensificar</h2>
+      <div style="border:1.5px solid #e0b4b4;background:#fff6f6;border-radius:8px;padding:12px 16px;font-size:12.5px;line-height:1.6">
+        <div>La/el estudiante <b>excedió el límite</b> de inasistencias institucionales. Si se comunica esta situación a la familia, las materias que deberá intensificar son las siguientes:</div>
+        <div style="margin-top:8px"><b>Por asistencia</b> (menos de 75% de las clases dictadas):</div>
+        ${mats ? li(bajoAsist, m => `<li>${esc(m.materia)} — ${m.porcentaje}% (${m.clases_total - m.clases_ausente} de ${m.clases_total} clases)</li>`) : '<div style="margin:4px 0 8px;color:#8a5a00">No se pudo calcular la asistencia por materia en este momento.</div>'}
+        <div><b>Por calificación</b> (menos de 7 en algún cuatrimestre):</div>
+        ${li(bajoNota, m => `<li>${esc(m.materia)} — ${m.bajos.map(esc).join(' · ')}</li>`)}
+        <div style="margin-top:6px;font-weight:700">Total de materias a intensificar: ${todas.size}</div>
+      </div>`;
+  }
+  const tabla = mats && mats.length ? `<h2>📚 Asistencia por materia${excedio ? '' : ' (informativa)'}</h2>
+    <table><thead><tr><th style="text-align:left">Materia</th><th>Clases dictadas</th><th>Asistió</th><th>% asistencia</th>${excedio ? '<th>Situación</th>' : ''}</tr></thead><tbody>
+      ${mats.map(m => `<tr><td style="text-align:left;font-weight:600">${esc(m.materia)}</td><td style="text-align:center">${m.clases_total}</td><td style="text-align:center">${m.clases_total - m.clases_ausente}</td>
+        <td style="text-align:center;font-weight:700;color:${m.estado === 'OK' ? '#1a7a44' : m.estado === 'ALERTA' ? '#b8860b' : '#c0392b'}">${m.porcentaje}%</td>${excedio ? `<td style="text-align:center">${m.estado === 'OK' ? 'Alcanza el 75%' : 'A intensificar'}</td>` : ''}</tr>`).join('')}
+    </tbody></table>` : '';
+  return estado + intens + tabla + RITE_NOTA;
+}
+
+function _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMaterias) {
   const hoy     = new Date().toLocaleDateString('es-AR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   const logoUrl = typeof PM_LOGO !== 'undefined' ? PM_LOGO : '';
   const materias  = resNotas.materias  || [];
@@ -12387,6 +12466,7 @@ tr:nth-child(even){background:#f7faf8}
     <div class="badge" style="background:#f3e5f5;color:#7d3c98">🚪 ${retiros}<br><span style="font-weight:400;font-size:10px">Retiros</span></div>
     <div class="badge" style="background:#e8e8e8;color:#555">📅 ${diasHab}<br><span style="font-weight:400;font-size:10px">Días hábiles</span></div>
   </div>
+  ${riteSeccionIntensificar(inasist, resMaterias, resNotas)}
   <table><thead><tr><th style="text-align:left">Fecha</th><th>Estado</th><th>Hora</th></tr></thead><tbody>${filasAsist}</tbody></table>
   <div class="footer">Informe generado por Perito Digital · ${hoy} · Documento de carácter informativo</div>
   <div style="text-align:center;margin-top:16px">
