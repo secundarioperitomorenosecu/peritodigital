@@ -525,7 +525,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     <div class="sidebar-nav">
       <div class="nav-section-title">Principal</div>
       <div class="nav-item active" onclick="showSection('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
-      <div class="nav-item" onclick="showSection('mural',this)"><span class="nav-icon">📋</span> Mural de Novedades <span class="nav-badge">3</span></div>
+      <div class="nav-item" onclick="showSection('mural',this)"><span class="nav-icon">📋</span> Mural de Novedades <span class="nav-badge" id="badge-mural" style="display:none"></span></div>
       <div class="nav-item" onclick="showSection('calendario',this)"><span class="nav-icon">📅</span> Calendario</div>
       <div class="nav-section-title" id="nav-docente-section">Docentes</div>
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia',this)"><span class="nav-icon">✅</span> Asistencia</div>
@@ -3840,6 +3840,13 @@ function doLogin(name, role, usuario, res){
   if(window.innerWidth<=800) document.getElementById('hamburger').style.display='none';
   // Cargar dashboard al entrar
   setTimeout(cargarDashboard, 500);
+  // Contador del Mural: oculto hasta confirmar que hay publicaciones sin ver
+  _muralMostrarBadge(0);
+  setTimeout(actualizarBadgeMural, 1500);
+  if (!window._muralBadgeTimer) {
+    window._muralBadgeTimer = setInterval(actualizarBadgeMural, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) actualizarBadgeMural(); });
+  }
   // Mensaje de bienvenida según horario
   setTimeout(() => mostrarBienvenida(name), 900);
   document.getElementById('sidebar-name').textContent=name;
@@ -3993,6 +4000,43 @@ function showSection(id,el){
   if(id === 'usuarios') cargarUsuarios();
 }
 
+// ── Contador real del Mural ─────────────────────────────────────────────
+// Cuenta las publicaciones activas que el usuario todavía NO vio en este
+// dispositivo (se guardan en localStorage los IDs ya vistos, por usuario).
+// Si no hay nada nuevo, el número no se muestra. Al abrir el Mural se pone en 0.
+function _muralKey() { return 'mural_vistas_' + (currentUser || ''); }
+function _muralLeerVistas() {
+  try { return JSON.parse(localStorage.getItem(_muralKey()) || '[]'); } catch(e) { return []; }
+}
+function _muralMostrarBadge(n) {
+  const b = document.getElementById('badge-mural');
+  if (!b) return;
+  if (n > 0) { b.textContent = n > 9 ? '9+' : String(n); b.style.display = 'inline-block'; }
+  else { b.style.display = 'none'; }
+}
+function _muralMarcarVistas(pubs) {
+  try { localStorage.setItem(_muralKey(), JSON.stringify((pubs || []).map(p => String(p.id)))); } catch(e) {}
+  _muralMostrarBadge(0);
+}
+function _muralEsPropia(p) {
+  const nom = String(currentNombre || '').trim().toLowerCase();
+  return p.esAutor === true ||
+         (nom && String(p.docente || '').trim().toLowerCase() === nom);
+}
+function actualizarBadgeMural() {
+  if (!currentUser) return;
+  const app = document.getElementById('app');
+  if (!app || app.style.display === 'none') return;
+  if (document.getElementById('sec-mural')?.classList.contains('active')) { _muralMostrarBadge(0); return; }
+  const esAlumno = currentRole === 'alumno' || currentRole === 'tutor';
+  callWebApp({ accion: 'obtenerPublicaciones', curso: esAlumno ? currentCursoAlumno : 'todos', soloActivas: true, usuario: currentUser }).then(res => {
+    if (!res || !res.ok || !res.publicaciones) return;   // ante un error no se toca el contador
+    const vistas = _muralLeerVistas();
+    const nuevas = res.publicaciones.filter(p => !vistas.includes(String(p.id)) && !_muralEsPropia(p)).length;
+    _muralMostrarBadge(nuevas);
+  }).catch(() => {});
+}
+
 function cargarMural() {
   const feed = document.getElementById('mural-feed');
   if (!feed) return;
@@ -4004,7 +4048,8 @@ function cargarMural() {
   if (filtros) filtros.style.display = isAlumnoOTutor ? 'none' : 'flex';
   let cursoFiltro = 'todos';
   if (isAlumnoOTutor) cursoFiltro = currentCursoAlumno;
-  callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true }).then(res => {
+  callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true, usuario: currentUser }).then(res => {
+    if (res && res.ok) _muralMarcarVistas(res.publicaciones || []);
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
       feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3);font-size:13px">📋 No hay publicaciones aún.<br><span style="font-size:11px">Los docentes pueden publicar desde este mural.</span></div>';
       return;
@@ -4013,9 +4058,9 @@ function cargarMural() {
     feed.innerHTML = res.publicaciones.map(p => `
       <div class="mural-post">
         <div class="mural-post-header">
-          <div class="post-avatar">${(p.docenteNombre||'??').split(',').map(x=>x.trim()[0]).join('').substring(0,2).toUpperCase()}</div>
+          <div class="post-avatar">${(p.docenteNombre||p.docente||'??').split(',').map(x=>x.trim()[0]).join('').substring(0,2).toUpperCase()}</div>
           <div class="post-meta">
-            <div class="post-author">${p.docenteNombre||'Docente'}</div>
+            <div class="post-author">${p.docenteNombre||p.docente||'Docente'}</div>
             <div class="post-info">${p.materia||''} · ${p.curso||''}</div>
           </div>
           <span class="post-badge ${tipoClass[p.tipo]||''}">${p.tipo||''}</span>
@@ -4024,7 +4069,7 @@ function cargarMural() {
         <div class="post-footer">
           ${p.fechaEvento ? `<span class="post-footer-chip">📅 ${p.fechaEvento}</span>` : ''}
           <span class="post-footer-chip">📌 ${p.curso||'General'}</span>
-          ${canDeletePost(p) ? `<button class="btn btn-sm btn-danger" style="margin-left:auto;background:rgba(26,158,92,.15);border:1px solid rgba(26,158,92,.3);color:#1a9e5c;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px" onclick="eliminarPost('${p.id}','${p.autor_usuario||p.docente||''}')">🗑️</button>` : ''}
+          ${canDeletePost(p) ? `<button class="btn btn-sm btn-danger" style="margin-left:auto;background:rgba(26,158,92,.15);border:1px solid rgba(26,158,92,.3);color:#1a9e5c;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px" onclick="eliminarPost('${p.id}','')">🗑️</button>` : ''}
         </div>
       </div>`).join('');
   });
@@ -4035,7 +4080,7 @@ function filtrarMural(curso, el) {
   if(el) el.classList.add('active');
   const feed = document.getElementById('mural-feed');
   feed.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3);font-size:13px">⏳ Cargando...</div>';
-  callWebApp({ accion: 'obtenerPublicaciones', curso: curso, soloActivas: true }).then(res => {
+  callWebApp({ accion: 'obtenerPublicaciones', curso: curso, soloActivas: true, usuario: currentUser }).then(res => {
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
       feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3);font-size:13px">📋 Sin publicaciones para este filtro.</div>';
       return;
@@ -4044,9 +4089,9 @@ function filtrarMural(curso, el) {
     feed.innerHTML = res.publicaciones.map(p => `
       <div class="mural-post">
         <div class="mural-post-header">
-          <div class="post-avatar">${(p.docenteNombre||'??').split(',').map(x=>x.trim()[0]).join('').substring(0,2).toUpperCase()}</div>
+          <div class="post-avatar">${(p.docenteNombre||p.docente||'??').split(',').map(x=>x.trim()[0]).join('').substring(0,2).toUpperCase()}</div>
           <div class="post-meta">
-            <div class="post-author">${p.docenteNombre||'Docente'}</div>
+            <div class="post-author">${p.docenteNombre||p.docente||'Docente'}</div>
             <div class="post-info">${p.materia||''} · ${p.curso||''}</div>
           </div>
           <span class="post-badge ${tipoClass[p.tipo]||''}">${p.tipo||''}</span>
@@ -4055,7 +4100,7 @@ function filtrarMural(curso, el) {
         <div class="post-footer">
           ${p.fechaEvento ? `<span class="post-footer-chip">📅 ${p.fechaEvento}</span>` : ''}
           <span class="post-footer-chip">📌 ${p.curso||'General'}</span>
-          ${canDeletePost(p) ? `<button class="btn btn-sm btn-danger" style="margin-left:auto;background:rgba(26,158,92,.15);border:1px solid rgba(26,158,92,.3);color:#1a9e5c;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px" onclick="eliminarPost('${p.id}','${p.autor_usuario||p.docente||''}')">🗑️</button>` : ''}
+          ${canDeletePost(p) ? `<button class="btn btn-sm btn-danger" style="margin-left:auto;background:rgba(26,158,92,.15);border:1px solid rgba(26,158,92,.3);color:#1a9e5c;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px" onclick="eliminarPost('${p.id}','')">🗑️</button>` : ''}
         </div>
       </div>`).join('');
   });
@@ -5139,13 +5184,13 @@ function exportarPDFLegajoEOE(l) {
 function canDeletePost(p) {
   const isAdmin     = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
   const isPreceptor = currentRole === 'preceptor';
-  const esAutor     = (p.autor_usuario || p.docente || '') === currentUser;
+  const esAutor     = p.esAutor === true;
   return isAdmin || isPreceptor || esAutor;
 }
 
 function eliminarPost(id, autorOriginal) {
   if (!confirm('¿Eliminar esta publicación?')) return;
-  callWebApp({ accion: 'eliminarPublicacion', id, usuario: currentUser, rol: currentRole }).then(res => {
+  callWebApp({ accion: 'eliminarPublicacion', id, usuario: currentUser, rol: currentRole, token: currentToken }).then(res => {
     if (res.ok) { showToast('Publicación eliminada','🗑️'); cargarMural(); }
     else showToast(res.error || 'Sin permisos para eliminar','❌');
   });
@@ -5199,7 +5244,7 @@ function cargarDashboard() {
 
   // Dashboard alumno: cargar datos de asistencia
   if (isAlumno && currentCursoAlumno) {
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre, token: currentToken }).then(res => {
       if (!res || !res.ok) return;
       const registros = res.registros || [];
       const { inasist, pct } = calcAsistencia(contarRegistrosAsistencia(registros));
@@ -5480,7 +5525,8 @@ function guardarAttendance() {
     curso: cursoActualAtt,
     fecha: fecha,
     lista: lista,
-    docente: currentUser || 'docente'
+    docente: currentUser || 'docente',
+    token: currentToken
   }).then(res => {
     if(res.ok) {
       showToast(`✅ Asistencia de ${cursoActualAtt} guardada`, '✅');
@@ -5709,7 +5755,8 @@ function guardarCalificaciones() {
 
   callWebApp({
     accion: 'guardarCalificacionesBloque',
-    datos: JSON.stringify({ curso, materia, docente: currentUser, periodo, alumnos: alumnosBloque })
+    datos: JSON.stringify({ curso, materia, docente: currentUser, periodo, alumnos: alumnosBloque }),
+    token: currentToken
   }).then(res => {
     if (res && res.ok) {
       showToast('✅ ' + res.guardados + ' calificaciones guardadas', '✅');
@@ -6637,8 +6684,8 @@ function infGenerarPDF() {
   const { solicitud: s, docentes } = infDetalleActual;
   showToast('Armando el PDF...', '⏳');
   const pedidos = s.incluirDatos
-    ? [callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: s.legajo, curso: s.curso, nombre: s.alumno }),
-       callWebApp({ accion: 'obtenerNotasAlumno', legajo: s.legajo, curso: s.curso, nombre: s.alumno })]
+    ? [callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: s.legajo, curso: s.curso, nombre: s.alumno, token: currentToken }),
+       callWebApp({ accion: 'obtenerNotasAlumno', legajo: s.legajo, curso: s.curso, nombre: s.alumno, token: currentToken })]
     : [Promise.resolve(null), Promise.resolve(null)];
   Promise.all(pedidos).then(([resAsist, resNotas]) => {
     infAbrirPDF(infHtmlPDF(s, docentes, resAsist, resNotas), s);
@@ -7902,8 +7949,8 @@ function cargarResumenAlumno() {
   const anio = document.getElementById('ra-anio')?.value || new Date().getFullYear();
 
   Promise.all([
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso }),
-    callWebApp({ accion: 'obtenerNotasAlumno', legajo, curso, anio })
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso, token: currentToken }),
+    callWebApp({ accion: 'obtenerNotasAlumno', legajo, curso, anio, token: currentToken })
   ]).then(([resAtt, resNot]) => {
     const registros = resAtt.registros || [];
     const presentes = registros.filter(r=>r.estado==='P').length;
@@ -8124,7 +8171,7 @@ function renderMisMaterias(res) {
 function cargarMiAsistencia() {
   if (currentRole === 'alumno') cargarMisMaterias(_mmPeriodo);
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
+  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre, token: currentToken }).then(res => {
     if (!res.ok) return;
     const registros = res.registros || [];
     const presentes = registros.filter(r => r.estado === 'P').length;
@@ -8332,7 +8379,7 @@ function imprimirInforme() {
 
 function cargarMisNotas() {
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre }).then(res => {
+  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre, token: currentToken }).then(res => {
     const tabla = document.getElementById('mis-notas-tabla');
     if (!res.ok || !res.materias || res.materias.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin calificaciones cargadas aún.</div>';
@@ -12253,8 +12300,8 @@ function descargarInformeAlumno() {
   const curso  = currentCursoAlumno || '—';
   showToast('Generando informe...', '⏳');
   Promise.all([
-    callWebApp({ accion: 'obtenerNotasAlumno',      legajo: currentUser, curso, nombre }),
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre }),
+    callWebApp({ accion: 'obtenerNotasAlumno',      legajo: currentUser, curso, nombre, token: currentToken }),
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre, token: currentToken }),
     (currentToken ? _mmPedir('anio') : Promise.resolve(null)).catch(() => null)   // % por materia del propio alumno
   ]).then(([resNotas, resAsist, resMat]) => {
     _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMat);
@@ -12271,8 +12318,8 @@ function descargarRITEStaff() {
   showToast('Generando informe...', '⏳');
   const [d, h] = _mmRango('anio');
   Promise.all([
-    callWebApp({ accion: 'obtenerNotasAlumno',      legajo, curso, nombre }),
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso, nombre }),
+    callWebApp({ accion: 'obtenerNotasAlumno',      legajo, curso, nombre, token: currentToken }),
+    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso, nombre, token: currentToken }),
     callWebApp({ accion: 'asistenciaMateriasPorLegajo', legajo, curso, desde: d, hasta: h, rol: currentRole })
   ]).then(([resNotas, resAsist, resMat]) => {
     _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMat);
