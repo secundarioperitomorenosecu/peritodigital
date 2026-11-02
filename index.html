@@ -3526,6 +3526,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function callWebApp(params) {
+  // Etapa 1: toda llamada lleva el código de sesión (el servidor lo exige)
+  if (currentToken && !params.sesion) params = Object.assign({}, params, { sesion: currentToken });
   // Operaciones de escritura en bloque usan timeout extendido (90s)
   const accionesLentas = ['guardarCalificacionesBloque','guardarAsistencia','registrarActaAccidente',
     'registrarAusenciaDocenteTodos','bibRegistrarPrestamo','bibMarcarDevuelto'];
@@ -3547,6 +3549,15 @@ function callWebApp(params) {
     signal: controller.signal
   })
     .then(res => { clearTimeout(timer); return res.json(); })
+    .then(data => {
+      // Etapa 1: si el servidor dice que la sesión venció, volver al login (una sola vez)
+      if (data && data.sesionInvalida && currentToken && !window._sesionCaida) {
+        window._sesionCaida = true;
+        showToast('Tu sesión venció. Ingresá de nuevo.', '⏳');
+        setTimeout(() => { logout(); window._sesionCaida = false; }, 800);
+      }
+      return data;
+    })
     .catch(err => {
       clearTimeout(timer);
       // Si fue timeout del navegador (no error de red), avisar que puede estar guardado
@@ -3723,6 +3734,7 @@ function elegirHijo(legajo, nombre, curso, e) {
     nombre: nombre,
     usuario: legajo,
     curso: curso,
+    token: res.token,   // Etapa 1: el tutor conserva su código de sesión al elegir hijo
     esTutor: true,
     tutorNombre: res.nombre
   };
