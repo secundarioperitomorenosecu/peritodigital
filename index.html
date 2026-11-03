@@ -8835,13 +8835,22 @@ function dibujarGrid() {
   }
 }
 
+// Fecha del evento como día local (y/m/d). Acepta 'yyyy-MM-dd' y también fechas
+// con hora ('2026-11-03T00:00:00.000Z'): se usan solo los primeros 10 caracteres,
+// igual que hace la grilla del calendario, para que ambas muestren el mismo día.
+function calFechaLocal(fecha) {
+  const p = String(fecha || '').substring(0, 10).split('-').map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return null;
+  return new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+}
+
 function renderEventosMes() {
   const contenedor = document.getElementById('cal-eventos-lista');
   if (!contenedor) return;
   const evsMes = calEventos.filter(e => {
-    const f = new Date(e.fecha);
-    return f.getMonth() === calMonth && f.getFullYear() === calYear;
-  }).sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+    const f = calFechaLocal(e.fecha);
+    return f && f.getMonth() === calMonth && f.getFullYear() === calYear;
+  }).sort((a,b) => calFechaLocal(a.fecha) - calFechaLocal(b.fecha));
 
   if (!evsMes.length) {
     contenedor.innerHTML = '<div style="text-align:center;color:rgba(0,0,0,.3);padding:20px;font-size:13px">Sin eventos este mes</div>';
@@ -8849,7 +8858,7 @@ function renderEventosMes() {
   }
   const TIPO_LABEL = { prueba:'Prueba', tp:'Trabajo Práctico', lectura:'Lectura', material:'Material', comunicado:'Aviso', feriado:'Feriado', acto:'Acto escolar', reunion:'Reunión padres', capacitacion:'Capacitación', otro:'Evento' };
   contenedor.innerHTML = evsMes.map(e => {
-    const f = new Date(e.fecha + 'T12:00:00');
+    const f = calFechaLocal(e.fecha);
     const dia = f.toLocaleDateString('es-AR', { weekday:'short', day:'numeric', month:'short' });
     const badge = e.origen === 'institucional' ? '🏫' : (e.curso && e.curso !== 'todos' ? e.curso : '📢');
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0e6d8">
