@@ -8738,7 +8738,7 @@ function renderCalendar() {
     calEventosCrudos = [];
     if (resMural?.ok) {
       resMural.publicaciones.forEach(p => {
-        if (p.fechaEvento) calEventosCrudos.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, curso: p.curso, docente: p.docente, origen: 'mural' });
+        if (p.fechaEvento) calEventosCrudos.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, curso: p.curso, materia: p.materia, docente: p.docente, origen: 'mural' });
       });
     }
     if (resEv?.ok) {
@@ -8819,7 +8819,9 @@ function dibujarGrid() {
     const evsDia = calEventos.filter(e => (e.fecha || '').substring(0,10) === fechaStr);
     let html = '<div class="cal-day-num">' + d + '</div>';
     evsDia.slice(0,3).forEach(e => {
-      html += `<div class="cal-event-dot tipo-${e.tipo}" title="${e.titulo}">${e.titulo}</div>`;
+      const mat = e.materia ? calEsc(e.materia) : '';
+      const matHtml = mat ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;font-size:8px;font-weight:700;opacity:.75;text-transform:uppercase">${mat}</span>` : '';
+      html += `<div class="cal-event-dot tipo-${e.tipo}" title="${mat ? mat + ' – ' : ''}${e.titulo}">${matHtml}${e.titulo}</div>`;
     });
     if (evsDia.length > 3) html += `<div style="font-size:9px;color:#aaa">+${evsDia.length-3} más</div>`;
     div.innerHTML = html;
@@ -8838,6 +8840,10 @@ function dibujarGrid() {
 // Fecha del evento como día local (y/m/d). Acepta 'yyyy-MM-dd' y también fechas
 // con hora ('2026-11-03T00:00:00.000Z'): se usan solo los primeros 10 caracteres,
 // igual que hace la grilla del calendario, para que ambas muestren el mismo día.
+function calEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 function calFechaLocal(fecha) {
   const p = String(fecha || '').substring(0, 10).split('-').map(Number);
   if (p.length !== 3 || p.some(isNaN)) return null;
@@ -8864,7 +8870,7 @@ function renderEventosMes() {
     return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0e6d8">
       <div style="min-width:90px;font-size:12px;color:#888;font-weight:600">${dia}</div>
       <div class="cal-event-dot tipo-${e.tipo}" style="font-size:11px;padding:3px 8px">${TIPO_LABEL[e.tipo]||e.tipo}</div>
-      <div style="flex:1;font-size:13px;color:#1a1a1a;font-weight:500">${e.titulo}</div>
+      <div style="flex:1;font-size:13px;color:#1a1a1a;font-weight:500">${e.titulo}${e.materia ? `<div style="font-size:11px;color:#888;font-weight:600;margin-top:2px">${calEsc(e.materia)}</div>` : ''}</div>
       <div style="font-size:11px;color:#aaa">${badge}</div>
     </div>`;
   }).join('');
