@@ -1299,6 +1299,32 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
       </div>
 
+      <!-- ALUMNOS CON MATERIAS PENDIENTES -->
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header">
+          <h3>⚠️ Alumnos con 4 o más materias pendientes</h3>
+        </div>
+        <div class="panel-body">
+          <div style="font-size:11px;color:rgba(0,0,0,.45);margin-bottom:14px;line-height:1.5">
+            Materia pendiente: nota menor a 7 en el 1° o 2° cuatrimestre (no se consideran TEA, TEP, TED ni los bimestres), o 28 o más inasistencias con menos de 75% de asistencia en esa materia. Si la recuperó en diciembre o febrero con 4 o más, deja de contar.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:5px">Curso</label>
+              <select id="pend-curso" style="padding:9px 12px;border-radius:9px;border:1px solid #e8d5c4;background:#fdf8f3;font-family:inherit;font-size:13px">
+                <option value="TODOS">Todos los cursos</option>
+                <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+                <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+                <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="generarInformePendientes()">📋 Ver informe</button>
+            <button class="btn btn-sm" style="background:#fff3e0;color:#e65100;border:1px solid #ffcc80" onclick="exportarInformePendientesPDF()">🖨️ PDF</button>
+          </div>
+          <div id="pend-contenido"></div>
+        </div>
+      </div>
+
       <!-- MEJORES PROMEDIOS -->
       <div class="panel" style="margin-top:16px">
         <div class="panel-header">
@@ -6092,6 +6118,113 @@ function generarReporteAlumnos() {
   });
 }
 
+
+// ═══════════════════════════════════════════════════════════════════════
+//  INFORME: ALUMNOS CON 4 O MÁS MATERIAS PENDIENTES (pantalla + PDF)
+// ═══════════════════════════════════════════════════════════════════════
+function pendCargar(callback) {
+  const sel = document.getElementById('pend-curso');
+  const curso = sel ? sel.value : 'TODOS';
+  callWebApp({ accion: 'informePendientes', curso }).then(res => {
+    if (!res || !res.ok) { callback(null, (res && res.error) || 'no se pudo calcular el informe'); return; }
+    window._pendientesData = res;
+    callback(res, null);
+  });
+}
+
+function pendRender(res) {
+  const cont = document.getElementById('pend-contenido');
+  if (!cont) return;
+  const total = res.cursos.reduce((s, c) => s + c.alumnos.length, 0);
+  if (total === 0) {
+    cont.innerHTML = '<div style="text-align:center;padding:30px;color:#2e7d32">✅ Ningún alumno tiene ' + res.minimo + ' o más materias pendientes.</div>';
+    return;
+  }
+  const bloques = res.cursos.filter(c => c.alumnos.length).map(c => {
+    const tarjetas = c.alumnos.map(a => `
+      <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:12px 16px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:700;color:#1a1a1a">${calEsc(a.nombre)}</div>
+          <span style="background:#ffebee;color:#c62828;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap">${a.cantidad} pendientes</span>
+        </div>
+        ${a.materias.map(m => `<div style="font-size:12px;color:#333;padding-left:10px"><strong>${calEsc(m.materia)}</strong> — ${m.motivos.map(calEsc).join(' · ')}</div>`).join('')}
+      </div>`).join('');
+    return `<h4 style="margin:16px 0 8px;font-size:13px;color:rgba(0,0,0,.55);text-transform:uppercase;letter-spacing:1px">Curso ${calEsc(c.curso)} · ${c.alumnos.length} de ${c.totalAlumnos} alumnos</h4>${tarjetas}`;
+  }).join('');
+  cont.innerHTML = `<div style="font-size:12px;color:#888;margin-bottom:6px">${total} alumno(s) con ${res.minimo} o más materias pendientes</div>${bloques}`;
+}
+
+function generarInformePendientes() {
+  const cont = document.getElementById('pend-contenido');
+  if (!cont) return;
+  cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Calculando...</div>';
+  pendCargar((res, err) => {
+    if (err) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + calEsc(err) + '</div>'; return; }
+    pendRender(res);
+  });
+}
+
+// Arma el HTML imprimible: una página por curso
+function pendArmarHtml(res, hoy) {
+  const conAlumnos = res.cursos.filter(c => c.alumnos.length);
+  const sin = res.cursos.filter(c => !c.alumnos.length).map(c => c.curso);
+  const paginas = conAlumnos.map((c, idx) => {
+    const filas = c.alumnos.map((a, i) => `<tr>
+        <td style="text-align:center;color:#888">${i + 1}</td>
+        <td><strong>${calEsc(a.nombre)}</strong></td>
+        <td style="text-align:center;font-weight:700;color:#c62828">${a.cantidad}</td>
+        <td>${a.materias.map(m => `<div><strong>${calEsc(m.materia)}</strong>: ${m.motivos.map(calEsc).join(' · ')}</div>`).join('')}</td>
+      </tr>`).join('');
+    return `<section class="pag" ${idx > 0 ? 'style="page-break-before:always"' : ''}>
+      <h1>Alumnos con ${res.minimo} o más materias pendientes — Curso ${calEsc(c.curso)}</h1>
+      <div class="meta">Ciclo lectivo ${res.anio} · Al ${calEsc(hoy)} · ${c.alumnos.length} de ${c.totalAlumnos} alumno(s)</div>
+      <table>
+        <thead><tr><th style="width:34px">#</th><th style="width:26%">Alumno/a</th><th style="width:70px">Pendientes</th><th>Materias y motivo</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <div class="nota">Materia pendiente: nota menor a 7 en el 1° o 2° cuatrimestre (no se consideran TEA, TEP, TED ni los bimestres), o 28 o más inasistencias con menos de 75% de asistencia en la materia. Si se recuperó en diciembre o febrero con 4 o más, no se cuenta.</div>
+    </section>`;
+  }).join('');
+  const resumenSin = (sin.length && conAlumnos.length) ? `<div class="nota" style="margin-top:20px">Cursos sin alumnos en esta situación: ${sin.map(calEsc).join(', ')}.</div>` : '';
+  const vacio = conAlumnos.length ? '' : `<h1>Alumnos con ${res.minimo} o más materias pendientes</h1><div class="meta">Al ${calEsc(hoy)} · Ningún alumno cumple el criterio.</div>`;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <title>Alumnos con materias pendientes</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:30px;color:#1a1a1a}
+      h1{font-size:17px;margin-bottom:4px}
+      .meta{color:#888;font-size:13px;margin-bottom:16px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th{text-align:left;padding:8px 10px;background:#fdf8f3;border-bottom:2px solid #e8d5c4}
+      td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:top}
+      tr{page-break-inside:avoid}
+      .nota{color:#777;font-size:11px;margin-top:14px;line-height:1.5}
+      @media print{button{display:none}}
+    </style></head>
+    <body>
+      <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-weight:600">🖨️ Imprimir / Guardar como PDF</button>
+      ${paginas}${vacio}${resumenSin}
+    </body></html>`;
+}
+
+function exportarInformePendientesPDF() {
+  const cont = document.getElementById('pend-contenido');
+  if (cont) cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Generando PDF...</div>';
+  pendCargar((res, err) => {
+    if (err) { if (cont) cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + calEsc(err) + '</div>'; return; }
+    const hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
+    const html = pendArmarHtml(res, hoy);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const win  = window.open(url, '_blank');
+    if (!win) {
+      const a = document.createElement('a');
+      a.href = url; a.download = 'Materias_pendientes_' + res.anio + '.html';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    pendRender(res);   // deja también la vista en pantalla (sin volver a consultar)
+  });
+}
 
 function generarInformeCalificaciones() {
   const curso   = document.getElementById('inf-cal-curso').value;
