@@ -6122,14 +6122,37 @@ function generarReporteAlumnos() {
 // ═══════════════════════════════════════════════════════════════════════
 //  INFORME: ALUMNOS CON 4 O MÁS MATERIAS PENDIENTES (pantalla + PDF)
 // ═══════════════════════════════════════════════════════════════════════
+function pendAvisoFallidos(res) {
+  if (!res || !res.fallidos || !res.fallidos.length) return '';
+  return '<div style="background:#fff3e0;border:1px solid #ffcc80;color:#e65100;border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:10px">⚠️ No se pudo calcular: ' +
+    res.fallidos.map(f => '<strong>' + calEsc(f.curso) + '</strong>').join(', ') + '. El informe está incompleto; volvé a generarlo.</div>';
+}
+
+// Consulta de a un curso por vez (cada consulta tiene su propio límite de 30 s)
 function pendCargar(callback) {
   const sel = document.getElementById('pend-curso');
   const curso = sel ? sel.value : 'TODOS';
-  callWebApp({ accion: 'informePendientes', curso }).then(res => {
-    if (!res || !res.ok) { callback(null, (res && res.error) || 'no se pudo calcular el informe'); return; }
-    window._pendientesData = res;
-    callback(res, null);
-  });
+  const lista = (curso === 'TODOS') ? ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'] : [curso];
+  const cont = document.getElementById('pend-contenido');
+  const acum = { ok: true, anio: new Date().getFullYear(), minimo: 4, cursos: [], fallidos: [] };
+  let i = 0;
+  const siguiente = () => {
+    if (i >= lista.length) { window._pendientesData = acum; callback(acum, null); return; }
+    const cu = lista[i];
+    if (cont) cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.4)">⏳ Calculando ' + calEsc(cu) + ' (' + (i + 1) + ' de ' + lista.length + ')...</div>';
+    callWebApp({ accion: 'informePendientes', curso: cu }).then(res => {
+      if (res && res.ok) {
+        acum.anio = res.anio || acum.anio;
+        acum.minimo = res.minimo || acum.minimo;
+        (res.cursos || []).forEach(c => acum.cursos.push(c));
+      } else {
+        acum.fallidos.push({ curso: cu, error: (res && res.error) || '' });
+      }
+      i++;
+      siguiente();
+    });
+  };
+  siguiente();
 }
 
 function pendRender(res) {
@@ -6137,7 +6160,7 @@ function pendRender(res) {
   if (!cont) return;
   const total = res.cursos.reduce((s, c) => s + c.alumnos.length, 0);
   if (total === 0) {
-    cont.innerHTML = '<div style="text-align:center;padding:30px;color:#2e7d32">✅ Ningún alumno tiene ' + res.minimo + ' o más materias pendientes.</div>';
+    cont.innerHTML = pendAvisoFallidos(res) + '<div style="text-align:center;padding:30px;color:#2e7d32">✅ Ningún alumno tiene ' + res.minimo + ' o más materias pendientes.</div>';
     return;
   }
   const bloques = res.cursos.filter(c => c.alumnos.length).map(c => {
@@ -6151,7 +6174,7 @@ function pendRender(res) {
       </div>`).join('');
     return `<h4 style="margin:16px 0 8px;font-size:13px;color:rgba(0,0,0,.55);text-transform:uppercase;letter-spacing:1px">Curso ${calEsc(c.curso)} · ${c.alumnos.length} de ${c.totalAlumnos} alumnos</h4>${tarjetas}`;
   }).join('');
-  cont.innerHTML = `<div style="font-size:12px;color:#888;margin-bottom:6px">${total} alumno(s) con ${res.minimo} o más materias pendientes</div>${bloques}`;
+  cont.innerHTML = `${pendAvisoFallidos(res)}<div style="font-size:12px;color:#888;margin-bottom:6px">${total} alumno(s) con ${res.minimo} o más materias pendientes</div>${bloques}`;
 }
 
 function generarInformePendientes() {
@@ -6160,6 +6183,10 @@ function generarInformePendientes() {
   cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Calculando...</div>';
   pendCargar((res, err) => {
     if (err) { cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + calEsc(err) + '</div>'; return; }
+    if (!res.cursos.length && res.fallidos.length) {
+      cont.innerHTML = '<div style="color:#F44336;padding:16px">No se pudo calcular el informe (' + calEsc(res.fallidos[0].error || 'tiempo de espera agotado') + '). Es solo una consulta: no se guardó nada. Probá de nuevo.</div>';
+      return;
+    }
     pendRender(res);
   });
 }
@@ -6186,6 +6213,7 @@ function pendArmarHtml(res, hoy) {
     </section>`;
   }).join('');
   const resumenSin = (sin.length && conAlumnos.length) ? `<div class="nota" style="margin-top:20px">Cursos sin alumnos en esta situación: ${sin.map(calEsc).join(', ')}.</div>` : '';
+  const aviso = (res.fallidos && res.fallidos.length) ? `<div class="nota" style="color:#c62828;font-weight:700">⚠ No se pudo calcular: ${res.fallidos.map(f => calEsc(f.curso)).join(', ')}. El informe está incompleto.</div>` : '';
   const vacio = conAlumnos.length ? '' : `<h1>Alumnos con ${res.minimo} o más materias pendientes</h1><div class="meta">Al ${calEsc(hoy)} · Ningún alumno cumple el criterio.</div>`;
   return `<!DOCTYPE html><html><head><meta charset="UTF-8"/>
     <title>Alumnos con materias pendientes</title>
@@ -6202,7 +6230,7 @@ function pendArmarHtml(res, hoy) {
     </style></head>
     <body>
       <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-weight:600">🖨️ Imprimir / Guardar como PDF</button>
-      ${paginas}${vacio}${resumenSin}
+      ${aviso}${paginas}${vacio}${resumenSin}
     </body></html>`;
 }
 
@@ -6211,6 +6239,10 @@ function exportarInformePendientesPDF() {
   if (cont) cont.innerHTML = '<div style="text-align:center;padding:20px;color:rgba(0,0,0,.3)">⏳ Generando PDF...</div>';
   pendCargar((res, err) => {
     if (err) { if (cont) cont.innerHTML = '<div style="color:#F44336;padding:16px">Error: ' + calEsc(err) + '</div>'; return; }
+    if (!res.cursos.length && res.fallidos.length) {
+      if (cont) cont.innerHTML = '<div style="color:#F44336;padding:16px">No se pudo calcular el informe (' + calEsc(res.fallidos[0].error || 'tiempo de espera agotado') + '). Es solo una consulta: no se guardó nada. Probá de nuevo.</div>';
+      return;
+    }
     const hoy = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' });
     const html = pendArmarHtml(res, hoy);
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
