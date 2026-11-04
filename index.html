@@ -4732,7 +4732,8 @@ function cargarLegajosEOE() {
       if (!porAlumno[key]) porAlumno[key] = { alumno: l.alumno, curso: l.curso, legajos: [] };
       porAlumno[key].legajos.push(l);
     });
-    Object.values(porAlumno).forEach(g => g.legajos.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||'')));
+    // Más nuevo primero; si son del mismo día, el cargado más tarde (id EOE_<hora>) va arriba
+    Object.values(porAlumno).forEach(g => g.legajos.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || String(b.id||'').localeCompare(String(a.id||''))));
     const grupos = Object.values(porAlumno).sort((a,b) => a.alumno.localeCompare(b.alumno));
 
     // Cargar archivos de Supabase para todos los alumnos en paralelo
@@ -4764,11 +4765,11 @@ function cargarLegajosEOE() {
       const fijados = g.legajos.filter(l => l.fijado);
       const noFijados = g.legajos.filter(l => !l.fijado);
 
-      // Línea de tiempo unificada ordenada por fecha (sin los fijados, que van arriba)
+      // Línea de tiempo unificada, de la más nueva a la más vieja (sin los fijados, que van arriba)
       const items = [
         ...noFijados.map(l => ({ ...l, _tipo:'legajo' })),
         ...archivos
-      ].sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+      ].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || String(b.id||'').localeCompare(String(a.id||'')));
 
       const fijadosHTML = fijados.length ? `
         <div style="margin-bottom:12px;padding:10px 12px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px">
@@ -4926,10 +4927,17 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
   let legajos, archivos;
   try { legajos = JSON.parse(legajosStr); } catch(e) { showToast('Error al generar PDF','❌'); return; }
   try { archivos = archivosStr ? JSON.parse(archivosStr) : []; } catch(e) { archivos = []; }
+  // Número de registro cronológico (el más antiguo es el #1), aunque se muestren de más nuevo a más viejo
+  const nroCron = {};
+  [...legajos].sort((a,b) => (a.fecha||'').localeCompare(b.fecha||'') || String(a.id||'').localeCompare(String(b.id||'')))
+    .forEach((l, k) => { nroCron[l.id] = k + 1; });
+  // Período del historial: primera y última fecha, sin depender del orden en que se muestran
+  const fechasOrd = legajos.map(l => l.fecha).filter(Boolean).sort();
+  const fDesde = fechasOrd[0], fHasta = fechasOrd[fechasOrd.length - 1];
   legajos.sort((a,b) => {
     const fa = a.fijado ? 1 : 0, fb = b.fijado ? 1 : 0;
     if (fa !== fb) return fb - fa; // fijados primero
-    return (a.fecha||'').localeCompare(b.fecha||'');
+    return (b.fecha||'').localeCompare(a.fecha||'') || String(b.id||'').localeCompare(String(a.id||'')); // más nuevo primero
   });
 
   const TIPO_LABEL  = { convivencia:'Convivencia', academica:'Problemática académica', familiar:'Situación familiar', salud:'Salud / Discapacidad', conducta:'Conducta', cud:'CUD / Terapia', otro:'Otro' };
@@ -4943,7 +4951,7 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
       <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:${TIPO_BORDER[l.tipo]||'#e0e0e0'};border-radius:4px 0 0 4px"></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap;gap:6px">
         <div>
-          <span style="font-size:10px;font-weight:700;color:#888">REGISTRO #${i+1}</span>
+          <span style="font-size:10px;font-weight:700;color:#888">REGISTRO #${nroCron[l.id] || (i+1)}</span>
           <span style="margin-left:10px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${TIPO_COLOR[l.tipo]||'#fafafa'}">${TIPO_LABEL[l.tipo]||l.tipo}</span>
           ${l.fijado ? '<span style="margin-left:6px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#fff8e1;color:#f57f17;border:1px solid #ffe082">📌 FIJADO</span>' : ''}
         </div>
@@ -4956,12 +4964,12 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
 
   // Generar URLs firmadas 7 días para cada adjunto
   const SIETE_DIAS = 7 * 24 * 3600;
-  const archivosConUrl = await Promise.all(archivos.map(async (a, i) => {
+  const archivosConUrl = (await Promise.all(archivos.map(async (a, i) => {
     try {
       const { data, error } = await getSupa().storage.from(SUPA_BUCKET).createSignedUrl(a.path, SIETE_DIAS);
-      return { ...a, signedUrl: error ? null : data.signedUrl };
-    } catch(e) { return { ...a, signedUrl: null }; }
-  }));
+      return { ...a, _n: i + 1, signedUrl: error ? null : data.signedUrl };
+    } catch(e) { return { ...a, _n: i + 1, signedUrl: null }; }
+  }))).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || b._n - a._n);   // más nuevo primero
 
   // Fecha de expiración legible
   const fechaExpira = new Date(Date.now() + SIETE_DIAS * 1000).toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
@@ -4983,7 +4991,7 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
             <span>${icon}</span>
             <div style="font-size:11px;font-weight:600;color:#1a1a1a">${a.nombreLimpio}</div>
-            <span style="margin-left:auto;font-size:10px;font-weight:700;color:#1a9e5c">DOC ${i+1}</span>
+            <span style="margin-left:auto;font-size:10px;font-weight:700;color:#1a9e5c">DOC ${a._n}</span>
           </div>
           <div style="font-size:10px;color:#888;margin-bottom:4px">Adjuntado el ${fechaStr}</div>
           ${linkHTML}
@@ -5011,7 +5019,7 @@ async function exportarHistorialEOE(legajosStr, alumno, curso, archivosStr) {
     <div class="alumno-field"><label>Curso</label><div class="val">${curso}</div></div>
     <div class="alumno-field"><label>Total de registros</label><div class="val">${legajos.length} situación${legajos.length!==1?'es':''}</div></div>
     <div class="alumno-field"><label>Documentos adjuntos</label><div class="val">${archivos.length > 0 ? archivos.length + ' archivo' + (archivos.length!==1?'s':'') : 'Ninguno'}</div></div>
-    <div class="alumno-field"><label>Período</label><div class="val">${legajos[0]?.fecha ? new Date(legajos[0].fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : '—'} – ${legajos[legajos.length-1]?.fecha ? new Date(legajos[legajos.length-1].fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</div></div>
+    <div class="alumno-field"><label>Período</label><div class="val">${fDesde ? new Date(fDesde+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : '—'} – ${fHasta ? new Date(fHasta+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</div></div>
   </div>
   <div class="section-title">Cronología de intervenciones</div>
   ${registrosHTML}
