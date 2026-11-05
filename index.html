@@ -6764,7 +6764,7 @@ function periChipsBase() {
     { t: '🕒 Mi horario', q: 'horario de hoy' },
     { t: '✅ Mi asistencia', q: 'asistencia' },
     { t: '📝 Mis notas', q: 'notas' },
-    { t: '📅 Próximas evaluaciones', q: 'proximas evaluaciones y trabajos' },
+    { t: '📅 Evaluaciones y trabajos', q: 'proximas evaluaciones y trabajos' },
     { t: '📄 Descargar RITE', q: 'rite' },
     { t: '🧭 Llevame a...', fn: 'ir' }
   ];
@@ -7023,14 +7023,27 @@ function periCalendario(texto) {
     let lista = evs.map(x => Object.assign({}, x, { f: calFechaLocal(x.fecha) })).filter(x => x.f && x.f >= hoy && x.f <= lim);
     const diaDe = f => new Date(f.getFullYear(), f.getMonth(), f.getDate()).getTime();
     const t = periNorm(texto);
-    const esOral = x => periNorm(x.titulo).indexOf('oral') !== -1;
+    // Los docentes no siempre eligen el tipo "correcto": además del tipo, se mira el título
+    const tit = x => periNorm(x.titulo);
+    const esOral = x => tit(x).indexOf('oral') !== -1;
+    const esPrueba = x => x.tipo === 'prueba' || esOral(x) || /evaluaci|prueba|examen|parcial|integrador|recuperatorio/.test(tit(x));
+    const esTp = x => x.tipo === 'tp' || /trabajo|(^| )tp( |$)|entrega|actividad|practico|lamina|monografia/.test(tit(x));
+    // "evaluación oral" / "examen oral" se pide como una sola cosa: solo las orales
+    const t2 = t.replace(/(evaluacion|evaluaciones|examen|examenes|prueba|pruebas) (oral|orales)/g, ' oral ');
+    const quiereOral = periTiene(t2, ['oral', 'orales']);
+    const quiereTp = periTiene(t2, ['trabajo', 'trabajos', 'tp', 'tps', 'practico', 'practicos', 'entrega', 'entregas', 'tarea', 'tareas', 'actividad', 'actividades']);
+    const quierePrueba = periTiene(t2, ['prueba', 'pruebas', 'examen', 'examenes', 'evaluacion', 'evaluaciones']);
     let filtro = 'eventos';
-    if (periTiene(t, ['oral', 'orales'])) { lista = lista.filter(esOral); filtro = 'evaluaciones orales'; }
-    else if (periTiene(t, ['trabajo', 'trabajos', 'tp', 'tps', 'practico', 'practicos', 'entrega', 'entregas', 'tarea', 'tareas'])) { lista = lista.filter(x => x.tipo === 'tp'); filtro = 'trabajos prácticos'; }
-    else if (periTiene(t, ['prueba', 'pruebas', 'examen', 'examenes', 'evaluacion', 'evaluaciones'])) { lista = lista.filter(x => x.tipo === 'prueba' || esOral(x)); filtro = 'evaluaciones'; }
+    if (quiereOral || quiereTp || quierePrueba) {
+      lista = lista.filter(x => (quiereOral && esOral(x)) || (quierePrueba && esPrueba(x)) || (quiereTp && esTp(x)));
+      const partes = [];
+      if (quierePrueba) partes.push('evaluaciones'); else if (quiereOral) partes.push('evaluaciones orales');
+      if (quiereTp) partes.push('trabajos prácticos');
+      filtro = partes.join(' ni ');
+    }
     lista.sort((a, b) => a.f - b.f);
     if (!lista.length) {
-      periDecir('No hay ' + filtro + ' cargados para los próximos 30 días 😌', { img: 'feliz' });
+      periDecir('No encontré ' + filtro + ' para los próximos 30 días 😌', { img: 'feliz' });
       periChips([periChipIr('calendario')].concat(periChipsBase().filter(c => c.q !== 'proximas evaluaciones y trabajos')));
       return;
     }
@@ -7039,7 +7052,7 @@ function periCalendario(texto) {
     const fmt = f => diaDe(f) === hoy.getTime() ? 'hoy' : diaDe(f) === manana.getTime() ? 'mañana'
       : f.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
     const filas = lista.slice(0, 10).map(x => {
-      const tipo = esOral(x) ? '🗣️ Evaluación oral' : (etq[x.tipo] || '📌 Evento');
+      const tipo = esOral(x) ? '🗣️ Evaluación oral' : (x.tipo === 'prueba' || x.tipo === 'tp') ? etq[x.tipo] : esPrueba(x) ? etq.prueba : esTp(x) ? etq.tp : (etq[x.tipo] || '📌 Evento');
       return '🗓️ <b>' + periEsc(fmt(x.f)) + '</b> · ' + tipo + '<br>&nbsp;&nbsp;&nbsp;&nbsp;' + periEsc(x.titulo) + (x.materia ? ' <i>(' + periEsc(periTitulo(x.materia)) + ')</i>' : '');
     }).join('<br>');
     const mas = lista.length > 10 ? '<br><br>Y ' + (lista.length - 10) + ' más en el Calendario.' : '';
