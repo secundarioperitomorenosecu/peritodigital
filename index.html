@@ -3053,10 +3053,10 @@ function generarInformeMaterias() {
       cont.innerHTML = `<p style="color:#1a9e5c;padding:20px;font-size:13px">⚠️ ${res.error || 'Error al generar el informe'}</p>`;
       return;
     }
-    _infData = res;
+    _infData = _mmOcultarEnInforme(res);
     document.getElementById('inf-acciones').style.display = 'flex';
     document.getElementById('inf-buscar').value = '';
-    infRenderTabla(res.alumnos);
+    infRenderTabla(_infData.alumnos);
   }).catch(err => {
     cont.innerHTML = '<p style="color:#1a9e5c;padding:20px;font-size:13px">⚠️ Error de conexión</p>';
   });
@@ -7032,7 +7032,7 @@ function periAsistencia() {
       const num = n => (Math.round((n || 0) * 100) / 100).toString().replace('.', ',');
       h += '<br>🗓️ <b>Inasistencias:</b> ' + num(mm.inasistencias) + ' de ' + lim + ' permitidas';
       if (mm.excedioLimite) {
-        const intens = (mm.materias || []).filter(m => m.estado !== 'OK');
+        const intens = (mm.materias || []).filter(m => _mmVisible(m) && m.estado !== 'OK');
         h += '<br>⚠️ Se superó el límite. ' + (intens.length
           ? 'Materias a intensificar por asistencia (menos de 75%): <b>' + intens.map(m => periEsc(periTitulo(m.materia))).join(', ') + '</b>.'
           : 'Por ahora todas las materias están con 75% o más.');
@@ -8883,6 +8883,7 @@ function cargarResumenCurso() {
       if (!res.ok) {
         contenido.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Error al cargar el informe.</div>'; return;
       }
+      res = _mmOcultarEnIntensificacion(res);
       if (!res.alumnos || res.alumnos.length === 0) {
         contenido.innerHTML = '<div style="text-align:center;padding:30px;color:#2e7d32">✅ Ningún alumno necesita intensificar en este curso.</div>'; return;
       }
@@ -9434,11 +9435,31 @@ function _mmPedir(tipo) {
     return res;
   });
 }
+// Materias cuyo % de asistencia NO se muestra en la pantalla del alumno
+const _MM_OCULTAS = ['ROBOTICA', 'TECNICAS DE ESTUDIO'];
+function _mmNorm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim(); }
+function _mmVisible(m) { return !_MM_OCULTAS.includes(_mmNorm(m && m.materia)); }
+// Informe de asistencia por materia (staff): saca las materias ocultas de cada alumno
+function _mmOcultarEnInforme(res) {
+  if (!res) return res;
+  (res.alumnos || []).forEach(a => { a.materias = (a.materias || []).filter(_mmVisible); });
+  if (res.clasesSinDocentePorMateria) {
+    Object.keys(res.clasesSinDocentePorMateria).forEach(k => { if (!_mmVisible({ materia: k })) delete res.clasesSinDocentePorMateria[k]; });
+  }
+  return res;
+}
+// Informe de intensificación: saca el % de asistencia de las materias ocultas (las notas no se tocan)
+function _mmOcultarEnIntensificacion(res) {
+  if (!res || !res.alumnos) return res;
+  res.alumnos.forEach(a => { a.materiasPorInasistencia = (a.materiasPorInasistencia || []).filter(_mmVisible); });
+  res.alumnos = res.alumnos.filter(a => (a.materiasPorNota || []).length || a.materiasPorInasistencia.length);
+  return res;
+}
 function mmActualizarTarjeta() {
   const el = document.getElementById('dash-materias-riesgo');
   if (!el) return;
   if (!currentToken) { el.textContent = '—'; return; }
-  _mmPedir('anio').then(res => { el.textContent = (res && res.ok && res.excedioLimite) ? res.materias.filter(m => m.estado !== 'OK').length : '—'; })   // solo si excedió el límite de 28
+  _mmPedir('anio').then(res => { el.textContent = (res && res.ok && res.excedioLimite) ? res.materias.filter(m => _mmVisible(m) && m.estado !== 'OK').length : '—'; })   // solo si excedió el límite de 28
                   .catch(() => { el.textContent = '—'; });
 }
 function cargarMisMaterias(tipo) {
@@ -9459,7 +9480,7 @@ function cargarMisMaterias(tipo) {
 function renderMisMaterias(res) {
   const cont = document.getElementById('mm-contenido'); if (!cont) return;
   if (!res || !res.ok) { cont.innerHTML = `<div style="padding:14px;color:#c62828;font-size:13px">${_mmEsc((res && res.error) || 'No se pudo cargar')}</div>`; return; }
-  const mats = (res.materias || []).slice().sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia));
+  const mats = (res.materias || []).filter(_mmVisible).sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia));
   if (!mats.length) { cont.innerHTML = '<div style="padding:14px;color:#777;font-size:13px">Todavía no hay clases registradas en este período.</div>'; return; }
   const excedio = !!res.excedioLimite, lim = res.limiteInasistencias || 28;
   const num = n => (Math.round((n || 0) * 100) / 100).toString().replace('.', ',');
@@ -9493,8 +9514,8 @@ function renderMisMaterias(res) {
 function cargarMiAsistencia() {
   if (currentRole === 'alumno') cargarMisMaterias(_mmPeriodo);
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre, token: currentToken }).then(res => {
-    if (!res.ok) return;
+  _alPedir('asist', currentUser, currentCursoAlumno, currentNombre).then(res => {
+    if (!res || !res.ok) return;
     const registros = res.registros || [];
     const presentes = registros.filter(r => r.estado === 'P').length;
     const ausentes  = registros.filter(r => r.estado === 'A' || r.estado === 'AP').length;
@@ -9699,11 +9720,33 @@ function imprimirInforme() {
   showToast('Informe exportado correctamente','✅');
 }
 
+// Pide al servidor y, si falla (error o respuesta no ok), reintenta una vez
+function _pedirConReintento(params) {
+  const intento = () => callWebApp(params).catch(e => ({ ok: false, error: 'Error de conexión' }));
+  return intento().then(r => (r && r.ok) ? r : (r && r.sesionInvalida) ? r : intento());
+}
+// Notas y asistencia del alumno: se guardan 5 minutos para no volver a pedirlas al descargar el informe
+const _alCache = { notas: null, asist: null };
+function _alPedir(tipo, legajo, curso, nombre) {
+  const c = _alCache[tipo];
+  const clave = [legajo, curso].join('|');
+  if (c && c.clave === clave && Date.now() - c.t < 300000) return Promise.resolve(c.res);
+  const accion = tipo === 'notas' ? 'obtenerNotasAlumno' : 'obtenerAsistenciaAlumno';
+  return _pedirConReintento({ accion, legajo, curso, nombre, token: currentToken }).then(res => {
+    if (res && res.ok) _alCache[tipo] = { clave, t: Date.now(), res };
+    return res;
+  });
+}
+
 function cargarMisNotas() {
   if (!currentCursoAlumno) return;
-  callWebApp({ accion: 'obtenerNotasAlumno', legajo: currentUser, curso: currentCursoAlumno, nombre: currentNombre, token: currentToken }).then(res => {
+  _alPedir('notas', currentUser, currentCursoAlumno, currentNombre).then(res => {
     const tabla = document.getElementById('mis-notas-tabla');
-    if (!res.ok || !res.materias || res.materias.length === 0) {
+    if (!res || !res.ok) {
+      tabla.innerHTML = '<div style="text-align:center;padding:30px;color:#c62828;font-size:13px;line-height:1.7">⚠️ No se pudieron cargar tus notas' + (res && res.error ? ' (' + _mmEsc(res.error) + ')' : '') + '.<br><button onclick="cargarMisNotas()" style="margin-top:10px;padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">🔄 Reintentar</button></div>';
+      return;
+    }
+    if (!res.materias || res.materias.length === 0) {
       tabla.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.3)">Sin calificaciones cargadas aún.</div>';
       return;
     }
@@ -13637,10 +13680,15 @@ function descargarInformeAlumno() {
   const curso  = currentCursoAlumno || '—';
   showToast('Generando informe...', '⏳');
   Promise.all([
-    callWebApp({ accion: 'obtenerNotasAlumno',      legajo: currentUser, curso, nombre, token: currentToken }),
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo: currentUser, curso, nombre, token: currentToken }),
+    _alPedir('notas', currentUser, curso, nombre),
+    _alPedir('asist', currentUser, curso, nombre),
     (currentToken ? _mmPedir('anio') : Promise.resolve(null)).catch(() => null)   // % por materia del propio alumno
   ]).then(([resNotas, resAsist, resMat]) => {
+    if (!resNotas || !resNotas.ok || !resAsist || !resAsist.ok) {
+      const err = (resNotas && !resNotas.ok && resNotas.error) || (resAsist && !resAsist.ok && resAsist.error) || 'sin respuesta del servidor';
+      showToast('No se pudo generar el informe: ' + err + '. Probá de nuevo.', '❌');
+      return;
+    }
     _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMat);
     _riteNombrePendiente = nombre;
     _riteCursoPendiente  = curso;
@@ -13655,10 +13703,15 @@ function descargarRITEStaff() {
   showToast('Generando informe...', '⏳');
   const [d, h] = _mmRango('anio');
   Promise.all([
-    callWebApp({ accion: 'obtenerNotasAlumno',      legajo, curso, nombre, token: currentToken }),
-    callWebApp({ accion: 'obtenerAsistenciaAlumno', legajo, curso, nombre, token: currentToken }),
+    _pedirConReintento({ accion: 'obtenerNotasAlumno',      legajo, curso, nombre, token: currentToken }),
+    _pedirConReintento({ accion: 'obtenerAsistenciaAlumno', legajo, curso, nombre, token: currentToken }),
     callWebApp({ accion: 'asistenciaMateriasPorLegajo', legajo, curso, desde: d, hasta: h, rol: currentRole })
   ]).then(([resNotas, resAsist, resMat]) => {
+    if (!resNotas || !resNotas.ok || !resAsist || !resAsist.ok) {
+      const err = (resNotas && !resNotas.ok && resNotas.error) || (resAsist && !resAsist.ok && resAsist.error) || 'sin respuesta del servidor';
+      showToast('No se pudo generar el informe: ' + err + '. Probá de nuevo.', '❌');
+      return;
+    }
     _riteHtmlPendiente   = _generarHTMLRITE(nombre, curso, resNotas, resAsist, resMat);
     _riteNombrePendiente = nombre;
     _riteCursoPendiente  = curso;
@@ -13723,7 +13776,7 @@ const RITE_NOTA = `
 function riteSeccionIntensificar(inasist, resMaterias, resNotas) {
   const esc = _riteEsc;
   const excedio = inasist > RITE_LIMITE;
-  const mats = (resMaterias && resMaterias.ok) ? (resMaterias.materias || []).slice().sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia)) : null;
+  const mats = (resMaterias && resMaterias.ok) ? (resMaterias.materias || []).filter(_mmVisible).sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia)) : null;
   const bajoAsist = mats ? mats.filter(m => m.estado !== 'OK') : [];                         // menos de 75% de las clases dictadas
   const bajoNota = ((resNotas && resNotas.materias) || []).map(m => {                        // menos de 7 en algún cuatrimestre
     const bajos = [];
