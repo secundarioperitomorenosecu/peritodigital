@@ -6865,6 +6865,13 @@ function periChipsBase() {
   ];
 }
 function periAccionChip(x) {
+  if (x.alu) {
+    periUsuarioDice(x.t);
+    const a = (window._periAluRes || {})[x.alu];
+    if (a) periFichaAlumnoP(a); else periBuscarAlumnoP(String(x.t).split(' · ')[0]);
+    return;
+  }
+  if (x.aluAbrir) { const a = (window._periAluRes || {})[x.aluAbrir]; if (a) periAbrirResumenAlumnoP(a); return; }
   if (x.fn === 'ir') {
     periUsuarioDice(x.t);
     periDecir('¿A dónde querés ir? 🧭');
@@ -7222,13 +7229,15 @@ function periChipsPersonal() {
     { t: '📚 Mis cursos', q: 'mis cursos' },
     { t: '📅 Próximos eventos', q: 'proximos eventos' },
     { t: '💬 Mensajes', q: 'mensajes sin leer' },
-    { t: '✅ Cargar asistencia', sec: 'asistencia' },
+    { t: '🔎 Buscar alumno', q: 'buscar alumno' },
+    { t: '✅ Consultar asistencia', sec: 'asistencia' },
     { t: '🧭 Llevame a...', fn: 'ir' }
   ];
   const l = [
     { t: '📋 Asistencia de hoy', q: 'asistencia de hoy' },
     { t: '⚠️ Alumnos en riesgo', q: 'alumnos en riesgo' },
     { t: '🚫 Docentes ausentes hoy', q: 'docentes ausentes hoy' },
+    { t: '🔎 Buscar alumno', q: 'buscar alumno' },
     { t: '💬 Mensajes', q: 'mensajes sin leer' },
     { t: '📅 Próximos eventos', q: 'proximos eventos' },
     { t: '🧭 Llevame a...', fn: 'ir' }
@@ -7240,8 +7249,8 @@ function periBienvenidaPersonal() {
   const nombre = n.indexOf(',') !== -1 ? ', ' + periEsc(periPrimerNombre()) : '';
   const tipo = periTipo();
   let h = '¡Hola' + nombre + '! 👋 Soy <b>Peri</b>, tu asistente del colegio.<br>';
-  if (tipo === 'docente') h += 'Puedo mostrarte tus cursos y materias, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
-  else h += 'Puedo contarte cómo viene la asistencia de hoy, qué docentes faltan, qué alumnos están en riesgo, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
+  if (tipo === 'docente') h += 'Puedo buscar a un alumno por apellido y mostrarte su asistencia y sus notas, tus cursos y materias, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
+  else h += 'Puedo buscar a un alumno por apellido y mostrarte su asistencia y sus notas, contarte cómo viene la asistencia de hoy, qué docentes faltan, qué alumnos están en riesgo, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
   periDecir(h, { img: 'hola' });
   periChips(periChipsPersonal());
 }
@@ -7250,6 +7259,7 @@ function periAyudaPersonal() {
   let h = 'Te puedo ayudar con:<br>';
   if (tipo === 'docente') h += '📚 tus <b>cursos y materias</b><br>';
   else h += '📋 la <b>asistencia de hoy</b> por curso<br>🚫 los <b>docentes ausentes</b> de hoy<br>⚠️ los <b>alumnos en riesgo</b> de un curso (por ejemplo <i>«en riesgo 3A»</i>)<br>';
+  h = h.replace('Te puedo ayudar con:<br>', 'Te puedo ayudar con:<br>🔎 buscar a un <b>alumno por apellido</b> (por ejemplo <i>«notas de Pérez»</i>) y mostrarte su asistencia y sus notas<br>');
   h += '📅 los próximos <b>eventos</b> del colegio<br>💬 tus <b>mensajes</b> sin leer<br>🧭 llevarte a cualquier pantalla del portal';
   periDecir(h, { img: 'escucha' });
   periChips(periChipsPersonal());
@@ -7269,6 +7279,13 @@ function periResponderPersonal(texto) {
 
   if (periTiene(t, ['ocultar','ocultate','sacate','desaparece','no mostrar','molesta','no quiero ver a peri'])) return periPreguntaOcultar();
   if (toks.length <= 4 && periTiene(t, ['hola','buenas','buen dia','buenos dias','buenas tardes','buenas noches','que tal','hey'])) return periSaludo();
+  // Búsqueda de un alumno por apellido ("notas de Pérez", "buscar Gómez", "asistencia de Rojas María")
+  const ca = periConsultaAlumno(t);
+  if (ca.disparador && !ca.reservado) {
+    if (!periNavVisible('nav-resumen-alumno')) return periSinPermiso();
+    if (ca.resto.length) return periBuscarAlumnoP(ca.resto.join(' '));
+    if (!(verboIr && secs.length)) return periPedirApellido();
+  }
   if (verboIr && secs.length) return periNavegar(secs[0]);
   if (periTiene(t, ['sin leer','no leidos','mensajes nuevos','mensajes pendientes','tengo mensajes'])) return periMensajesP();
   if (docDe && periTiene(t, ['ausente','ausentes','falto','faltaron','faltan','falta','faltas','ausencia','ausencias','quien falto','quienes faltaron'])) return periDocentesAusentesP();
@@ -7282,6 +7299,8 @@ function periResponderPersonal(texto) {
   if (periTiene(t, ['gracias','genial','perfecto','buenisimo','excelente','dale','listo'])) return periGracias();
   if (periTiene(t, ['chau','adios','hasta luego','nos vemos'])) return periChau();
   if (periTiene(t, ['ayuda','ayudame','quien sos','que haces','que sabes','que podes','para que servis','como funcionas','peri'])) return periAyuda();
+  // Si nada de lo anterior coincide y parece un apellido (1 a 3 palabras), se busca como alumno
+  if (periNavVisible('nav-resumen-alumno') && !ca.reservado && ca.resto.length >= 1 && ca.resto.length <= 3 && ca.resto.every(x => x.length >= 3)) return periBuscarAlumnoP(ca.resto.join(' '));
   return periFallback();
 }
 
@@ -7428,6 +7447,89 @@ function periMensajesP() {
     periDecir(n ? '💬 Tenés <b>' + n + '</b> mensaje' + (n === 1 ? '' : 's') + ' sin leer.' : '💬 No tenés mensajes sin leer 🎉', { img: n ? 'ok' : 'feliz' });
     periChips([periChipIrP('mensajes')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'mensajes sin leer')));
   });
+}
+
+
+// ── Buscar un alumno por apellido: asistencia y notas ─────────────────────
+// Usa la misma búsqueda de la lupa del portal (la ven directivos, preceptores y docentes).
+const PERI_STOP_ALU = ['buscar','busca','buscame','busques','alumno','alumna','estudiante','el','la','los','las','de','del','a','al','en','por','y','con','me','te','le','lo','un','una','que','como','esta','va','tiene','tuvo','quiero','ver','mostrame','mostra','decime','dame','necesito','favor','porfa','notas','nota','calificaciones','calificacion','asistencia','asistencias','inasistencias','faltas','falta','datos','dato','info','informacion','ficha','resumen','llevame','abrir','abri','pantalla','seccion','menu','sobre','chico','chica'];
+const PERI_RESERV_ALU = ['hoy','ayer','manana','semana','mes','anio','curso','cursos','docente','docentes','profe','profes','riesgo','alertas','alerta','ausentes','presentes','evento','eventos','proximos','mensajes','mensaje','cargar','tomar','todos','todas','mis','materias','materia','gracias','hola','chau','ayuda','peri','buenas','buenos','dias','tardes','noches'];
+function periConsultaAlumno(t) {
+  const toks = String(t || '').split(' ').filter(Boolean);
+  const disparador = /(^| )(buscar|busca|buscame|alumno|alumna|estudiante)( |$)/.test(t) ||
+                     /(^| )(notas?|calificaciones|asistencias?|inasistencias|faltas|datos|info|informacion|ficha) (de|del|a)( |$)/.test(t) ||
+                     /(^| )como (esta|le va)( |$)/.test(t);
+  const resto = toks.filter(x => PERI_STOP_ALU.indexOf(x) === -1);
+  const reservado = resto.some(x => PERI_RESERV_ALU.indexOf(x) !== -1 || /^[1-6][ab]$/.test(x));
+  return { disparador: disparador, resto: resto, reservado: reservado };
+}
+function periPedirApellido() {
+  periDecir('🔎 Decime el <b>apellido</b> del alumno (o apellido y nombre, o el DNI) y te muestro su asistencia y sus notas.', { img: 'escucha' });
+  periChips(periChipsBase());
+}
+function periBuscarAlumnoP(q) {
+  return periPedir('alu:' + q, () => callWebApp({ accion: 'buscarAlumnoGlobal', q: q })).then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const lista = res.resultados || [];
+    window._periAluRes = {};
+    lista.forEach(a => { window._periAluRes[a.legajo + '|' + a.curso] = a; });
+    if (!lista.length) {
+      periDecir('No encontré alumnos con «' + periEsc(q) + '» 🤔<br>Probá con el apellido, o con el apellido y el nombre.', { img: 'pensando' });
+      periChips(periChipsBase());
+      return;
+    }
+    if (lista.length === 1) return periFichaAlumnoP(lista[0]);
+    periDecir('Encontré <b>' + lista.length + '</b> alumnos con «' + periEsc(q) + '»' + (lista.length >= 10 ? ' (muestro los primeros 10)' : '') + '. ¿Cuál querés ver?', { img: 'escucha' });
+    periChips(lista.map(a => ({ t: periTitulo(a.nombre) + ' · ' + a.curso, alu: a.legajo + '|' + a.curso })));
+  });
+}
+function periFichaAlumnoP(a) {
+  const as = a.asistencia || {};
+  const ap = as.ausentesPresencia || 0;
+  let pct = null;
+  try {
+    const c = calcAsistencia({ presentes: as.presentes || 0, ausentes: as.ausentes || 0, tardes: as.tardanzas || 0, retiros: as.retiros || 0 });
+    if (c && c.pct !== null && c.pct !== undefined) pct = c.pct;
+  } catch (e) {}
+  let h = '👤 <b>' + periEsc(periTitulo(a.nombre)) + '</b> · ' + periEsc(a.curso) +
+    '<br><br>📋 <b>Asistencia</b><br>✅ Presentes: ' + ((as.presentes || 0) + (as.tardanzas || 0) + (as.retiros || 0)) +
+    ' · ❌ Ausentes: ' + ((as.ausentes || 0) - ap) + ' · 🟣 Aus. con presencia: ' + ap +
+    '<br>🕐 Tardanzas: ' + (as.tardanzas || 0) + ' · 🚪 Retiros: ' + (as.retiros || 0) +
+    (pct !== null ? '<br>📊 Asistencia: <b>' + pct + '%</b>' : '');
+  const PER = [['bim1', '1°Bim'], ['cuat1', '1°Cuat'], ['bim3', '3°Bim'], ['cuat2', '2°Cuat'], ['dic', 'Dic'], ['feb', 'Feb']];
+  const mats = a.materias || [];
+  if (!mats.length) {
+    h += '<br><br>📝 <b>Notas:</b> sin calificaciones cargadas.';
+  } else {
+    h += '<br><br>📝 <b>Notas</b> (la última cargada de cada materia)<br>' + mats.map(m => {
+      let ult = null;
+      PER.forEach(p => { if (m[p[0]] !== '' && m[p[0]] != null) ult = { v: m[p[0]], p: p[1] }; });
+      const num = ult ? parseFloat(String(ult.v).replace(',', '.')) : NaN;
+      return '• ' + periEsc(periTitulo(m.materia)) + ': ' + (ult ? '<b>' + periEsc(ult.v) + '</b> (' + ult.p + ')' + (!isNaN(num) && num < 7 ? ' ⚠️' : '') : '—') +
+             (m.estadoFinal ? ' · ' + periEsc(m.estadoFinal) : '');
+    }).join('<br>');
+  }
+  periDecir(h, { img: 'ok' });
+  periChips([{ t: '📂 Abrir resumen completo', aluAbrir: a.legajo + '|' + a.curso }].concat(periChipsBase()));
+}
+function periAbrirResumenAlumnoP(a) {
+  periUsuarioDice('Abrir el resumen de ' + periTitulo(a.nombre));
+  periDecir('Abriendo el resumen de <b>' + periEsc(periTitulo(a.nombre)) + '</b> ⏳', { img: 'ok' });
+  periIr('resumen-alumno');
+  setTimeout(() => {
+    const selCurso = document.getElementById('ra-curso');
+    if (!selCurso) return;
+    selCurso.value = a.curso;
+    cargarAlumnosDeCurso();
+    setTimeout(() => {
+      const selAlumno = document.getElementById('ra-alumno');
+      if (!selAlumno) return;
+      let found = false;
+      for (let o of selAlumno.options) { if (o.value == a.legajo) { selAlumno.value = a.legajo; found = true; break; } }
+      if (!found) { const opt = document.createElement('option'); opt.value = a.legajo; opt.textContent = a.nombre; selAlumno.appendChild(opt); selAlumno.value = a.legajo; }
+      cargarResumenAlumno();
+    }, 1200);
+  }, 300);
 }
 
 // ── R.I.T.E. ──────────────────────────────────────────────────────────────
