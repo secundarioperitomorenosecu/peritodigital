@@ -865,6 +865,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
             <div class="form-group">
               <label>Curso</label>
               <select id="post-curso">
+                <option value="">Elegí un curso…</option>
                 <option value="todos">Todos los cursos</option>
                 <option value="1A">1°A</option><option value="1B">1°B</option>
                 <option value="2A">2°A</option><option value="2B">2°B</option>
@@ -4237,6 +4238,14 @@ function _muralMarcarVistas(pubs) {
   try { localStorage.setItem(_muralKey(), JSON.stringify((pubs || []).map(p => String(p.id)))); } catch(e) {}
   _muralMostrarBadge(0);
 }
+// Curso normalizado ("4°A", "4 A", "4a" -> "4A") y regla de visibilidad (lo general + lo de mi curso)
+function _muralNormCurso(c) { return String(c == null ? '' : c).replace(/[°\s]/g, '').toUpperCase(); }
+function _muralEsDeCurso(p, curso) {
+  const cs = String(p && p.curso || '').split(/[,;]/).map(_muralNormCurso).filter(Boolean);
+  if (!cs.length || cs.indexOf('TODOS') !== -1) return true;               // publicación general
+  const mio = _muralNormCurso(curso);
+  return !!mio && cs.indexOf(mio) !== -1;
+}
 function _muralEsPropia(p) {
   const nom = String(currentNombre || '').trim().toLowerCase();
   return p.esAutor === true ||
@@ -4251,7 +4260,8 @@ function actualizarBadgeMural() {
   callWebApp({ accion: 'obtenerPublicaciones', curso: esAlumno ? currentCursoAlumno : 'todos', soloActivas: true, usuario: currentUser }).then(res => {
     if (!res || !res.ok || !res.publicaciones) return;   // ante un error no se toca el contador
     const vistas = _muralLeerVistas();
-    const nuevas = res.publicaciones.filter(p => !vistas.includes(String(p.id)) && !_muralEsPropia(p)).length;
+    const lista = esAlumno ? res.publicaciones.filter(p => _muralEsDeCurso(p, currentCursoAlumno)) : res.publicaciones;
+    const nuevas = lista.filter(p => !vistas.includes(String(p.id)) && !_muralEsPropia(p)).length;
     _muralMostrarBadge(nuevas);
   }).catch(() => {});
 }
@@ -4268,6 +4278,8 @@ function cargarMural() {
   let cursoFiltro = 'todos';
   if (isAlumnoOTutor) cursoFiltro = currentCursoAlumno;
   callWebApp({ accion: 'obtenerPublicaciones', curso: cursoFiltro, soloActivas: true, usuario: currentUser }).then(res => {
+    // Alumnos y familias: además del filtro del servidor, solo lo general y lo de SU curso
+    if (res && res.ok && isAlumnoOTutor) res.publicaciones = (res.publicaciones || []).filter(p => _muralEsDeCurso(p, currentCursoAlumno));
     if (res && res.ok) _muralMarcarVistas(res.publicaciones || []);
     if (!res.ok || !res.publicaciones || res.publicaciones.length === 0) {
       feed.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,0,0,.3);font-size:13px">📋 No hay publicaciones aún.<br><span style="font-size:11px">Los docentes pueden publicar desde este mural.</span></div>';
@@ -6669,6 +6681,16 @@ let _periEsTutor = false, _periUsuario = '', _periMsgs = [], _periCache = {}, _p
 let _periAhora = () => new Date();
 
 function periEnAlumno() { return String(currentRole || '').toLowerCase() === 'alumno'; }
+// Personal que también tiene a Peri: preceptores, docentes, directivos y representante legal
+const PERI_ROLES_PERSONAL = ['preceptor', 'docente', 'teacher', 'director', 'vicedirector', 'secretary', 'secretario', 'legal'];
+function periEsPersonal() { return PERI_ROLES_PERSONAL.indexOf(String(currentRole || '').toLowerCase()) !== -1; }
+function periActivo() { return periEnAlumno() || periEsPersonal(); }
+function periTipo() {
+  const r = String(currentRole || '').toLowerCase();
+  if (r === 'preceptor') return 'preceptor';
+  if (r === 'docente' || r === 'teacher') return 'docente';
+  return 'directivo';
+}
 function periEsc(s) { return calEsc(s); }
 
 // ── Texto: normalizar y reconocer palabras (tolera errores de tipeo) ─────
@@ -6751,7 +6773,7 @@ function periEsconderTodo() {
 
 // Se llama después de iniciar sesión (solo se muestra a alumnos y familias)
 function periInicializar(res) {
-  const esAlumno = periEnAlumno();
+  const esAlumno = periActivo();
   const navPeri = document.getElementById('nav-peri');
   if (navPeri) navPeri.style.display = esAlumno ? 'flex' : 'none';
   if (!esAlumno) { periEsconderTodo(); return; }
@@ -6779,7 +6801,7 @@ function periLimpiar() {
 }
 
 function periAbrir(forzar) {
-  if (!periEnAlumno()) return;
+  if (!periActivo()) return;
   if (!forzar && periOculto()) return;   // oculto: solo vuelve desde el menú («Hablar con Peri»)
   if (forzar) periGuardarOculto(false);
   periConstruir();
@@ -6794,7 +6816,7 @@ function periAbrir(forzar) {
 function periCerrar() {
   const l = document.getElementById('peri-launcher'), p = document.getElementById('peri-panel');
   if (p) p.style.display = 'none';
-  if (l && periEnAlumno() && !periOculto()) l.style.display = 'block';
+  if (l && periActivo() && !periOculto()) l.style.display = 'block';
 }
 
 function periOcultar() {
@@ -6832,6 +6854,7 @@ function periChips(lista) {
   });
 }
 function periChipsBase() {
+  if (periEsPersonal()) return periChipsPersonal();
   return [
     { t: '🕒 Mi horario', q: 'horario de hoy' },
     { t: '✅ Mi asistencia', q: 'asistencia' },
@@ -6845,10 +6868,10 @@ function periAccionChip(x) {
   if (x.fn === 'ir') {
     periUsuarioDice(x.t);
     periDecir('¿A dónde querés ir? 🧭');
-    periChips(PERI_SECCIONES.map(s => ({ t: s.icono + ' ' + s.etq, sec: s.id })));
+    periChips(periSecciones().map(s => ({ t: s.icono + ' ' + s.etq, sec: s.id })));
     return;
   }
-  if (x.sec) { periUsuarioDice(x.t); periNavegar(PERI_SECCIONES.find(s => s.id === x.sec)); return; }
+  if (x.sec) { periUsuarioDice(x.t); periNavegar(periSecciones().find(s => s.id === x.sec)); return; }
   if (x.fn === 'rite-si') { periUsuarioDice(x.t); periDescargarRite(); return; }
   if (x.fn === 'ocultar-si') { periOcultar(); return; }
   if (x.fn === 'quedarse') { periUsuarioDice(x.t); periDecir('¡Genial, sigo por acá! 💚'); periChips(periChipsBase()); return; }
@@ -6878,6 +6901,7 @@ function periProcesar(texto, etiqueta) {
 
 // ── Entender qué quiere la persona ────────────────────────────────────────
 function periResponder(texto) {
+  if (periEsPersonal()) return periResponderPersonal(texto);
   const t = periNorm(texto);
   const toks = t.split(' ').filter(Boolean);
   if (!toks.length) return periFallback();
@@ -6903,6 +6927,7 @@ function periResponder(texto) {
 
 // ── Respuestas simples ────────────────────────────────────────────────────
 function periBienvenida() {
+  if (periEsPersonal()) return periBienvenidaPersonal();
   const nombre = (!_periEsTutor && periPrimerNombre()) ? ', ' + periEsc(periPrimerNombre()) : '';
   let h = '¡Hola' + nombre + '! 👋 Soy <b>Peri</b>, tu asistente del colegio.<br>';
   if (_periEsTutor && periNombreCompleto()) h += 'Estás viendo la información de <b>' + periEsc(periNombreCompleto()) + '</b>.<br>';
@@ -6914,10 +6939,12 @@ function periSaludo() { periDecir('¡Hola! 😊 ¿Qué querés ver?', { img: 'fe
 function periGracias() { periDecir('¡De nada! 💚 Si necesitás algo más, acá estoy.', { img: 'ok' }); periChips(periChipsBase()); }
 function periChau() { periDecir('¡Chau! 👋 Que tengas un lindo día.', { img: 'feliz' }); periChips(periChipsBase()); }
 function periAyuda() {
+  if (periEsPersonal()) return periAyudaPersonal();
   periDecir('Te puedo ayudar con:<br>🕒 el <b>horario</b> de hoy, de mañana o de la semana<br>✅ la <b>asistencia</b><br>📝 las <b>notas</b><br>📅 las próximas <b>evaluaciones, trabajos y orales</b><br>📄 descargar el <b>R.I.T.E.</b><br>🧭 llevarte a cualquier pantalla del portal<br>Escribime con tus palabras o tocá una opción.', { img: 'escucha' });
   periChips(periChipsBase());
 }
 function periFallback() {
+  if (periEsPersonal()) return periFallbackPersonal();
   periDecir('Mmm, no estoy seguro de haberte entendido 🙈<br>Probá con alguna de estas opciones o escribime algo como <i>«¿qué horario tengo hoy?»</i>.<br>Si necesitás otra cosa, consultá en secretaría.', { img: 'sorpresa' });
   periChips(periChipsBase());
 }
@@ -6930,6 +6957,8 @@ function periErr(res) { return 'Uy, no pude traer los datos ' + '😕' + ((res &
 // ── Ir a una pantalla del portal ──────────────────────────────────────────
 function periIr(id) {
   try {
+    if (id === 'agenda' && typeof crearSeccionAgenda === 'function') crearSeccionAgenda();
+    if (id === 'biblioteca' && typeof bibCargado !== 'undefined' && !bibCargado && typeof inicializarBiblioteca === 'function') inicializarBiblioteca();
     const el = document.querySelector('.nav-item[onclick*="showSection(\'' + id + '\'"]');
     showSection(id, el || undefined);
     if (typeof syncBottomNav === 'function') syncBottomNav(id);
@@ -7087,7 +7116,7 @@ function periCalendario(texto) {
   ]).then(([m, e]) => ({ ok: true, m: m, e: e }))).then(r => {
     const evs = [];
     if (r.m && r.m.ok) (r.m.publicaciones || []).forEach(p => {
-      if (p.fechaEvento && p.curso === currentCursoAlumno) evs.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, materia: p.materia });
+      if (p.fechaEvento && _muralNormCurso(p.curso) && _muralEsDeCurso(p, currentCursoAlumno)) evs.push({ fecha: p.fechaEvento, titulo: p.titulo, tipo: p.tipo, materia: p.materia });
     });
     if (r.e && r.e.ok) (r.e.eventos || []).forEach(x => evs.push({ fecha: x.fecha, titulo: x.titulo, tipo: 'institucional' }));
     const hoy = _periAhora(); hoy.setHours(0, 0, 0, 0);
@@ -7130,6 +7159,274 @@ function periCalendario(texto) {
     const mas = lista.length > 10 ? '<br><br>Y ' + (lista.length - 10) + ' más en el Calendario.' : '';
     periDecir('Esto viene en los próximos 30 días:<br><br>' + filas + mas, { img: 'ok' });
     periChips([periChipIr('calendario')].concat(periChipsBase().filter(c => c.q !== 'proximas evaluaciones y trabajos')));
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════
+//  PERI PARA EL PERSONAL (preceptores, docentes, directivos y representante legal)
+//  Mismo Peri, sin IA: reconoce palabras clave y consulta los datos que cada
+//  perfil ya puede ver en el portal. Los permisos salen del propio menú.
+// ═══════════════════════════════════════════════════════════════════════
+const PERI_SECCIONES_P = [
+  { id: 'dashboard',          nav: null,                      icono: '📊', etq: 'Inicio',                 ir: 'al inicio',                    claves: ['dashboard','inicio','principal'] },
+  { id: 'mural',              nav: null,                      icono: '📋', etq: 'Mural de Novedades',     ir: 'al Mural de Novedades',        claves: ['mural','novedades','novedad'] },
+  { id: 'calendario',         nav: null,                      icono: '📅', etq: 'Calendario',             ir: 'al Calendario',                claves: ['calendario'] },
+  { id: 'asistencia',         nav: 'nav-asistencia',          icono: '✅', etq: 'Asistencia',             ir: 'a Asistencia',                 claves: ['asistencia','tomar asistencia','cargar asistencia','pasar lista','lista'] },
+  { id: 'calificaciones',     nav: 'nav-calificaciones',      icono: '📝', etq: 'Calificaciones',         ir: 'a Calificaciones',             claves: ['calificaciones','cargar notas','calificacion'] },
+  { id: 'archivos',           nav: 'nav-archivos',            icono: '📁', etq: 'Archivos',               ir: 'a Archivos',                   claves: ['archivos','archivo','materiales'] },
+  { id: 'subir',              nav: 'nav-subir',               icono: '☁️', etq: 'Subir Material',         ir: 'a Subir Material',             claves: ['subir','subir material','publicar'] },
+  { id: 'planificacion',      nav: 'nav-planificacion',       icono: '📚', etq: 'Mi planificación',       ir: 'a tu planificación',           claves: ['planificacion','mi planificacion'] },
+  { id: 'planificaciones-dir',nav: 'nav-planificaciones-dir', icono: '🗂️', etq: 'Planificaciones docentes', ir: 'a las Planificaciones docentes', claves: ['planificaciones','planificaciones docentes'] },
+  { id: 'constancias',        nav: 'nav-constancias',         icono: '📜', etq: 'Constancias',            ir: 'a Constancias',                claves: ['constancia','constancias'] },
+  { id: 'resumen-curso',      nav: 'nav-resumen-curso',       icono: '🏫', etq: 'Resumen por Curso',      ir: 'al Resumen por Curso',         claves: ['resumen por curso','resumen del curso','resumen curso'] },
+  { id: 'resumen-alumno',     nav: 'nav-resumen-alumno',      icono: '👤', etq: 'Resumen por Alumno',     ir: 'al Resumen por Alumno',        claves: ['resumen por alumno','resumen alumno','buscar alumno','ficha del alumno'] },
+  { id: 'alertas',            nav: 'nav-alertas',             icono: '⚠️', etq: 'Alumnos en Riesgo',      ir: 'a Alumnos en Riesgo',          claves: ['alumnos en riesgo','riesgo','alertas'] },
+  { id: 'evolucion',          nav: 'nav-evolucion',           icono: '📈', etq: 'Evolución Alumno',       ir: 'a la Evolución del Alumno',    claves: ['evolucion'] },
+  { id: 'reportes',           nav: 'nav-reportes',            icono: '📈', etq: 'Reportes',               ir: 'a Reportes',                   claves: ['reportes','reporte','parte diario'] },
+  { id: 'gd',                 nav: 'nav-gd',                  icono: '📁', etq: 'Gestión Documental',     ir: 'a Gestión Documental',         claves: ['gestion documental','documentacion docente'] },
+  { id: 'usuarios',           nav: 'nav-usuarios',            icono: '👥', etq: 'Usuarios',               ir: 'a Usuarios',                   claves: ['usuarios','usuario'] },
+  { id: 'eoe',                nav: 'nav-eoe',                 icono: '🧠', etq: 'Legajos EOE',            ir: 'a Legajos EOE',                claves: ['eoe','legajos eoe'] },
+  { id: 'trayectoria',        nav: 'nav-trayectoria',         icono: '🎓', etq: 'Trayectoria educativa',  ir: 'a la Trayectoria educativa',   claves: ['trayectoria','trayectoria educativa'] },
+  { id: 'ctrlasist',          nav: 'nav-ctrlasist',           icono: '🗓️', etq: 'Control de Asistencia',  ir: 'al Control de Asistencia',     claves: ['control de asistencia','controlar asistencia'] },
+  { id: 'banos',              nav: 'nav-banos',               icono: '🚽', etq: 'Control de Baños',       ir: 'al Control de Baños',          claves: ['banos','bano','control de banos'] },
+  { id: 'biblioteca',         nav: 'nav-biblioteca',          icono: '📚', etq: 'Biblioteca',             ir: 'a la Biblioteca',              claves: ['biblioteca','libros','prestamo','prestamos'] },
+  { id: 'seguimiento-faltas', nav: 'nav-seguimiento-faltas',  icono: '📋', etq: 'Seguimiento de Faltas',  ir: 'al Seguimiento de Faltas',     claves: ['seguimiento de faltas','seguimiento faltas','seguimiento'] },
+  { id: 'ausencias-docentes', nav: 'nav-ausencias-docentes',  icono: '🚫', etq: 'Ausencias Docentes',     ir: 'a Ausencias Docentes',         claves: ['ausencias docentes','ausencia docente','registrar ausencia'] },
+  { id: 'informe-materias',   nav: 'nav-informe-materias',    icono: '📊', etq: 'Informe por Materia',    ir: 'al Informe por Materia',       claves: ['informe por materia','informe materias','informe de materias'] },
+  { id: 'dias-no-lectivos',   nav: 'nav-dias-no-lectivos',    icono: '📅', etq: 'Días No Lectivos',       ir: 'a Días No Lectivos',           claves: ['dias no lectivos','no lectivos','feriados'] },
+  { id: 'mensajes',           nav: 'nav-mensajes',            icono: '💬', etq: 'Mensajes',               ir: 'a Mensajes',                   claves: ['mensajes','mensaje','chat'] },
+  { id: 'comunicados',        nav: 'nav-comunicados',         icono: '📢', etq: 'Comunicados',            ir: 'a Comunicados',                claves: ['comunicados','comunicado','avisos'] },
+  { id: 'informes',           nav: 'nav-informes',            icono: '📝', etq: 'Informes',               ir: 'a Informes',                   claves: ['informes','solicitudes de informe'] },
+  { id: 'agenda',             nav: 'nav-agenda',              icono: '📓', etq: 'Agenda Directiva',       ir: 'a la Agenda Directiva',        claves: ['agenda directiva','agenda'] }
+];
+// Una pantalla se ofrece solo si el menú del perfil la muestra
+function periNavVisible(navId) {
+  if (!navId) return true;
+  const el = document.getElementById(navId);
+  return !!el && el.style.display !== 'none';
+}
+function periSecciones() { return periEsPersonal() ? PERI_SECCIONES_P.filter(x => periNavVisible(x.nav)) : PERI_SECCIONES; }
+function periChipIrP(id) { const x = periSecciones().find(y => y.id === id); return x ? { t: x.icono + ' Abrir ' + x.etq, sec: x.id } : null; }
+function periSinPermiso() {
+  periDecir('Esa información la ve el equipo directivo y la preceptoría 🔒<br>Si la necesitás, consultá en dirección.', { img: 'pensando' });
+  periChips(periChipsBase());
+}
+function periCursosNorm(lista) { return (lista || []).map(c => String(c).replace(/[°\s]/g, '').toUpperCase()).filter(Boolean); }
+function periFechaBack(d) { return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); }
+function periNombreP(n) { return periTitulo(n || ''); }
+
+function periChipsPersonal() {
+  const tipo = periTipo();
+  if (tipo === 'docente') return [
+    { t: '📚 Mis cursos', q: 'mis cursos' },
+    { t: '📅 Próximos eventos', q: 'proximos eventos' },
+    { t: '💬 Mensajes', q: 'mensajes sin leer' },
+    { t: '✅ Cargar asistencia', sec: 'asistencia' },
+    { t: '🧭 Llevame a...', fn: 'ir' }
+  ];
+  const l = [
+    { t: '📋 Asistencia de hoy', q: 'asistencia de hoy' },
+    { t: '⚠️ Alumnos en riesgo', q: 'alumnos en riesgo' },
+    { t: '🚫 Docentes ausentes hoy', q: 'docentes ausentes hoy' },
+    { t: '💬 Mensajes', q: 'mensajes sin leer' },
+    { t: '📅 Próximos eventos', q: 'proximos eventos' },
+    { t: '🧭 Llevame a...', fn: 'ir' }
+  ];
+  return l;
+}
+function periBienvenidaPersonal() {
+  const n = String(currentNombre || '');
+  const nombre = n.indexOf(',') !== -1 ? ', ' + periEsc(periPrimerNombre()) : '';
+  const tipo = periTipo();
+  let h = '¡Hola' + nombre + '! 👋 Soy <b>Peri</b>, tu asistente del colegio.<br>';
+  if (tipo === 'docente') h += 'Puedo mostrarte tus cursos y materias, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
+  else h += 'Puedo contarte cómo viene la asistencia de hoy, qué docentes faltan, qué alumnos están en riesgo, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
+  periDecir(h, { img: 'hola' });
+  periChips(periChipsPersonal());
+}
+function periAyudaPersonal() {
+  const tipo = periTipo();
+  let h = 'Te puedo ayudar con:<br>';
+  if (tipo === 'docente') h += '📚 tus <b>cursos y materias</b><br>';
+  else h += '📋 la <b>asistencia de hoy</b> por curso<br>🚫 los <b>docentes ausentes</b> de hoy<br>⚠️ los <b>alumnos en riesgo</b> de un curso (por ejemplo <i>«en riesgo 3A»</i>)<br>';
+  h += '📅 los próximos <b>eventos</b> del colegio<br>💬 tus <b>mensajes</b> sin leer<br>🧭 llevarte a cualquier pantalla del portal';
+  periDecir(h, { img: 'escucha' });
+  periChips(periChipsPersonal());
+}
+function periFallbackPersonal() {
+  periDecir('Mmm, no estoy seguro de haberte entendido 🙈<br>Probá con alguna de estas opciones o escribime, por ejemplo, <i>«llevame a Mensajes»</i>.', { img: 'sorpresa' });
+  periChips(periChipsPersonal());
+}
+
+function periResponderPersonal(texto) {
+  const t = periNorm(texto);
+  const toks = t.split(' ').filter(Boolean);
+  if (!toks.length) return periFallback();
+  const secs = periSecciones().filter(x => periTiene(t, x.claves));
+  const verboIr = periTiene(t, ['llevame','llevar','abrir','abri','abre','anda','entrar','donde','pantalla','seccion','menu','ir a','como veo','como entro','como llego']);
+  const docDe = periTiene(t, ['docente','docentes','profe','profes','profesor','profesores','profesora','profesoras']);
+
+  if (periTiene(t, ['ocultar','ocultate','sacate','desaparece','no mostrar','molesta','no quiero ver a peri'])) return periPreguntaOcultar();
+  if (toks.length <= 4 && periTiene(t, ['hola','buenas','buen dia','buenos dias','buenas tardes','buenas noches','que tal','hey'])) return periSaludo();
+  if (verboIr && secs.length) return periNavegar(secs[0]);
+  if (periTiene(t, ['sin leer','no leidos','mensajes nuevos','mensajes pendientes','tengo mensajes'])) return periMensajesP();
+  if (docDe && periTiene(t, ['ausente','ausentes','falto','faltaron','faltan','falta','faltas','ausencia','ausencias','quien falto','quienes faltaron'])) return periDocentesAusentesP();
+  if (periTiene(t, ['quien falto','quienes faltaron','quien no vino'])) return periDocentesAusentesP();
+  if (periTiene(t, ['riesgo','alertas','alerta','quedar libre','libres','intensificar','intensificacion','criticos'])) return periRiesgoP(t);
+  if (periTiene(t, ['asistencia','parte diario','presentes','ausentes','cuantos faltaron','cuantos vinieron','inasistencias','falta cargar','sin cargar'])) return periParteHoyP();
+  if (periTiene(t, ['mis cursos','mis materias','mis clases','que cursos','que curso','cursos','materias'])) return periMisCursosP();
+  if (periTiene(t, ['evento','eventos','proximos','proximas','fecha','fechas','acto','actos','reunion','reuniones','feriado'])) return periEventosP();
+  if (periTiene(t, ['mensajes','mensaje'])) return periMensajesP();
+  if (secs.length) return periNavegar(secs[0]);
+  if (periTiene(t, ['gracias','genial','perfecto','buenisimo','excelente','dale','listo'])) return periGracias();
+  if (periTiene(t, ['chau','adios','hasta luego','nos vemos'])) return periChau();
+  if (periTiene(t, ['ayuda','ayudame','quien sos','que haces','que sabes','que podes','para que servis','como funcionas','peri'])) return periAyuda();
+  return periFallback();
+}
+
+// ── Parte del día: asistencia por curso y docentes ausentes ───────────────
+function periParteDe(fb) { return periPedir('parte:' + fb, () => callWebApp({ accion: 'obtenerParteDiario', fecha: fb })); }
+
+function periParteHoyP() {
+  if (!periNavVisible('nav-reportes')) return periSinPermiso();
+  const hoy = _periAhora(), fb = periFechaBack(hoy);
+  return periParteDe(fb).then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    let cursos = Object.keys(res.asistencia || {});
+    if (periTipo() === 'preceptor') { const mios = periCursosNorm(currentCursos); if (mios.length) cursos = cursos.filter(c => mios.indexOf(c) !== -1); }
+    const filas = cursos.map(c => Object.assign({ c: c }, res.asistencia[c])).filter(x => x.inscriptos > 0);
+    const cargados = filas.filter(x => (x.presentes + x.ausentes) > 0);
+    const sin = filas.filter(x => (x.presentes + x.ausentes) === 0).map(x => x.c);
+    const dia = hoy.getDay();
+    if (!cargados.length) {
+      periDecir((dia === 0 || dia === 6) ? 'Hoy es fin de semana: no hay asistencia cargada 😌' : '📋 Todavía no hay asistencia cargada hoy (' + fb + ').', { img: 'pensando' });
+      periChips([periChipIrP('asistencia')].filter(Boolean).concat(periChipsBase()));
+      return;
+    }
+    const sum = k => cargados.reduce((a, x) => a + (x[k] || 0), 0);
+    let h = '📋 <b>Asistencia de hoy (' + fb + ')</b><br>✅ Presentes: <b>' + sum('presentes') + '</b> · ❌ Ausentes: <b>' + sum('ausentes') + '</b>' +
+            '<br>🕘 Tardes: ' + sum('tardes') + ' · 🚪 Retiros: ' + sum('retiros') +
+            '<br><br>' + cargados.map(x => '• <b>' + periEsc(x.c) + '</b>: ' + x.presentes + ' presentes, ' + x.ausentes + ' ausentes (de ' + x.inscriptos + ')').join('<br>');
+    if (sin.length) h += '<br><br>⏳ <b>Sin asistencia cargada:</b> ' + sin.map(periEsc).join(', ');
+    periDecir(h, { img: 'ok' });
+    periChips([periChipIrP('reportes'), periChipIrP('asistencia')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'asistencia de hoy')));
+  });
+}
+
+function periDocentesAusentesP() {
+  if (!periNavVisible('nav-ausencias-docentes')) return periSinPermiso();
+  const hoy = _periAhora(), fb = periFechaBack(hoy);
+  return periParteDe(fb).then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const lista = res.docentesAusentes || [];
+    if (!lista.length) {
+      periDecir('🚫 Hoy no hay docentes ausentes registrados 🎉', { img: 'feliz' });
+    } else {
+      periDecir('🚫 <b>Docentes ausentes hoy (' + fb + '):</b> ' + lista.length + '<br>' +
+        lista.map(x => '• ' + periEsc(periNombreP(x.docente)) + (x.motivo ? ' <i>(' + periEsc(x.motivo) + ')</i>' : '')).join('<br>'), { img: 'ok' });
+    }
+    periChips([periChipIrP('ausencias-docentes')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'docentes ausentes hoy')));
+  });
+}
+
+// ── Alumnos en riesgo (mismos criterios que la pantalla) ──────────────────
+function periRiesgoP(t) {
+  if (!periNavVisible('nav-alertas')) return periSinPermiso();
+  let cursos = [];
+  const m = /(?:^| )([1-6]) ?(a|b)(?: |$)/.exec(t);
+  if (m) cursos = [m[1] + m[2].toUpperCase()];
+  else if (periTipo() === 'preceptor') cursos = periCursosNorm(currentCursos);
+  if (!cursos.length) {
+    periDecir('¿De qué curso querés ver los alumnos en riesgo? ⚠️', { img: 'escucha' });
+    periChips(['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'].map(c => ({ t: c, q: 'en riesgo ' + c })));
+    return;
+  }
+  cursos = cursos.slice(0, 3);
+  return Promise.all(cursos.map(c => Promise.all([
+    periPedir('riesgoI:' + c, () => callWebApp({ accion: 'obtenerAlertasInasistencias', curso: c })),
+    periPedir('riesgoA:' + c, () => callWebApp({ accion: 'obtenerAlertasAcademicas', curso: c }))
+  ]))).then(rs => {
+    const falla = rs.find(r => !r[0] || !r[0].ok);
+    if (falla) { periDecir(periErr(falla[0]), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const nom = a => periEsc(periTitulo(a.nombre));
+    const bloques = rs.map((r, i) => {
+      const ina = r[0].alertas || [], aca = (r[1] && r[1].ok) ? (r[1].alertas || []) : [];
+      const crit = ina.filter(a => a.nivel === 'critico'), alto = ina.filter(a => a.nivel === 'alto'), med = ina.filter(a => a.nivel === 'medio');
+      let h = '⚠️ <b>Alumnos en riesgo · ' + periEsc(cursos[i]) + '</b>';
+      if (!ina.length && !aca.length) return h + '<br>No hay alumnos en riesgo en este curso 🎉';
+      h += '<br>🔴 Críticos (28 o más inasistencias): <b>' + crit.length + '</b><br>🟠 Altos (20 a 27): <b>' + alto.length + '</b><br>🟡 Medios (10 a 19): <b>' + med.length + '</b>';
+      const top = crit.concat(alto).slice(0, 6);
+      if (top.length) h += '<br><br>' + top.map(a => '• ' + nom(a) + ' (' + String(a.ausencias).replace('.', ',') + ')').join('<br>');
+      if (aca.length) h += '<br><br>📚 <b>Con 4 o más materias en riesgo académico:</b> ' + aca.length + '<br>' + aca.slice(0, 5).map(a => '• ' + nom(a) + ' (TEP: ' + a.materiasTEP + ', menos de 7: ' + a.notasBajas + ')').join('<br>');
+      return h;
+    });
+    periDecir(bloques.join('<br><br>') + '<br><br><small>El detalle completo está en Alumnos en Riesgo.</small>', { img: 'escucha' });
+    periChips([periChipIrP('alertas')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'alumnos en riesgo')));
+  });
+}
+
+// ── Mis cursos (docentes y preceptores) ───────────────────────────────────
+function periMisCursosP() {
+  const tipo = periTipo();
+  const cursos = periCursosNorm(currentCursos);
+  if (tipo === 'directivo') {
+    periDecir('Tenés acceso a <b>todos los cursos</b> 🏫<br>Para ver uno, abrí <b>Resumen por Curso</b>.', { img: 'ok' });
+    periChips([periChipIrP('resumen-curso')].filter(Boolean).concat(periChipsBase()));
+    return;
+  }
+  if (tipo === 'preceptor') {
+    periDecir(cursos.length ? '🏫 <b>Tus cursos:</b> ' + cursos.map(periEsc).join(', ') : 'Tenés acceso a <b>todos los cursos</b> 🏫', { img: 'ok' });
+    periChips([periChipIrP('resumen-curso')].filter(Boolean).concat(periChipsBase()));
+    return;
+  }
+  // docente: cursos y materias asignados + clases de hoy (si el horario las reconoce)
+  const mats = (currentMaterias && currentMaterias.length) ? currentMaterias : (currentMateria ? String(currentMateria).split(',').map(x => x.trim()).filter(Boolean) : []);
+  let base = '';
+  if (cursos.length) base += '🏫 <b>Tus cursos:</b> ' + cursos.map(periEsc).join(', ');
+  if (mats.length) base += (base ? '<br>' : '') + '📚 <b>Tus materias:</b> ' + mats.map(x => periEsc(periTitulo(x))).join(', ');
+  const fb = periFechaBack(_periAhora());
+  const pedir = nombre => callWebApp({ accion: 'obtenerCursosDocente', docente: nombre, fecha: fb }).catch(() => null);
+  const nombre = String(currentNombre || '').trim();
+  return pedir(nombre).then(r => (r && r.ok && r.cursos && r.cursos.length) ? r : (nombre.indexOf(',') !== -1 ? pedir(nombre.replace(',', '').replace(/\s+/g, ' ')) : r)).then(r => {
+    let h = base;
+    if (r && r.ok && r.cursos && r.cursos.length) {
+      h += (h ? '<br><br>' : '') + '🗓️ <b>Hoy (' + periEsc(r.diaNom || '') + '):</b><br>' + r.cursos.map(x => '• ' + periEsc(x.curso) + ' · ' + periEsc(periTitulo(x.materia))).join('<br>');
+    }
+    if (!h) h = 'No tengo cursos cargados a tu nombre todavía 🤔 Consultá en dirección.';
+    periDecir(h, { img: 'ok' });
+    periChips([periChipIrP('resumen-curso'), periChipIrP('asistencia')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'mis cursos')));
+  });
+}
+
+// ── Próximos eventos institucionales ──────────────────────────────────────
+function periEventosP() {
+  return periPedir('eventosP', () => callWebApp({ accion: 'obtenerEventosInstitucionales' })).then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const hoy = _periAhora(); hoy.setHours(0, 0, 0, 0);
+    const lim = new Date(hoy); lim.setDate(lim.getDate() + 30);
+    const lista = (res.eventos || []).map(x => ({ f: calFechaLocal(x.fecha), titulo: x.titulo })).filter(x => x.f && x.f >= hoy && x.f <= lim).sort((a, b) => a.f - b.f);
+    if (!lista.length) {
+      periDecir('No hay eventos institucionales para los próximos 30 días 😌', { img: 'feliz' });
+    } else {
+      const manana = new Date(hoy); manana.setDate(manana.getDate() + 1);
+      const dia = f => new Date(f.getFullYear(), f.getMonth(), f.getDate()).getTime();
+      const fmt = f => dia(f) === hoy.getTime() ? 'hoy' : dia(f) === manana.getTime() ? 'mañana'
+        : f.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
+      periDecir('Esto viene en los próximos 30 días:<br><br>' + lista.slice(0, 10).map(x => '🗓️ <b>' + periEsc(fmt(x.f)) + '</b> · ' + periEsc(x.titulo)).join('<br>') +
+        (lista.length > 10 ? '<br><br>Y ' + (lista.length - 10) + ' más en el Calendario.' : ''), { img: 'ok' });
+    }
+    periChips([periChipIrP('calendario')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'proximos eventos')));
+  });
+}
+
+// ── Mensajes sin leer ─────────────────────────────────────────────────────
+function periMensajesP() {
+  return callWebApp({ accion: 'contarNoLeidos', usuario: currentUser }).then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const n = res.total || 0;
+    periDecir(n ? '💬 Tenés <b>' + n + '</b> mensaje' + (n === 1 ? '' : 's') + ' sin leer.' : '💬 No tenés mensajes sin leer 🎉', { img: n ? 'ok' : 'feliz' });
+    periChips([periChipIrP('mensajes')].filter(Boolean).concat(periChipsBase().filter(c => c.q !== 'mensajes sin leer')));
   });
 }
 
@@ -8536,7 +8833,7 @@ function setupMuralCursos() {
 
   // Limitar cursos del formulario para docentes y preceptores
   if (cursoSel && !isAdmin && currentCursos.length > 0) {
-    cursoSel.innerHTML = '<option value="todos">Todos mis cursos</option>' +
+    cursoSel.innerHTML = '<option value="">Elegí un curso…</option><option value="todos">Todos mis cursos</option>' +
       currentCursos.map(c => `<option value="${c}">${c}</option>`).join('');
   }
 
@@ -9854,25 +10151,30 @@ function toggleNuevoPost() {
 }
 
 function limpiarFormMural() {
-  ['post-titulo','post-cuerpo','post-fecha'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  ['post-titulo','post-cuerpo','post-fecha','post-curso'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
 }
 
 function publicarEnMural() {
   const titulo = (document.getElementById('post-titulo')?.value || '').trim();
   const cuerpo = (document.getElementById('post-cuerpo')?.value || '').trim();
   const tipo   = document.getElementById('post-tipo')?.value || 'comunicado';
-  const curso  = document.getElementById('post-curso')?.value || 'todos';
+  const curso  = document.getElementById('post-curso')?.value || '';
   const fecha  = document.getElementById('post-fecha')?.value || '';
   const necesitaFecha = ['prueba','tp','lectura'].includes(tipo);
+  if (!curso) { showToast('Elegí a qué curso querés publicar','⚠️'); return; }
   if (!titulo) { showToast('Escribí un título para la publicación','⚠️'); return; }
   if (necesitaFecha && !fecha) { showToast('Este tipo requiere una fecha','⚠️'); return; }
   showToast('Publicando...', '⏳');
   // Materia: leer del selector si tiene varias, o de currentMateria si tiene una
   const materiaEl = document.getElementById('post-materia-display');
   const materia = materiaEl ? (materiaEl.value || materiaEl.textContent.trim()) : (currentMateria || '');
-  callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso, materia, fechaEvento: fecha,
+  // "Todos mis cursos" (docentes y preceptores): se publica en CADA uno de sus cursos, no para todo el colegio
+  const esDirectivo = ['director','vicedirector','secretary','secretario','legal'].includes(currentRole);
+  const cursosDestino = (curso === 'todos' && !esDirectivo && currentCursos.length) ? currentCursos.map(c => String(c).replace(/[°\s]/g, '').toUpperCase()) : [curso];
+  Promise.all(cursosDestino.map(c => callWebApp({ accion:'crearPost', titulo, cuerpo, tipo, curso: c, materia, fechaEvento: fecha,
     autor_usuario: currentUser, autor_nombre: currentNombre, rol_autor: currentRole
-  }).then(res => {
+  }))).then(rs => {
+    const res = { ok: rs.every(r => r && r.ok) };
     if (res && res.ok) {
       showToast('Publicado en el mural ✓', '✅');
       limpiarFormMural();
@@ -10107,7 +10409,7 @@ function renderCalendar() {
     } else if (isAlumnoView) {
       // El alumno solo ve lo publicado para SU curso + los institucionales —
       // nunca lo de otros cursos ni de otros docentes.
-      calEventosCrudos = calEventosCrudos.filter(e => e.origen === 'institucional' || e.curso === currentCursoAlumno);
+      calEventosCrudos = calEventosCrudos.filter(e => e.origen === 'institucional' || (_muralNormCurso(e.curso) && _muralEsDeCurso(e, currentCursoAlumno)));
       document.getElementById('cal-filtro-docente').style.display = 'none';
     } else {
       document.getElementById('cal-filtro-docente').style.display = 'none';
