@@ -4102,7 +4102,7 @@ function doLogin(name, role, usuario, res){
   document.getElementById('nav-informes').style.display = canSeeInformes ? 'flex' : 'none';
   const btnLupa = document.getElementById('btn-lupa-global');
   if (btnLupa) btnLupa.style.display = canSeeResumenAlumno ? 'inline-block' : 'none';
-  document.getElementById('nav-alertas').style.display   = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  document.getElementById('nav-alertas').style.display   = (isAdmin || isPreceptor || isEOE) ? 'flex' : 'none';
   document.getElementById('nav-evolucion').style.display = (isAdmin || isPreceptor || isEOE) ? 'flex' : 'none';
   document.getElementById('nav-reportes').style.display  = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navGD = document.getElementById('nav-gd'); if (navGD) navGD.style.display = isAdmin ? 'flex' : 'none';
@@ -6682,13 +6682,14 @@ let _periAhora = () => new Date();
 
 function periEnAlumno() { return String(currentRole || '').toLowerCase() === 'alumno'; }
 // Personal que también tiene a Peri: preceptores, docentes, directivos y representante legal
-const PERI_ROLES_PERSONAL = ['preceptor', 'docente', 'teacher', 'director', 'vicedirector', 'secretary', 'secretario', 'legal'];
+const PERI_ROLES_PERSONAL = ['preceptor', 'docente', 'teacher', 'director', 'vicedirector', 'secretary', 'secretario', 'legal', 'eoe'];
 function periEsPersonal() { return PERI_ROLES_PERSONAL.indexOf(String(currentRole || '').toLowerCase()) !== -1; }
 function periActivo() { return periEnAlumno() || periEsPersonal(); }
 function periTipo() {
   const r = String(currentRole || '').toLowerCase();
   if (r === 'preceptor') return 'preceptor';
   if (r === 'docente' || r === 'teacher') return 'docente';
+  if (r === 'eoe') return 'eoe';
   return 'directivo';
 }
 function periEsc(s) { return calEsc(s); }
@@ -6868,7 +6869,8 @@ function periAccionChip(x) {
   if (x.alu) {
     periUsuarioDice(x.t);
     const a = (window._periAluRes || {})[x.alu];
-    if (a) { if (x.rite) periRiteAlumnoP(a); else periFichaAlumnoP(a); } else periBuscarAlumnoP(String(x.t).split(' · ')[0], { rite: !!x.rite });
+    const modo = x.modo || (x.rite ? 'rite' : 'ficha');
+    if (a) periAccionAlumnoP(a, modo); else periBuscarAlumnoP(String(x.t).split(' · ')[0], { modo: modo });
     return;
   }
   if (x.aluRite) { const a = (window._periAluRes || {})[x.aluRite]; if (a) { periUsuarioDice(x.t); periRiteAlumnoP(a); } return; }
@@ -7226,6 +7228,16 @@ function periNombreP(n) { return periTitulo(n || ''); }
 
 function periChipsPersonal() {
   const tipo = periTipo();
+  if (tipo === 'eoe') return [
+    { t: '🔎 Buscar alumno', q: 'buscar alumno' },
+    { t: '⚠️ Alumnos a priorizar', q: 'alumnos a priorizar' },
+    { t: '🧠 En riesgo sin legajo', q: 'en riesgo sin legajo' },
+    { t: '🧠 Legajos EOE', q: 'legajos eoe resumen' },
+    { t: '🎓 Trayectoria', q: 'trayectoria' },
+    { t: '💬 Mensajes', q: 'mensajes sin leer' },
+    { t: '📅 Próximos eventos', q: 'proximos eventos' },
+    { t: '🧭 Llevame a...', fn: 'ir' }
+  ];
   if (tipo === 'docente') return [
     { t: '📚 Mis cursos', q: 'mis cursos' },
     { t: '📅 Próximos eventos', q: 'proximos eventos' },
@@ -7250,7 +7262,8 @@ function periBienvenidaPersonal() {
   const nombre = n.indexOf(',') !== -1 ? ', ' + periEsc(periPrimerNombre()) : '';
   const tipo = periTipo();
   let h = '¡Hola' + nombre + '! 👋 Soy <b>Peri</b>, tu asistente del colegio.<br>';
-  if (tipo === 'docente') h += 'Puedo buscar a un alumno por apellido y mostrarte su asistencia y sus notas, tus cursos y materias, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
+  if (tipo === 'eoe') h += 'Puedo buscar a un alumno por apellido (asistencia, notas, legajos EOE y trayectoria), mostrarte los alumnos a priorizar, los que están en riesgo y sin legajo, un resumen de los legajos EOE, los próximos eventos, tus mensajes o llevarte a cualquier parte del portal. ¿Qué necesitás?';
+  else if (tipo === 'docente') h += 'Puedo buscar a un alumno por apellido y mostrarte su asistencia y sus notas, tus cursos y materias, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
   else h += 'Puedo buscar a un alumno por apellido y mostrarte su asistencia y sus notas, contarte cómo viene la asistencia de hoy, qué docentes faltan, qué alumnos están en riesgo, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
   periDecir(h, { img: 'hola' });
   periChips(periChipsPersonal());
@@ -7258,7 +7271,8 @@ function periBienvenidaPersonal() {
 function periAyudaPersonal() {
   const tipo = periTipo();
   let h = 'Te puedo ayudar con:<br>';
-  if (tipo === 'docente') h += '📚 tus <b>cursos y materias</b><br>';
+  if (tipo === 'eoe') h += '⚠️ los <b>alumnos a priorizar</b> de un curso (por ejemplo <i>«a priorizar 3A»</i>)<br>🧠 los alumnos <b>en riesgo sin legajo</b> EOE<br>🧠 un resumen de los <b>legajos EOE</b> (por curso o por tipo) o los de un alumno<br>🎓 la <b>trayectoria</b> de un alumno (cantidades por categoría)<br>';
+  else if (tipo === 'docente') h += '📚 tus <b>cursos y materias</b><br>';
   else h += '📋 la <b>asistencia de hoy</b> por curso<br>🚫 los <b>docentes ausentes</b> de hoy<br>⚠️ los <b>alumnos en riesgo</b> de un curso (por ejemplo <i>«en riesgo 3A»</i>)<br>';
   h = h.replace('Te puedo ayudar con:<br>', 'Te puedo ayudar con:<br>🔎 buscar a un <b>alumno por apellido</b> (por ejemplo <i>«notas de Pérez»</i>) y mostrarte su asistencia y sus notas<br>📄 generar el <b>R.I.T.E.</b> de cualquier alumno (por ejemplo <i>«RITE de Pérez»</i>)<br>');
   h += '📅 los próximos <b>eventos</b> del colegio<br>💬 tus <b>mensajes</b> sin leer<br>🧭 llevarte a cualquier pantalla del portal';
@@ -7288,10 +7302,14 @@ function periResponderPersonal(texto) {
     if (!(verboIr && secs.length) || ca.rite) return periPedirApellido(ca.rite);
   }
   if (verboIr && secs.length) return periNavegar(secs[0]);
+  // EOE: legajos, trayectoria y alumnos en riesgo sin legajo
+  if (periTiene(t, ['sin legajo','sin legajos','sin intervencion','sin seguimiento','sin eoe','sin abordaje'])) return periSinLegajoP(t);
+  if (periTiene(t, ['legajo','legajos'])) return periLegajosP(t);
+  if (periTiene(t, ['trayectoria','trayectorias'])) return periTrayectoriaP(t);
   if (periTiene(t, ['sin leer','no leidos','mensajes nuevos','mensajes pendientes','tengo mensajes'])) return periMensajesP();
   if (docDe && periTiene(t, ['ausente','ausentes','falto','faltaron','faltan','falta','faltas','ausencia','ausencias','quien falto','quienes faltaron'])) return periDocentesAusentesP();
   if (periTiene(t, ['quien falto','quienes faltaron','quien no vino'])) return periDocentesAusentesP();
-  if (periTiene(t, ['riesgo','alertas','alerta','quedar libre','libres','intensificar','intensificacion','criticos'])) return periRiesgoP(t);
+  if (periTiene(t, ['riesgo','alertas','alerta','quedar libre','libres','intensificar','intensificacion','criticos','priorizar','prioridad','prioritarios'])) return periRiesgoP(t);
   if (periTiene(t, ['asistencia','parte diario','presentes','ausentes','cuantos faltaron','cuantos vinieron','inasistencias','falta cargar','sin cargar'])) return periParteHoyP();
   if (periTiene(t, ['mis cursos','mis materias','mis clases','que cursos','que curso','que materias','materias tengo','cursos tengo']) || (!secs.length && periTiene(t, ['cursos','materias']))) return periMisCursosP();
   if (periTiene(t, ['evento','eventos','proximos','proximas','fecha','fechas','acto','actos','reunion','reuniones','feriado'])) return periEventosP();
@@ -7390,7 +7408,7 @@ function periRiesgoP(t) {
 function periMisCursosP() {
   const tipo = periTipo();
   const cursos = periCursosNorm(currentCursos);
-  if (tipo === 'directivo') {
+  if (tipo === 'directivo' || tipo === 'eoe') {
     periDecir('Tenés acceso a <b>todos los cursos</b> 🏫<br>Para ver uno, abrí <b>Resumen por Curso</b>.', { img: 'ok' });
     periChips([periChipIrP('resumen-curso')].filter(Boolean).concat(periChipsBase()));
     return;
@@ -7472,7 +7490,8 @@ function periPedirApellido(rite) {
   periChips(periChipsBase());
 }
 function periBuscarAlumnoP(q, opts) {
-  const rite = !!(opts && opts.rite);
+  const modo = (opts && opts.modo) || (opts && opts.rite ? 'rite' : 'ficha');
+  const rite = modo === 'rite';
   return periPedir('alu:' + q, () => callWebApp({ accion: 'buscarAlumnoGlobal', q: q })).then(res => {
     if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
     const lista = res.resultados || [];
@@ -7483,10 +7502,16 @@ function periBuscarAlumnoP(q, opts) {
       periChips(periChipsBase());
       return;
     }
-    if (lista.length === 1) return rite ? periRiteAlumnoP(lista[0]) : periFichaAlumnoP(lista[0]);
-    periDecir('Encontré <b>' + lista.length + '</b> alumnos con «' + periEsc(q) + '»' + (lista.length >= 10 ? ' (muestro los primeros 10)' : '') + (rite ? '. ¿De cuál querés el R.I.T.E.?' : '. ¿Cuál querés ver?'), { img: 'escucha' });
-    periChips(lista.map(a => ({ t: periTitulo(a.nombre) + ' · ' + a.curso, alu: a.legajo + '|' + a.curso, rite: rite })));
+    if (lista.length === 1) return periAccionAlumnoP(lista[0], modo);
+    periDecir('Encontré <b>' + lista.length + '</b> alumnos con «' + periEsc(q) + '»' + (lista.length >= 10 ? ' (muestro los primeros 10)' : '') + (modo === 'rite' ? '. ¿De cuál querés el R.I.T.E.?' : modo === 'legajos' ? '. ¿De cuál querés ver los legajos EOE?' : modo === 'tray' ? '. ¿De cuál querés ver la trayectoria?' : '. ¿Cuál querés ver?'), { img: 'escucha' });
+    periChips(lista.map(a => ({ t: periTitulo(a.nombre) + ' · ' + a.curso, alu: a.legajo + '|' + a.curso, modo: modo })));
   });
+}
+function periAccionAlumnoP(a, modo) {
+  if (modo === 'rite') return periRiteAlumnoP(a);
+  if (modo === 'legajos') return periLegajosAlumnoP(a);
+  if (modo === 'tray') return periTrayAlumnoP(a);
+  return periFichaAlumnoP(a);
 }
 function periFichaAlumnoP(a) {
   const as = a.asistencia || {};
@@ -7515,7 +7540,11 @@ function periFichaAlumnoP(a) {
     }).join('<br>');
   }
   periDecir(h, { img: 'ok' });
-  periChips([{ t: '📄 Ver R.I.T.E.', aluRite: a.legajo + '|' + a.curso }, { t: '📂 Abrir resumen completo', aluAbrir: a.legajo + '|' + a.curso }].concat(periChipsBase()));
+  const key = a.legajo + '|' + a.curso;
+  const extra = [];
+  if (periNavVisible('nav-eoe')) extra.push({ t: '🧠 Legajos EOE', alu: key, modo: 'legajos' });
+  if (periNavVisible('nav-trayectoria')) extra.push({ t: '🎓 Trayectoria', alu: key, modo: 'tray' });
+  periChips([{ t: '📄 Ver R.I.T.E.', aluRite: key }, { t: '📂 Abrir resumen completo', aluAbrir: key }].concat(extra, periChipsBase()));
 }
 function periRiteAlumnoP(a) {
   if (!periNavVisible('nav-resumen-alumno')) return periSinPermiso();
@@ -7542,6 +7571,143 @@ function periAbrirResumenAlumnoP(a) {
       cargarResumenAlumno();
     }, 1200);
   }, 300);
+}
+
+
+// ── EQUIPO DE ORIENTACIÓN ESCOLAR (EOE) ───────────────────────────────────
+// Peri muestra solo cantidades, tipos y fechas: nunca el contenido de legajos ni de registros reservados.
+function _periNomTokens(n) { return String(n || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[,.;]/g, ' ').toLowerCase().split(/\s+/).filter(Boolean); }
+function _periMismoNombre(a, b) {
+  const A = _periNomTokens(a), B = _periNomTokens(b);
+  const chico = A.length <= B.length ? A : B, grande = A.length <= B.length ? B : A;
+  return chico.length >= 2 && chico.every(x => grande.indexOf(x) !== -1);
+}
+function _periFmtFecha(f) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(f || '')); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(f || ''); }
+function _periAnioLeg(l) { return String(l.anio || String(l.fecha || '').slice(0, 4)); }
+function periLegajosTodos() { return periPedir('legajosEOE', () => callWebApp({ accion: 'obtenerLegajosEOE', curso: '', tipo: '' })); }
+const PERI_STOP_EOE = ['legajo','legajos','eoe','trayectoria','trayectorias','educativa','tiene','si','este','ano','anio','tipo','tipos','por','todos','todas','cuantos','cuantas','hay','general','registros','registro','abiertos','activos','sin','intervencion','seguimiento','abordaje','curso','cursos','del','de','la','el','los','las','en','a','un','una','me','mostrame','decime','dame','ver','quiero','necesito','que','como','esta','alumno','alumna','riesgo','alumnos'];
+const PERI_TIPOS_EOE = { convivencia: 'convivencia', academica: 'academica', academico: 'academica', familiar: 'familiar', salud: 'salud', conducta: 'conducta', cud: 'cud' };
+function periParseEOE(t) {
+  const toks = String(t || '').split(' ').filter(Boolean);
+  const mc = /(^| )([1-6]) ?(a|b)( |$)/.exec(t);
+  const curso = mc ? mc[2] + mc[3].toUpperCase() : '';
+  let tipo = '';
+  toks.forEach(x => { if (PERI_TIPOS_EOE[x]) tipo = PERI_TIPOS_EOE[x]; });
+  const nombre = toks.filter(x => PERI_STOP_EOE.indexOf(x) === -1 && !PERI_TIPOS_EOE[x] && PERI_STOP_ALU.indexOf(x) === -1 && PERI_RESERV_ALU.indexOf(x) === -1 && !/^[1-6][ab]?$/.test(x));
+  return { curso: curso, tipo: tipo, nombre: nombre };
+}
+function periCursosChips(prefijo) { return ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'].map(c => ({ t: c, q: prefijo + ' ' + c })); }
+
+// 4) Legajos EOE: resumen general, por curso/tipo, o de un alumno
+function periLegajosP(t) {
+  if (!periNavVisible('nav-eoe')) return periSinPermiso();
+  const p = periParseEOE(t);
+  if (p.nombre.length) return periBuscarAlumnoP(p.nombre.join(' '), { modo: 'legajos' });
+  return periLegajosTodos().then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const anio = String(_periAhora().getFullYear());
+    let lista = (res.legajos || []).filter(l => _periAnioLeg(l) === anio);
+    if (p.curso) lista = lista.filter(l => _muralNormCurso(l.curso) === p.curso);
+    if (p.tipo) lista = lista.filter(l => l.tipo === p.tipo);
+    const filtro = (p.curso ? ' · ' + p.curso : '') + (p.tipo ? ' · ' + (TRAY_EOE_TIPOS[p.tipo] || p.tipo) : '');
+    if (!lista.length) {
+      periDecir('🧠 No hay legajos EOE activos de ' + anio + periEsc(filtro) + '.', { img: 'pensando' });
+    } else {
+      const alumnos = {}; lista.forEach(l => { alumnos[_periNomTokens(l.alumno).sort().join(' ')] = 1; });
+      const cuenta = campo => { const o = {}; lista.forEach(l => { const k = l[campo] || '—'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => [k, o[k]]).sort((a, b) => b[1] - a[1]); };
+      let h = '🧠 <b>Legajos EOE ' + anio + periEsc(filtro) + '</b><br>Legajos activos: <b>' + lista.length + '</b> · Alumnos con legajo: <b>' + Object.keys(alumnos).length + '</b>';
+      if (!p.tipo) h += '<br><br><b>Por tipo</b><br>' + cuenta('tipo').map(x => '• ' + periEsc(TRAY_EOE_TIPOS[x[0]] || x[0]) + ': ' + x[1]).join('<br>');
+      if (!p.curso) h += '<br><br><b>Por curso</b><br>' + cuenta('curso').slice(0, 12).map(x => '• ' + periEsc(x[0]) + ': ' + x[1]).join('<br>');
+      periDecir(h, { img: 'ok' });
+    }
+    periChips([periChipIrP('eoe')].filter(Boolean).concat([{ t: '🧠 En riesgo sin legajo', q: 'en riesgo sin legajo' }], periChipsBase().filter(c => c.q !== 'legajos eoe resumen')));
+  });
+}
+function periLegajosAlumnoP(a) {
+  if (!periNavVisible('nav-eoe')) return periSinPermiso();
+  return periLegajosTodos().then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const mios = (res.legajos || []).filter(l => _periMismoNombre(l.alumno, a.nombre));
+    const nom = periEsc(periTitulo(a.nombre)) + ' (' + periEsc(a.curso) + ')';
+    if (!mios.length) {
+      periDecir('🧠 <b>' + nom + '</b> no tiene legajos EOE activos.', { img: 'pensando' });
+    } else {
+      const anio = String(_periAhora().getFullYear());
+      const esteAnio = mios.filter(l => _periAnioLeg(l) === anio).length;
+      const tipos = {}; mios.forEach(l => { tipos[l.tipo] = (tipos[l.tipo] || 0) + 1; });
+      const ult = mios.slice().sort((x, y) => String(y.fecha).localeCompare(String(x.fecha)))[0];
+      periDecir('🧠 <b>Legajos EOE de ' + nom + '</b><br>Activos: <b>' + mios.length + '</b> (de ' + anio + ': ' + esteAnio + ')' + (mios.some(l => l.fijado) ? ' · 📌 ' + mios.filter(l => l.fijado).length + ' fijado(s)' : '') +
+        '<br>Tipos: ' + Object.keys(tipos).map(k => periEsc(TRAY_EOE_TIPOS[k] || k) + ' ×' + tipos[k]).join(', ') +
+        '<br>Último: ' + periEsc(_periFmtFecha(ult.fecha)) + ' (' + periEsc(TRAY_EOE_TIPOS[ult.tipo] || ult.tipo) + ')' +
+        '<br><br><small>El contenido está en Legajos EOE.</small>', { img: 'ok' });
+    }
+    periChips([periChipIrP('eoe')].filter(Boolean).concat(periChipsBase()));
+  });
+}
+
+// 5) Trayectoria: cantidades por categoría (sin el texto de los registros)
+function periTrayectoriaP(t) {
+  if (!periNavVisible('nav-trayectoria')) return periSinPermiso();
+  const p = periParseEOE(t);
+  if (p.nombre.length) return periBuscarAlumnoP(p.nombre.join(' '), { modo: 'tray' });
+  periDecir('🎓 Decime el <b>apellido</b> del alumno (o apellido y nombre, o el DNI) y te cuento cuántos registros de trayectoria tiene.', { img: 'escucha' });
+  periChips([periChipIrP('trayectoria')].filter(Boolean).concat(periChipsBase()));
+}
+function periTrayAlumnoP(a) {
+  if (!periNavVisible('nav-trayectoria')) return periSinPermiso();
+  return periPedir('tray:' + a.legajo, () => callWebApp({ accion: 'obtenerTrayectoriaAlumno', legajo: a.legajo, nombre: a.nombre, rol: currentRole, usuario: currentUser })).then(res => {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const regs = res.registros || [];
+    const nom = periEsc(periTitulo(a.nombre)) + ' (' + periEsc(a.curso) + ')';
+    if (!regs.length) {
+      periDecir('🎓 <b>' + nom + '</b> no tiene registros de trayectoria.', { img: 'pensando' });
+    } else {
+      const ETQ = { convivencia: '🤝 Convivencia', familiar: '👨‍👩‍👧 Familiar', academico: '📚 Académico', logro: '🏆 Logro' };
+      const c = {}; regs.forEach(r => { c[r.categoria] = (c[r.categoria] || 0) + 1; });
+      const anio = String(_periAhora().getFullYear());
+      const ult = regs.slice().sort((x, y) => String(y.fecha).localeCompare(String(x.fecha)))[0];
+      const res2 = regs.filter(r => r.reservada).length;
+      periDecir('🎓 <b>Trayectoria de ' + nom + '</b><br>Registros: <b>' + regs.length + '</b> (de ' + anio + ': ' + regs.filter(r => String(r.anio) === anio).length + ')<br>' +
+        Object.keys(c).map(k => periEsc(ETQ[k] || k) + ' ' + c[k]).join(' · ') +
+        (res2 ? '<br>🔒 Reservados: ' + res2 : '') + '<br>Último: ' + periEsc(_periFmtFecha(ult.fecha)) + ' (' + periEsc(ETQ[ult.categoria] || ult.categoria) + ')' +
+        '<br><br><small>El detalle está en Trayectoria.</small>', { img: 'ok' });
+    }
+    periChips([periChipIrP('trayectoria')].filter(Boolean).concat(periChipsBase()));
+  });
+}
+
+// 3) Alumnos en riesgo que todavía no tienen ningún legajo EOE este año
+function periSinLegajoP(t) {
+  if (!periNavVisible('nav-eoe') || !periNavVisible('nav-alertas')) return periSinPermiso();
+  const p = periParseEOE(t);
+  if (!p.curso) {
+    periDecir('¿De qué curso querés ver los alumnos en riesgo que no tienen legajo EOE? 🧠', { img: 'escucha' });
+    periChips(periCursosChips('en riesgo sin legajo'));
+    return;
+  }
+  const c = p.curso;
+  return Promise.all([
+    periPedir('riesgoI:' + c, () => callWebApp({ accion: 'obtenerAlertasInasistencias', curso: c })),
+    periPedir('riesgoA:' + c, () => callWebApp({ accion: 'obtenerAlertasAcademicas', curso: c })),
+    periLegajosTodos()
+  ]).then(r => {
+    if (!r[0] || !r[0].ok) { periDecir(periErr(r[0]), { img: 'sorpresa' }); periChips(periChipsBase()); return; }
+    const anio = String(_periAhora().getFullYear());
+    const legs = ((r[2] && r[2].legajos) || []).filter(l => _periAnioLeg(l) === anio);
+    const ina = (r[0].alertas || []).filter(a => a.nivel === 'critico' || a.nivel === 'alto');
+    const aca = (r[1] && r[1].ok) ? (r[1].alertas || []) : [];
+    const mapa = {};
+    ina.forEach(a => { mapa[a.nombre] = { nombre: a.nombre, motivos: ['inasistencias: ' + String(a.ausencias).replace('.', ',')] }; });
+    aca.forEach(a => { (mapa[a.nombre] = mapa[a.nombre] || { nombre: a.nombre, motivos: [] }).motivos.push(a.materiasTEP + ' materias TEP'); });
+    const todos = Object.keys(mapa).map(k => mapa[k]);
+    const sin = todos.filter(x => !legs.some(l => _periMismoNombre(l.alumno, x.nombre)));
+    let h = '🧠 <b>En riesgo sin legajo EOE · ' + periEsc(c) + '</b><br>Revisé <b>' + todos.length + '</b> alumnos en riesgo (críticos o altos por inasistencias, o con 4 o más materias en riesgo académico).';
+    if (!todos.length) h = '🧠 En <b>' + periEsc(c) + '</b> no hay alumnos en riesgo crítico, alto o académico 🎉';
+    else if (!sin.length) h += '<br>Todos tienen al menos un legajo EOE de ' + anio + ' 🎉';
+    else h += '<br><b>' + sin.length + '</b> sin ningún legajo EOE de ' + anio + ':<br>' + sin.slice(0, 10).map(x => '• ' + periEsc(periTitulo(x.nombre)) + ' (' + periEsc(x.motivos.join(', ')) + ')').join('<br>') + (sin.length > 10 ? '<br>Y ' + (sin.length - 10) + ' más.' : '');
+    periDecir(h, { img: 'ok' });
+    periChips([periChipIrP('eoe'), periChipIrP('alertas')].filter(Boolean).concat(periChipsBase()));
+  });
 }
 
 // ── R.I.T.E. ──────────────────────────────────────────────────────────────
