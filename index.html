@@ -5088,18 +5088,19 @@ async function certSubirDesdeHistorial(input) {
     showToast(ext === 'pdf' ? 'El PDF supera los 10MB. Probá escanearlo en calidad media o con la opción de tamaño reducido' : 'El archivo supera los 10MB','❌');
     input.value = ''; return;
   }
-  showToast('Subiendo archivo...','⏳');
+  let resumenCompresion = '';
+  showToast('Comprimiendo y subiendo...','⏳');
   if (comprimible) {
     const original = archivo;
     archivo = await gdComprimirImagen(original, 1800, 0.82);
-    if (archivo !== original) showToast('Comprimido: ' + (original.size / MB).toFixed(1) + 'MB → ' + (archivo.size / MB).toFixed(1) + 'MB', '🗜️');
+    if (archivo !== original) resumenCompresion = (original.size / MB).toFixed(1).replace('.', ',') + ' MB → ' + (archivo.size / MB).toFixed(2).replace('.', ',') + ' MB';
   }
   if (archivo.size > 10 * MB) { showToast('El archivo sigue pesando más de 10MB. Probá con una imagen más chica','❌'); input.value = ''; return; }
   const path = certNombreArchivo(alumno, curso, archivo);
   try {
     const { error } = await getSupa().storage.from(SUPA_BUCKET).upload(path, archivo, { cacheControl:'3600', upsert:false });
     if (error) throw error;
-    showToast('Adjunto guardado ✓','✅');
+    showToast(resumenCompresion ? 'Adjunto guardado ✓ · Comprimido: ' + resumenCompresion : 'Adjunto guardado ✓', '✅', resumenCompresion ? 8000 : 3400);
     input.value = '';
     cargarLegajosEOE();
   } catch(err) {
@@ -9381,13 +9382,13 @@ function colorGradeSelect(sel, periodo, idx) {
 
 
 let toastTimer;
-function showToast(msg,icon='✅'){
+function showToast(msg,icon='✅',ms){
   clearTimeout(toastTimer);
   document.getElementById('toast-text').textContent=msg;
   document.getElementById('toast-icon').textContent=icon;
   const t=document.getElementById('toast');
   t.classList.add('show');
-  toastTimer=setTimeout(()=>t.classList.remove('show'),3400);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),ms||3400);
 }
 
 // ── Resumen por Curso (directivo/preceptor) ───────────────────────────
