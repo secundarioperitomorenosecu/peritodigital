@@ -5074,14 +5074,27 @@ function cargarLegajosEOE() {
 
 // Subir adjunto desde la tarjeta del alumno
 async function certSubirDesdeHistorial(input) {
-  const archivo = input.files[0];
+  let archivo = input.files[0];
   const alumno  = input.dataset.alumno;
   const curso   = input.dataset.curso;
   if (!archivo || !alumno || !curso) return;
-  if (archivo.size > 10*1024*1024) { showToast('El archivo supera los 10MB','❌'); return; }
+  const MB = 1024 * 1024;
   const ext = archivo.name.split('.').pop().toLowerCase();
-  if (!['jpg','jpeg','png','webp','gif','pdf'].includes(ext)) { showToast('Formato no permitido','❌'); return; }
+  if (!['jpg','jpeg','png','webp','gif','pdf'].includes(ext)) { showToast('Formato no permitido (solo PDF o imágenes)','❌'); input.value = ''; return; }
+  // Las fotos se comprimen antes de subirlas, por eso se aceptan más pesadas; los PDF se suben tal cual
+  const comprimible = ['jpg','jpeg','png','webp'].includes(ext);
+  if (comprimible && archivo.size > 25 * MB) { showToast('La imagen supera los 25MB','❌'); input.value = ''; return; }
+  if (!comprimible && archivo.size > 10 * MB) {
+    showToast(ext === 'pdf' ? 'El PDF supera los 10MB. Probá escanearlo en calidad media o con la opción de tamaño reducido' : 'El archivo supera los 10MB','❌');
+    input.value = ''; return;
+  }
   showToast('Subiendo archivo...','⏳');
+  if (comprimible) {
+    const original = archivo;
+    archivo = await gdComprimirImagen(original, 1800, 0.82);
+    if (archivo !== original) showToast('Comprimido: ' + (original.size / MB).toFixed(1) + 'MB → ' + (archivo.size / MB).toFixed(1) + 'MB', '🗜️');
+  }
+  if (archivo.size > 10 * MB) { showToast('El archivo sigue pesando más de 10MB. Probá con una imagen más chica','❌'); input.value = ''; return; }
   const path = certNombreArchivo(alumno, curso, archivo);
   try {
     const { error } = await getSupa().storage.from(SUPA_BUCKET).upload(path, archivo, { cacheControl:'3600', upsert:false });
@@ -5089,7 +5102,13 @@ async function certSubirDesdeHistorial(input) {
     showToast('Adjunto guardado ✓','✅');
     input.value = '';
     cargarLegajosEOE();
-  } catch(err) { showToast('Error: '+(err.message||err),'❌'); }
+  } catch(err) {
+    const msg = String((err && err.message) || err || '');
+    showToast(/failed to fetch|networkerror|load failed/i.test(msg)
+      ? 'No se pudo conectar con el almacenamiento de archivos. Probá de nuevo en unos minutos o avisá a sistemas.'
+      : 'Error: ' + msg, '❌');
+    input.value = '';
+  }
 }
 
 // Ver archivo por path (desde data attribute)
@@ -14645,6 +14664,8 @@ function gdComprimirImagen(file, maxDim, calidad) {
       const canvas = document.createElement('canvas');
       canvas.width = width; canvas.height = height;
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob(blob => {
         URL.revokeObjectURL(url);
