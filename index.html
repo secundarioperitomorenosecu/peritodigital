@@ -2449,6 +2449,33 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
     </div>
 
+    <!-- Informe por docente (comparativo): solo equipo directivo -->
+    <div id="aud-informe-panel" style="display:none;background:var(--color-background-primary);border:0.5px solid #1a2744;border-radius:var(--border-radius-lg);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:#1a2744;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📈 Informe de ausencias por docente</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px">Horas perdidas por docente y por motivo, con un cuadro comparativo. Cada hora es un módulo de clase registrado como ausencia.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
+          <input type="date" id="aud-inf-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"/>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
+          <input type="date" id="aud-inf-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)"/>
+        </div>
+        <button onclick="audInfGenerar()" id="btn-aud-inf" style="padding:7px 18px;background:#1a2744;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap">📈 Ver informe</button>
+        <span id="aud-inf-acciones" style="display:none;gap:8px;align-items:center;flex-wrap:wrap">
+          <select id="aud-inf-orden" onchange="audInfRender()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)">
+            <option value="horas">Ordenar por horas</option>
+            <option value="dias">Ordenar por días</option>
+            <option value="nombre">Ordenar por apellido</option>
+          </select>
+          <button onclick="audInfExcel()" style="padding:7px 14px;background:#1a9e5c;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">📥 Excel</button>
+          <button onclick="audInfImprimir()" style="padding:7px 14px;background:#fff;color:#1a2744;border:1px solid #1a2744;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">🖨️ Imprimir / PDF</button>
+        </span>
+      </div>
+      <div id="aud-inf-resultado" style="margin-top:14px"></div>
+    </div>
+
     <!-- Filtros historial -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
       <span style="font-size:12px;color:var(--color-text-secondary)">Ver desde</span>
@@ -2816,6 +2843,207 @@ function audExportarExcel(registros, desde, hasta) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+
+// ── Informe de ausencias por docente: horas, motivos y cuadro comparativo ──
+// Cada registro de Ausencias_Docentes es un módulo de clase (una hora): las "horas" son la cantidad de registros.
+const AUD_INF_MOTIVOS = ['Enfermedad','Licencia médica','Licencia personal','Capacitación','Paro/huelga','Sin aviso','Otro'];
+let _audInf = null;
+
+function audInfEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function audInfNum(n, dec) { return Number(n).toFixed(dec == null ? 1 : dec).replace('.', ','); }
+function audInfFechaDate(f) {
+  const s = String(f || '').trim();
+  let m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s); if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s); if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+function audInfFechaTxt(f) { const d = audInfFechaDate(f); return d ? String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth() + 1).padStart(2,'0') + '/' + d.getFullYear() : String(f || ''); }
+function audInfPrefill() {
+  const d = document.getElementById('aud-inf-desde'), h = document.getElementById('aud-inf-hasta');
+  if (!d || !h || d.value) return;
+  const hoy = new Date(), pad = n => String(n).padStart(2, '0');
+  h.value = hoy.getFullYear() + '-' + pad(hoy.getMonth() + 1) + '-' + pad(hoy.getDate());
+  d.value = hoy.getFullYear() + '-03-01';
+}
+setTimeout(audInfPrefill, 0);
+
+function audInfCalcular(registros, desde, hasta) {
+  const porDoc = {}, porMot = {}, fechas = {};
+  registros.forEach(r => {
+    const docente = String(r.docente || '').trim() || '(sin nombre)';
+    const key = docente.toUpperCase();
+    const motivo = String(r.motivo || '').trim() || 'Sin motivo';
+    const fecha = audInfFechaTxt(r.fecha);
+    const d = porDoc[key] || (porDoc[key] = { docente: docente, horas: 0, fechas: {}, motivos: {}, materias: {}, detalle: [] });
+    d.horas++; d.fechas[fecha] = 1;
+    const m = d.motivos[motivo] || (d.motivos[motivo] = { horas: 0, fechas: {} });
+    m.horas++; m.fechas[fecha] = 1;
+    const mat = String(r.curso || '') + ' · ' + String(r.materia || '');
+    d.materias[mat] = (d.materias[mat] || 0) + 1;
+    d.detalle.push({ fecha: fecha, curso: String(r.curso || ''), materia: String(r.materia || ''), motivo: motivo });
+    const pm = porMot[motivo] || (porMot[motivo] = { horas: 0, docentes: {} });
+    pm.horas++; pm.docentes[key] = 1;
+    fechas[fecha] = 1;
+  });
+  const docentes = Object.keys(porDoc).map(k => { const d = porDoc[k]; d.dias = Object.keys(d.fechas).length; return d; });
+  const presentes = Object.keys(porMot);
+  const motivos = AUD_INF_MOTIVOS.filter(x => presentes.indexOf(x) !== -1).concat(presentes.filter(x => AUD_INF_MOTIVOS.indexOf(x) === -1).sort());
+  return { desde: desde, hasta: hasta, docentes: docentes, total: registros.length, motivos: motivos, porMot: porMot, diasConAusencias: Object.keys(fechas).length };
+}
+function audInfOrdenados() {
+  const o = (document.getElementById('aud-inf-orden') || {}).value || 'horas';
+  const l = _audInf.docentes.slice();
+  if (o === 'nombre') l.sort((a, b) => a.docente.localeCompare(b.docente, 'es'));
+  else if (o === 'dias') l.sort((a, b) => b.dias - a.dias || b.horas - a.horas || a.docente.localeCompare(b.docente, 'es'));
+  else l.sort((a, b) => b.horas - a.horas || b.dias - a.dias || a.docente.localeCompare(b.docente, 'es'));
+  return l;
+}
+// Detalle de un docente agrupado por fecha (ordenado cronológicamente)
+function audInfPorFecha(d) {
+  const g = {};
+  d.detalle.forEach(x => {
+    const e = g[x.fecha] || (g[x.fecha] = { fecha: x.fecha, horas: 0, motivos: {}, clases: {} });
+    e.horas++; e.motivos[x.motivo] = 1; e.clases[x.curso + ' ' + x.materia] = 1;
+  });
+  return Object.keys(g).map(k => g[k]).sort((a, b) => (audInfFechaDate(a.fecha) || 0) - (audInfFechaDate(b.fecha) || 0));
+}
+
+function audInfGenerar() {
+  audInfPrefill();
+  const desde = document.getElementById('aud-inf-desde').value;
+  const hasta = document.getElementById('aud-inf-hasta').value;
+  if (!desde || !hasta) { alert('Seleccioná fecha desde y hasta.'); return; }
+  if (desde > hasta) { alert('La fecha "desde" no puede ser posterior a "hasta".'); return; }
+  const btn = document.getElementById('btn-aud-inf');
+  const box = document.getElementById('aud-inf-resultado');
+  btn.disabled = true; btn.textContent = 'Generando…';
+  box.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:20px 0">Calculando…</p>';
+  const toBack = v => v.split('-').reverse().join('/');
+  callWebApp({ accion: 'obtenerAusenciasDocentes', fechaDesde: toBack(desde), fechaHasta: toBack(hasta), curso: '' }).then(res => {
+    btn.disabled = false; btn.textContent = '📈 Ver informe';
+    if (!res || !res.ok) { box.innerHTML = '<p style="color:#c62828;font-size:13px;padding:10px 0">No se pudo generar el informe' + (res && res.error ? ': ' + audInfEsc(res.error) : '') + '.</p>'; return; }
+    _audInf = audInfCalcular(res.registros || [], toBack(desde), toBack(hasta));
+    audInfRender();
+  }).catch(() => { btn.disabled = false; btn.textContent = '📈 Ver informe'; box.innerHTML = '<p style="color:#c62828;font-size:13px;padding:10px 0">Error de conexión. Probá de nuevo.</p>'; });
+}
+
+function audInfRender() {
+  const box = document.getElementById('aud-inf-resultado');
+  const acc = document.getElementById('aud-inf-acciones');
+  if (!_audInf) return;
+  const I = _audInf;
+  if (!I.total) {
+    if (acc) acc.style.display = 'none';
+    box.innerHTML = '<p style="font-size:13px;color:var(--color-text-tertiary);text-align:center;padding:24px 0">No hay ausencias docentes registradas entre el ' + audInfEsc(I.desde) + ' y el ' + audInfEsc(I.hasta) + '.</p>';
+    return;
+  }
+  if (acc) acc.style.display = 'inline-flex';
+  const docs = audInfOrdenados();
+  const maxH = Math.max.apply(null, docs.map(d => d.horas));
+  const principal = I.motivos.slice().sort((a, b) => I.porMot[b].horas - I.porMot[a].horas)[0];
+  const card = (valor, etq) => '<div style="flex:1;min-width:130px;background:#f6f8fb;border-radius:10px;padding:10px 12px"><div style="font-size:20px;font-weight:700;color:#1a2744">' + valor + '</div><div style="font-size:11px;color:#666;margin-top:2px">' + etq + '</div></div>';
+  const th = (t, al) => '<th style="padding:7px 8px;text-align:' + (al || 'center') + ';font-size:11px;font-weight:600;background:#1a2744;color:#fff;white-space:nowrap">' + t + '</th>';
+  const td = (t, al, ex) => '<td style="padding:6px 8px;text-align:' + (al || 'center') + ';font-size:12px;border-bottom:0.5px solid #e5e8ee;' + (ex || '') + '">' + t + '</td>';
+
+  let h = '<div style="font-size:12px;color:#555;margin-bottom:10px">Período: <b>' + audInfEsc(I.desde) + '</b> al <b>' + audInfEsc(I.hasta) + '</b></div>';
+  h += '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">' +
+       card(I.total, 'Horas de ausencia') + card(I.docentes.length, 'Docentes con ausencias') +
+       card(audInfNum(I.total / I.docentes.length), 'Promedio de horas por docente') +
+       card(audInfEsc(principal) + ' <span style="font-size:12px;font-weight:500;color:#666">' + audInfNum(I.porMot[principal].horas * 100 / I.total) + '%</span>', 'Motivo principal') + '</div>';
+
+  // Cuadro comparativo
+  h += '<div style="font-size:13px;font-weight:700;color:#1a2744;margin-bottom:6px">Cuadro comparativo entre docentes</div><div style="overflow-x:auto;margin-bottom:18px"><table style="border-collapse:collapse;width:100%;min-width:640px"><thead><tr>' +
+       th('#') + th('Docente', 'left') + th('Días') + th('Horas') + th('% del total') + I.motivos.map(m => th(audInfEsc(m))).join('') + th('Comparación', 'left') + '</tr></thead><tbody>';
+  docs.forEach((d, i) => {
+    h += '<tr>' + td(i + 1) + td('<b>' + audInfEsc(d.docente) + '</b>', 'left') + td(d.dias) + td('<b>' + d.horas + '</b>') + td(audInfNum(d.horas * 100 / I.total) + '%') +
+         I.motivos.map(m => td(d.motivos[m] ? d.motivos[m].horas : '<span style="color:#bbb">·</span>')).join('') +
+         td('<div style="background:#e8f5e9;height:8px;border-radius:4px;min-width:90px"><div style="width:' + Math.round(d.horas * 100 / maxH) + '%;background:#1a9e5c;height:8px;border-radius:4px"></div></div>', 'left') + '</tr>';
+  });
+  h += '<tr>' + td('', 'center', 'background:#f6f8fb') + td('<b>TOTAL</b>', 'left', 'background:#f6f8fb') + td('<b>' + I.diasConAusencias + '</b>', 'center', 'background:#f6f8fb') + td('<b>' + I.total + '</b>', 'center', 'background:#f6f8fb') + td('<b>100%</b>', 'center', 'background:#f6f8fb') +
+       I.motivos.map(m => td('<b>' + I.porMot[m].horas + '</b>', 'center', 'background:#f6f8fb')).join('') + td('', 'left', 'background:#f6f8fb') + '</tr></tbody></table></div>';
+  h += '<div style="font-size:11px;color:#888;margin:-12px 0 16px">En "Días", el total cuenta cada fecha una sola vez, aunque falten varios docentes ese día.</div>';
+
+  // Por motivo
+  h += '<div style="font-size:13px;font-weight:700;color:#1a2744;margin-bottom:6px">Por motivo de ausencia</div><div style="overflow-x:auto;margin-bottom:18px"><table style="border-collapse:collapse;width:100%;max-width:560px"><thead><tr>' +
+       th('Motivo', 'left') + th('Horas') + th('% del total') + th('Docentes') + '</tr></thead><tbody>' +
+       I.motivos.slice().sort((a, b) => I.porMot[b].horas - I.porMot[a].horas).map(m => '<tr>' + td(audInfEsc(m), 'left') + td('<b>' + I.porMot[m].horas + '</b>') + td(audInfNum(I.porMot[m].horas * 100 / I.total) + '%') + td(Object.keys(I.porMot[m].docentes).length) + '</tr>').join('') +
+       '</tbody></table></div>';
+
+  // Detalle por docente (se despliega al tocar)
+  h += '<div style="font-size:13px;font-weight:700;color:#1a2744;margin-bottom:6px">Detalle por docente <span style="font-weight:400;color:#888;font-size:11px">(tocá un nombre para desplegar)</span></div>';
+  docs.forEach(d => {
+    const mots = Object.keys(d.motivos).sort((a, b) => d.motivos[b].horas - d.motivos[a].horas);
+    const mats = Object.keys(d.materias).sort((a, b) => d.materias[b] - d.materias[a]);
+    h += '<details style="border:0.5px solid #dfe3ea;border-radius:8px;margin-bottom:6px;padding:0 10px"><summary style="cursor:pointer;padding:9px 0;font-size:13px"><b>' + audInfEsc(d.docente) + '</b> <span style="color:#666">· ' + d.horas + ' h · ' + d.dias + ' día' + (d.dias === 1 ? '' : 's') + '</span></summary>' +
+         '<div style="padding:2px 0 10px;font-size:12px;line-height:1.7">' +
+         '<b>Por motivo:</b> ' + mots.map(m => audInfEsc(m) + ' ' + d.motivos[m].horas + ' h (' + Object.keys(d.motivos[m].fechas).length + ' día' + (Object.keys(d.motivos[m].fechas).length === 1 ? '' : 's') + ')').join(' · ') +
+         '<br><b>Por curso y materia:</b> ' + mats.map(m => audInfEsc(m) + ' ' + d.materias[m] + ' h').join(' · ') +
+         '<br><b>Fechas:</b> ' + audInfPorFecha(d).map(f => audInfEsc(f.fecha) + ' (' + f.horas + ' h, ' + Object.keys(f.motivos).map(audInfEsc).join('/') + ')').join(' · ') + '</div></details>';
+  });
+  h += '<div style="font-size:11px;color:#888;margin-top:8px">Cada hora corresponde a un módulo de clase registrado como ausencia. Si una ausencia se cargó en modo "Por curso", cuenta como una hora por cada registro.</div>';
+  box.innerHTML = h;
+}
+
+// ── Excel (3 hojas: comparativo, por motivo y detalle) ──
+function audInfExcel() {
+  if (!_audInf || !_audInf.total) return;
+  const I = _audInf, docs = audInfOrdenados();
+  const esc = v => String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const S = (v, st) => '<Cell' + (st ? ' ss:StyleID="' + st + '"' : '') + '><Data ss:Type="String">' + esc(v) + '</Data></Cell>';
+  const N = (v, st) => '<Cell' + (st ? ' ss:StyleID="' + st + '"' : '') + '><Data ss:Type="Number">' + Number(v) + '</Data></Cell>';
+  const R = cells => '<Row>' + cells.join('') + '</Row>';
+  const cab = [R([S('Colegio Perito Moreno', 'title')]), R([S('CUE 0611877-00 · Tomás Valle 5662, González Catán')]),
+               R([S('Informe de ausencias docentes · Período: ' + I.desde + ' al ' + I.hasta)]),
+               R([S('Cada hora corresponde a un módulo de clase registrado como ausencia')]), '<Row/>'];
+  const hoja = (nombre, filas) => '<Worksheet ss:Name="' + nombre + '"><Table>' + filas.join('') + '</Table></Worksheet>';
+
+  const comp = cab.concat([R([S('#','hdr'), S('Docente','hdr'), S('Días','hdr'), S('Horas','hdr'), S('% del total','hdr')].concat(I.motivos.map(m => S(m,'hdr'))))]);
+  docs.forEach((d, i) => comp.push(R([N(i + 1), S(d.docente), N(d.dias), N(d.horas), N((d.horas * 100 / I.total).toFixed(1))].concat(I.motivos.map(m => N(d.motivos[m] ? d.motivos[m].horas : 0))))));
+  comp.push(R([S('', 'bold'), S('TOTAL', 'bold'), N(I.diasConAusencias, 'bold'), N(I.total, 'bold'), N(100, 'bold')].concat(I.motivos.map(m => N(I.porMot[m].horas, 'bold')))));
+
+  const mot = cab.concat([R([S('Motivo','hdr'), S('Horas','hdr'), S('% del total','hdr'), S('Docentes','hdr')])]);
+  I.motivos.slice().sort((a, b) => I.porMot[b].horas - I.porMot[a].horas).forEach(m => mot.push(R([S(m), N(I.porMot[m].horas), N((I.porMot[m].horas * 100 / I.total).toFixed(1)), N(Object.keys(I.porMot[m].docentes).length)])));
+
+  const det = cab.concat([R([S('Docente','hdr'), S('Fecha','hdr'), S('Curso','hdr'), S('Materia','hdr'), S('Motivo','hdr'), S('Horas','hdr')])]);
+  docs.slice().sort((a, b) => a.docente.localeCompare(b.docente, 'es')).forEach(d => {
+    d.detalle.slice().sort((a, b) => (audInfFechaDate(a.fecha) || 0) - (audInfFechaDate(b.fecha) || 0)).forEach(x => det.push(R([S(d.docente), S(x.fecha), S(x.curso), S(x.materia), S(x.motivo), N(1)])));
+  });
+
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles>' +
+    '<Style ss:ID="hdr"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1a2744" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center"/></Style>' +
+    '<Style ss:ID="bold"><Font ss:Bold="1"/></Style><Style ss:ID="title"><Font ss:Bold="1" ss:Size="14" ss:Color="#1a2744"/></Style></Styles>' +
+    hoja('Comparativo', comp) + hoja('Por motivo', mot) + hoja('Detalle', det) + '</Workbook>';
+  const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = 'Informe_Ausencias_Docentes_' + I.desde.replace(/\//g, '-') + '_al_' + I.hasta.replace(/\//g, '-') + '.xml';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ── Imprimir / guardar como PDF ──
+function audInfImprimir() {
+  if (!_audInf || !_audInf.total) return;
+  const I = _audInf, docs = audInfOrdenados(), e = audInfEsc;
+  const celdas = (arr, tag, al) => arr.map(x => '<' + tag + ' style="text-align:' + (al || 'center') + '">' + x + '</' + tag + '>').join('');
+  let h = '<h1>Colegio Perito Moreno</h1><div class="sub">CUE 0611877-00 · Tomás Valle 5662, González Catán</div>' +
+    '<h2>Informe de ausencias docentes</h2><div>Período: <b>' + e(I.desde) + '</b> al <b>' + e(I.hasta) + '</b> · Horas de ausencia: <b>' + I.total + '</b> · Docentes con ausencias: <b>' + I.docentes.length + '</b></div>' +
+    '<h3>Cuadro comparativo entre docentes</h3><table><thead><tr>' + celdas(['#'], 'th') + celdas(['Docente'], 'th', 'left') + celdas(['Días', 'Horas', '% del total'].concat(I.motivos.map(e)), 'th') + '</tr></thead><tbody>' +
+    docs.map((d, i) => '<tr>' + celdas([i + 1], 'td') + celdas([e(d.docente)], 'td', 'left') + celdas([d.dias, '<b>' + d.horas + '</b>', audInfNum(d.horas * 100 / I.total) + '%'].concat(I.motivos.map(m => d.motivos[m] ? d.motivos[m].horas : '·')), 'td') + '</tr>').join('') +
+    '<tr class="tot">' + celdas([''], 'td') + celdas(['TOTAL'], 'td', 'left') + celdas([I.diasConAusencias, I.total, '100%'].concat(I.motivos.map(m => I.porMot[m].horas)), 'td') + '</tr></tbody></table>' +
+    '<h3>Por motivo de ausencia</h3><table class="chica"><thead><tr>' + celdas(['Motivo'], 'th', 'left') + celdas(['Horas', '% del total', 'Docentes'], 'th') + '</tr></thead><tbody>' +
+    I.motivos.slice().sort((a, b) => I.porMot[b].horas - I.porMot[a].horas).map(m => '<tr>' + celdas([e(m)], 'td', 'left') + celdas([I.porMot[m].horas, audInfNum(I.porMot[m].horas * 100 / I.total) + '%', Object.keys(I.porMot[m].docentes).length], 'td') + '</tr>').join('') + '</tbody></table>' +
+    '<h3>Detalle por docente</h3>' + docs.map(d => '<div class="doc"><b>' + e(d.docente) + '</b> · ' + d.horas + ' h · ' + d.dias + ' día' + (d.dias === 1 ? '' : 's') + '<br><span>' +
+      audInfPorFecha(d).map(f => e(f.fecha) + ' (' + f.horas + ' h, ' + Object.keys(f.motivos).map(e).join('/') + ')').join(' · ') + '</span></div>').join('') +
+    '<div class="nota">Cada hora corresponde a un módulo de clase registrado como ausencia.</div>';
+  const w = window.open('', '_blank');
+  if (!w) { alert('El navegador bloqueó la ventana de impresión. Permití las ventanas emergentes para este sitio.'); return; }
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Informe de ausencias docentes</title><style>' +
+    'body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:18px;font-size:12px}h1{font-size:18px;margin:0}h2{font-size:15px;margin:10px 0 4px}h3{font-size:13px;margin:16px 0 6px;color:#1a2744}.sub{color:#555;margin-bottom:6px}' +
+    'table{border-collapse:collapse;width:100%}th{background:#1a2744;color:#fff;padding:5px 6px;font-size:11px}td{padding:4px 6px;border-bottom:1px solid #ddd}.tot td{background:#eef1f6;font-weight:bold}.chica{max-width:480px}' +
+    '.doc{border-bottom:1px solid #eee;padding:5px 0;page-break-inside:avoid}.doc span{color:#444;font-size:11px}.nota{margin-top:14px;color:#777;font-size:10px}' +
+    '@media print{body{margin:8mm}th{-webkit-print-color-adjust:exact;print-color-adjust:exact}.tot td{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>' + h + '</body></html>');
+  w.document.close(); w.focus(); setTimeout(() => w.print(), 400);
 }
 
 function audFeedback(msg, ok) {
@@ -4120,6 +4348,8 @@ function doLogin(name, role, usuario, res){
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navAud = document.getElementById('nav-ausencias-docentes');
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const panelAudInf = document.getElementById('aud-informe-panel');
+  if (panelAudInf) panelAudInf.style.display = isAdmin ? 'block' : 'none';
   const navInf = document.getElementById('nav-informe-materias');
   if (navInf) navInf.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navDnl = document.getElementById('nav-dias-no-lectivos');
