@@ -620,6 +620,7 @@ body.sin-registro-aud .aud-solo{display:block}
       <div class="nav-item" id="nav-biblioteca" onclick="showSection('biblioteca',this);if(!bibCargado)inicializarBiblioteca()" style="display:none"><span class="nav-icon">📚</span> Biblioteca</div>
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
+      <div class="nav-item" id="nav-legajo-control" onclick="showSection('legajo-control',this)" style="display:none"><span class="nav-icon">🗂️</span> Control de Legajo</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
@@ -1186,6 +1187,26 @@ body.sin-registro-aud .aud-solo{display:block}
         </div>
       </div>
     </div>
+    <!-- CONTROL DE LEGAJO -->
+    <div id="sec-legajo-control" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🗂️ Control de Legajo</h3>
+          <span id="leg-resumen" style="font-size:12px;font-weight:700;color:#555"></span>
+        </div>
+        <div class="panel-body">
+          <div id="leg-tablero" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <select id="leg-curso" onchange="legCargarCurso()" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"></select>
+            <input type="text" id="leg-buscar" placeholder="Buscar alumno…" oninput="legRender()" style="padding:8px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+            <label style="font-size:12px;display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="leg-solo" onchange="legRender()"> Solo alumnos con faltantes</label>
+          </div>
+          <div id="leg-info" style="font-size:12px;color:#666;margin-bottom:8px"></div>
+          <div id="leg-lista" style="overflow-x:auto"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- CALIFICACIONES -->
     <div id="sec-calificaciones" class="section">
       <div class="panel">
@@ -3266,6 +3287,117 @@ function audRegistrarTodos() {
 //  ASISTENCIA DE ROBÓTICA Y TÉCNICAS DE ESTUDIO
 //  Registro propio (no sale de la asistencia general). Cargan directivos y preceptores; el resto consulta.
 // ═══════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+//  CONTROL DE LEGAJO — la preceptora tilda lo que el alumno trajo; dirección y RL controlan
+// ═══════════════════════════════════════════════════════════════════════
+let legDatos = null, legReq = 0, legTab = [];
+function legNorm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+function legInicializar() {
+  legCargarTablero();
+}
+function legCargarTablero() {
+  const grid = document.getElementById('leg-tablero');
+  callWebApp({ accion: 'obtenerTableroLegajo' }).then(res => {
+    if (!res || !res.ok) {
+      grid.innerHTML = '<div style="grid-column:1/-1;color:#c62828;font-size:13px">' + amEsc((res && res.error) || 'No se pudo cargar el tablero.') + '</div>';
+      return;
+    }
+    legTab = res.cursos;
+    const sel = document.getElementById('leg-curso');
+    const previo = sel.value;
+    sel.innerHTML = res.cursos.length
+      ? res.cursos.map(c => '<option value="' + c.curso + '">' + c.curso.charAt(0) + '° ' + c.curso.charAt(1) + '</option>').join('')
+      : '<option value="">Sin cursos asignados</option>';
+    if (previo && res.cursos.some(c => c.curso === previo)) sel.value = previo;
+    document.getElementById('leg-resumen').textContent = res.completos + ' de ' + res.total + ' legajos completos';
+    legPintarTablero();
+    if (sel.value) legCargarCurso();
+    else document.getElementById('leg-lista').innerHTML = '<div style="padding:20px;color:#888;font-size:13px">No tenés cursos asignados.</div>';
+  }).catch(() => { grid.innerHTML = '<div style="grid-column:1/-1;color:#c62828;font-size:13px">Error de conexión.</div>'; });
+}
+function legPintarTablero() {
+  const sel = document.getElementById('leg-curso').value;
+  document.getElementById('leg-tablero').innerHTML = legTab.map(c => {
+    const pct = c.alumnos ? Math.round(c.completos * 100 / c.alumnos) : 0;
+    const col = c.alumnos && c.completos === c.alumnos ? '#2e7d32' : pct >= 60 ? '#e65100' : '#c62828';
+    return '<div onclick="legElegir(\'' + c.curso + '\')" style="cursor:pointer;border:2px solid ' + (c.curso === sel ? '#1a2744' : '#eee') + ';border-radius:12px;padding:10px 12px;background:#fff">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:800;font-size:15px;color:#1a2744">' + c.curso.charAt(0) + '° ' + c.curso.charAt(1) + '</span><span style="font-size:11px;font-weight:700;color:' + col + '">' + pct + '%</span></div>' +
+      '<div style="height:6px;border-radius:3px;background:#eee;margin:6px 0"><div style="height:6px;border-radius:3px;background:' + col + ';width:' + pct + '%"></div></div>' +
+      '<div style="font-size:11px;color:#555">' + c.completos + ' de ' + c.alumnos + ' completos</div>' +
+      '<div style="font-size:10px;color:#999;margin-top:2px">' + (c.preceptoras.length ? amEsc(c.preceptoras.join(' / ')) : 'sin preceptora') + '</div></div>';
+  }).join('');
+}
+function legElegir(curso) {
+  document.getElementById('leg-curso').value = curso;
+  legCargarCurso();
+  legPintarTablero();
+}
+function legCargarCurso() {
+  const curso = document.getElementById('leg-curso').value;
+  const lista = document.getElementById('leg-lista');
+  legDatos = null;
+  if (!curso) return;
+  legPintarTablero();
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.35);font-size:13px">Cargando…</div>';
+  const req = ++legReq;
+  callWebApp({ accion: 'obtenerControlLegajo', curso: curso }).then(res => {
+    if (req !== legReq) return;
+    if (!res || !res.ok) { lista.innerHTML = '<div style="padding:16px;color:#c62828;font-size:13px">' + amEsc((res && res.error) || 'No se pudo cargar.') + '</div>'; return; }
+    legDatos = res;
+    legRender();
+  }).catch(() => { if (req === legReq) lista.innerHTML = '<div style="padding:16px;color:#c62828;font-size:13px">Error de conexión.</div>'; });
+}
+function legRecalcular(a) {
+  a.faltan = legDatos.docs.filter(d => a.docs[d.k].e === 'FALTA' || a.docs[d.k].e === 'REVISAR').map(d => d.k);
+}
+function legCelda(i, d) {
+  const a = legDatos.alumnos[i], c = a.docs[d.k], e = c.e, puede = legDatos.puedeEditar;
+  const dis = puede ? '' : ' disabled';
+  const lk = (txt, est) => puede ? '<a href="#" onclick="legSet(' + i + ',\'' + d.k + '\',\'' + est + '\');return false" style="font-size:10px;color:#888;display:block;text-decoration:underline">' + txt + '</a>' : '';
+  const box = 'style="width:18px;height:18px;cursor:' + (puede ? 'pointer' : 'default') + '"';
+  if (e === 'NO CORRESPONDE') return '<td style="text-align:center;color:#bbb;padding:5px 6px;border-bottom:1px solid #f0e6dc">—' + lk('corresponde', 'FALTA') + '</td>';
+  if (e === 'PRESENTE') return '<td style="text-align:center;padding:5px 6px;border-bottom:1px solid #f0e6dc"><input type="checkbox" checked' + dis + ' onchange="legSet(' + i + ',\'' + d.k + '\',\'FALTA\')" ' + box + '><div style="font-size:9px;color:#888">' + (c.f ? c.f.slice(0, 5) : '') + '</div></td>';
+  return '<td style="text-align:center;padding:5px 6px;border-bottom:1px solid #f0e6dc;background:' + (e === 'REVISAR' ? '#fff3e0' : '#ffebee') + '"><input type="checkbox"' + dis + ' onchange="legSet(' + i + ',\'' + d.k + '\',\'PRESENTE\')" ' + box + '>' +
+    (e === 'REVISAR' ? '<div style="font-size:9px;color:#e65100;font-weight:700">revisar</div>' : '') + lk('no corresponde', 'NO CORRESPONDE') + '</td>';
+}
+function legRender() {
+  const d = legDatos; if (!d) return;
+  const q = legNorm(document.getElementById('leg-buscar').value), solo = document.getElementById('leg-solo').checked;
+  const cont = document.getElementById('leg-lista'), sx = cont.scrollLeft;
+  const filas = d.alumnos.map((a, i) => ({ a: a, i: i })).filter(x => (!solo || x.a.faltan.length) && (!q || legNorm(x.a.nombre).indexOf(q) !== -1));
+  const completos = d.alumnos.filter(a => !a.faltan.length).length;
+  document.getElementById('leg-info').innerHTML = '<strong>' + completos + ' de ' + d.alumnos.length + '</strong> legajos completos' +
+    (d.preceptoras.length ? ' · Preceptora: ' + amEsc(d.preceptoras.join(' / ')) : '') +
+    (d.puedeEditar ? ' · Tildá lo que el alumno trajo.' : ' · <span style="color:#8a5a00">Solo control: la documentación la tilda la preceptora.</span>');
+  const th = 'style="padding:6px 6px;background:#e8f5e9;border-bottom:2px solid #c8e6d4;font-size:11px;color:#1a2744;white-space:nowrap"';
+  cont.innerHTML = '<table style="border-collapse:collapse;min-width:100%;font-size:12px"><thead><tr><th ' + th.replace('padding:6px 6px', 'padding:6px 10px;text-align:left;position:sticky;left:0;z-index:1') + '>Alumno</th>' +
+    d.docs.map(c => '<th ' + th + ' title="' + amEsc(c.n) + '">' + amEsc(c.c) + (c.oblig ? '' : '<div style="font-weight:400;font-size:9px;color:#888">según caso</div>') + '</th>').join('') +
+    '<th ' + th + '>Faltan</th></tr></thead><tbody>' +
+    (filas.length ? filas.map(x => '<tr><td style="padding:5px 10px;border-bottom:1px solid #f0e6dc;font-weight:600;white-space:nowrap;position:sticky;left:0;background:#fff;border-left:4px solid ' + (x.a.faltan.length ? '#e57373' : '#81c784') + '">' + amEsc(x.a.nombre) + '</td>' +
+      d.docs.map(c => legCelda(x.i, c)).join('') +
+      '<td style="text-align:center;font-weight:800;border-bottom:1px solid #f0e6dc;color:' + (x.a.faltan.length ? '#c62828' : '#2e7d32') + '">' + (x.a.faltan.length || '✓') + '</td></tr>').join('')
+      : '<tr><td colspan="' + (d.docs.length + 2) + '" style="padding:20px;text-align:center;color:#888">No hay alumnos para mostrar.</td></tr>') +
+    '</tbody></table>';
+  cont.scrollLeft = sx;
+}
+function legSet(i, k, est) {
+  if (!legDatos || !legDatos.puedeEditar) return;
+  const a = legDatos.alumnos[i], previo = a.docs[k];
+  a.docs[k] = { e: est, f: previo.f };   // se ve al instante; si el servidor no lo acepta, se vuelve atrás
+  legRecalcular(a); legRender(); legResumenCurso();
+  const volver = msg => { a.docs[k] = previo; legRecalcular(a); legRender(); legResumenCurso(); showToast(msg, '❌'); };
+  callWebApp({ accion: 'guardarControlLegajo', curso: legDatos.curso, legajo: a.legajo, doc: k, estado: est, usuarioNombre: currentNombre }).then(res => {
+    if (res && res.ok) { a.docs[k] = { e: res.estado, f: res.fecha }; legRecalcular(a); legRender(); legResumenCurso(); }
+    else volver((res && res.error) || 'No se pudo guardar.');
+  }).catch(() => volver('Error de conexión: no se guardó.'));
+}
+function legResumenCurso() {
+  const t = legTab.filter(c => c.curso === legDatos.curso)[0];
+  if (!t) return;
+  t.completos = legDatos.alumnos.filter(a => !a.faltan.length).length;
+  document.getElementById('leg-resumen').textContent = legTab.reduce((n, c) => n + c.completos, 0) + ' de ' + legTab.reduce((n, c) => n + c.alumnos, 0) + ' legajos completos';
+  legPintarTablero();
+}
 let amMateria = 'ROBOTICA', amDatos = null, amEstados = {}, amOcupado = false, amReq = 0;
 const AM_NOMBRES = { 'ROBOTICA': '🤖 Robótica', 'TECNICAS DE ESTUDIO': '📖 Técnicas de Estudio' };
 function amEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -4261,8 +4393,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',planificacion:'Mi planificación áulica','planificaciones-dir':'Planificaciones de docentes',constancias:'Constancias',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','asist-materias':'Asistencia de Robótica y Técnicas de Estudio','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia','asist-materias':'Registro propio de estas dos materias',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',planificacion:'Tus planificaciones, para consultarlas cuando quieras','planificaciones-dir':'Consulta y descarga de las planificaciones áulicas',constancias:'Constancias para docentes: jornada escolar y salida educativa',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',planificacion:'Mi planificación áulica','planificaciones-dir':'Planificaciones de docentes',constancias:'Constancias',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','asist-materias':'Asistencia de Robótica y Técnicas de Estudio','legajo-control':'Control de Legajo','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia','asist-materias':'Registro propio de estas dos materias','legajo-control':'Documentación de cada alumno',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',planificacion:'Tus planificaciones, para consultarlas cuando quieras','planificaciones-dir':'Consulta y descarga de las planificaciones áulicas',constancias:'Constancias para docentes: jornada escolar y salida educativa',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -4598,6 +4730,8 @@ function doLogin(name, role, usuario, res){
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navAud = document.getElementById('nav-ausencias-docentes');
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navLeg = document.getElementById('nav-legajo-control');
+  if (navLeg) navLeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';   // preceptoras tildan; dirección y RL controlan
   document.body.classList.toggle('sin-registro-aud', !isDirectorEstricto);   // registrar/editar ausencias docentes: solo director, vice y secretaría
   const panelAudInf = document.getElementById('aud-informe-panel');
   if (panelAudInf) panelAudInf.style.display = isAdmin ? 'block' : 'none';
@@ -4660,6 +4794,7 @@ function showSection(id,el){
   if(id === 'calificaciones') setupCalificaciones();
   if(id === 'asistencia') setupAsistencia();
   if(id === 'asist-materias') amInicializar();
+  if(id === 'legajo-control') legInicializar();
   if(id === 'subir') setupSubir();
   if(id === 'planificacion') planInicializar();
   if(id === 'planificaciones-dir') planDirCargar();
