@@ -544,6 +544,9 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 .const-hoja p{text-align:justify;line-height:1.6;margin:18px 0 0}
 .const-hoja .cf{text-align:right;font-size:11px;margin-top:60px}
 @media (max-width:640px){.cl-row{flex-wrap:wrap}.cl-nom{flex:1 0 100%;white-space:normal}.cl-dni{flex:1}.cl-cargo{flex:1}}
+.aud-solo{display:none}
+body.sin-registro-aud .aud-reg{display:none !important}
+body.sin-registro-aud .aud-solo{display:block}
 </style>
 </head>
 <body>
@@ -590,6 +593,7 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
 <div class="nav-item" id="nav-peri" onclick="periAbrir(true)" style="display:none"><span class="nav-icon">🦉</span> Hablar con Peri</div>
       <div class="nav-section-title" id="nav-docente-section">Docentes</div>
       <div class="nav-item" id="nav-asistencia" onclick="showSection('asistencia',this)"><span class="nav-icon">✅</span> Asistencia</div>
+      <div class="nav-item" id="nav-asist-materias" onclick="amAbrir()" style="display:none"><span class="nav-icon">🤖</span> Robótica / Téc. de Estudio</div>
       <div class="nav-item" id="nav-calificaciones" onclick="showSection('calificaciones',this)"><span class="nav-icon">📝</span> Calificaciones</div>
       <div class="nav-item" id="nav-archivos" onclick="showSection('archivos',this)"><span class="nav-icon">📁</span> Mis Archivos</div>
       <div class="nav-item" id="nav-reg-ausencias" onclick="window.open('https://secundarioperitomorenosecu.github.io/asistencia-perito/','_blank')"><span class="nav-icon">🚫</span> Reg. Ausencias</div>
@@ -1126,6 +1130,11 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           </div>
         </div>
         <div class="panel-body">
+          <div class="curso-selector" style="margin-bottom:12px">
+            <div class="curso-chip active">✅ Asistencia general</div>
+            <div class="curso-chip" onclick="amAbrir('ROBOTICA')">🤖 Robótica</div>
+            <div class="curso-chip" onclick="amAbrir('TECNICAS DE ESTUDIO')">📖 Técnicas de Estudio</div>
+          </div>
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
             <input type="date" id="att-fecha" style="padding:8px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px" onchange="cargarAsistenciaDesdeSheets()"/>
           </div>
@@ -1150,6 +1159,33 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
       </div>
     </div>
 
+    <!-- ASISTENCIA DE ROBÓTICA Y TÉCNICAS DE ESTUDIO -->
+    <div id="sec-asist-materias" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3 id="am-titulo">🤖 Robótica — Asistencia</h3>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="am-cnt" style="font-size:12px;font-weight:700"></span>
+            <button class="btn btn-success btn-sm" id="am-btn-guardar" onclick="amGuardar()">💾 Guardar</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="curso-selector" id="am-chips" style="margin-bottom:12px">
+            <div class="curso-chip" onclick="showSection('asistencia',document.getElementById('nav-asistencia'))">✅ Asistencia general</div>
+            <div class="curso-chip active" data-mat="ROBOTICA" onclick="amSetMateria('ROBOTICA')">🤖 Robótica</div>
+            <div class="curso-chip" data-mat="TECNICAS DE ESTUDIO" onclick="amSetMateria('TECNICAS DE ESTUDIO')">📖 Técnicas de Estudio</div>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+            <select id="am-curso" onchange="amCargar()" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"></select>
+            <input type="date" id="am-fecha" onchange="amCargar()" style="padding:8px 12px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"/>
+            <span id="am-aviso" style="font-size:12px;font-weight:600"></span>
+          </div>
+          <div id="am-fechas"></div>
+          <div id="am-lista"><div style="text-align:center;padding:30px;color:rgba(0,0,0,.35);font-size:13px">Elegí el curso y la fecha de la clase.</div></div>
+          <div id="am-resumen"></div>
+        </div>
+      </div>
+    </div>
     <!-- CALIFICACIONES -->
     <div id="sec-calificaciones" class="section">
       <div class="panel">
@@ -2296,13 +2332,14 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         ➕ Agregar Docente
       </button>
     </div>
-    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">
+    <div class="aud-solo" style="font-size:13px;color:#8a5a00;background:#fff8e1;border-radius:10px;padding:10px 14px;margin-bottom:14px">Esta pantalla es solo de consulta. Las ausencias docentes las registra el equipo directivo.</div>
+    <p class="aud-reg" style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">
       Registrá cuando un docente no se presenta. Estas ausencias se descuentan del % de asistencia
       por materia de los alumnos — sin tocar la asistencia general.
     </p>
 
     <!-- Selector de modo -->
-    <div style="display:flex;gap:8px;margin-bottom:14px">
+    <div class="aud-reg" style="display:flex;gap:8px;margin-bottom:14px">
       <button id="aud-modo-btn-curso" onclick="audSetModo('curso')"
         style="padding:7px 16px;border-radius:20px;border:1.5px solid #1a9e5c;background:#1a9e5c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">
         Por curso
@@ -2314,12 +2351,12 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
     </div>
 
     <!-- Formulario modo POR CURSO (original) -->
-    <div id="aud-form-curso" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
+    <div id="aud-form-curso" class="aud-reg" style="background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:600;color:#1a9e5c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Nuevo registro — por curso</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Fecha</label>
-          <input type="date" id="aud-fecha" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <input type="date" id="aud-fecha" onchange="cargarDocentesCursoAud()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Curso</label>
@@ -2335,9 +2372,13 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
         </div>
         <div id="aud-dm-wrap" style="display:none;min-width:220px">
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Docente / Materia</label>
-          <select id="aud-docente-materia" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+          <select id="aud-docente-materia" onchange="audActualizarModulos()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
             <option value="">Primero seleccioná el curso</option>
           </select>
+        </div>
+        <div id="aud-mod-wrap" style="display:none">
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">¿Cuántos módulos?</label>
+          <input type="number" id="aud-modulos" min="1" max="12" value="1" style="width:80px;font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Motivo</label>
@@ -2372,16 +2413,17 @@ tbody td{padding:12px 14px;font-size:13px;color:#555}
           Registrar
         </button>
       </div>
+      <div id="aud-mod-hint" style="display:none;margin-top:8px;font-size:11px;color:#666"></div>
       <div id="aud-feedback" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
     </div>
 
     <!-- Formulario modo POR DOCENTE (todos los cursos del día) -->
-    <div id="aud-form-docente" style="display:none;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
+    <div id="aud-form-docente" class="aud-reg" style="display:none;background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:600;color:#1a9e5c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Registrar ausencia — todos los cursos del docente en el día</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <div>
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Fecha</label>
-          <input type="date" id="aud-fecha-doc" onchange="audVerificarCursosDocente()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <input type="date" id="aud-fecha-doc" onchange="audCambioFechaDoc()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div style="min-width:220px">
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Docente</label>
@@ -2594,26 +2636,67 @@ function inicializarAusenciasDocentes() {
   cargarHistorialAud();
 }
 
+function _audFechaBack(idInput) {
+  const v = document.getElementById(idInput).value;
+  return v ? v.split('-').reverse().join('/') : '';
+}
+
 function cargarDocentesCursoAud() {
   const curso = document.getElementById('aud-curso').value;
   const wrap  = document.getElementById('aud-dm-wrap');
   const sel   = document.getElementById('aud-docente-materia');
+  const previo = sel.value;
+  document.getElementById('aud-mod-wrap').style.display = 'none';
+  document.getElementById('aud-mod-hint').style.display = 'none';
   if (!curso) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'block';
   sel.innerHTML = '<option value="">Cargando…</option>';
-  callWebApp({ accion: 'obtenerDocentesCurso', curso }).then(res => {
+  // Con la fecha elegida se ofrecen los docentes que tenían el curso ESE día (cambios de docente durante el año)
+  callWebApp({ accion: 'obtenerDocentesCurso', curso, fecha: _audFechaBack('aud-fecha') }).then(res => {
     if (!res.ok || !res.docentes || !res.docentes.length) {
-      sel.innerHTML = '<option value="">Sin datos para este curso</option>';
+      sel.innerHTML = '<option value="">Sin datos para este curso en esa fecha</option>';
       return;
     }
     sel.innerHTML = '<option value="">— Seleccioná —</option>' +
       res.docentes.map(d =>
         `<option value="${d.docente}|${d.materia}">${d.materia} – ${d.docente}</option>`
       ).join('');
+    if (previo && Array.prototype.some.call(sel.options, o => o.value === previo)) { sel.value = previo; audActualizarModulos(); }
   }).catch(() => { sel.innerHTML = '<option value="">Error al cargar</option>'; });
 }
 
+// Pregunta cuántos módulos fueron: se completa con los módulos que tiene esa materia ese día según el horario
+let _audModReq = 0;
+function audActualizarModulos() {
+  const dm    = document.getElementById('aud-docente-materia').value;
+  const fecha = _audFechaBack('aud-fecha');
+  const curso = document.getElementById('aud-curso').value;
+  const wrap  = document.getElementById('aud-mod-wrap');
+  const hint  = document.getElementById('aud-mod-hint');
+  const inp   = document.getElementById('aud-modulos');
+  if (!dm || !fecha || !curso) { wrap.style.display = 'none'; hint.style.display = 'none'; return; }
+  wrap.style.display = 'block'; inp.value = 1;
+  hint.style.display = 'block'; hint.style.color = '#666'; hint.textContent = 'Mirando el horario…';
+  const req = ++_audModReq;
+  const partes = dm.split('|');
+  callWebApp({ accion: 'obtenerModulosAusencia', docente: partes[0], curso: curso, materia: partes[1], fecha: fecha }).then(res => {
+    if (req !== _audModReq) return;
+    if (!res || !res.ok) { hint.style.color = '#8a5a00'; hint.textContent = 'No pude consultar el horario. Indicá a mano cuántos módulos fueron.'; return; }
+    if (res.modulos > 0) {
+      inp.value = res.modulos;
+      hint.style.color = res.registrados >= res.modulos ? '#c62828' : '#666';
+      hint.textContent = 'Según el horario tiene ' + res.modulos + ' módulo' + (res.modulos === 1 ? '' : 's') + ' ese día (' + res.horarios.join(', ') + ').' +
+        (res.registrados > 0 ? ' Ya hay ' + res.registrados + ' registrado' + (res.registrados === 1 ? '' : 's') + '.' : '') + ' Cambiá la cantidad si faltó a menos.';
+    } else {
+      hint.style.color = '#8a5a00';
+      hint.textContent = 'Esa materia no figura en el horario de ese día. Indicá cuántos módulos fueron.' + (res.registrados > 0 ? ' Ya hay ' + res.registrados + ' registrado' + (res.registrados === 1 ? '' : 's') + '.' : '');
+    }
+  }).catch(() => { if (req === _audModReq) { hint.style.color = '#8a5a00'; hint.textContent = 'No pude consultar el horario. Indicá a mano cuántos módulos fueron.'; } });
+}
+
+let _audGuardando = false;
 function registrarAusenciaDocenteApp() {
+  if (_audGuardando) return;   // ya está registrando: se ignoran los clics repetidos
   const fecha       = document.getElementById('aud-fecha').value;
   const curso       = document.getElementById('aud-curso').value;
   const dmVal       = document.getElementById('aud-docente-materia').value;
@@ -2622,14 +2705,21 @@ function registrarAusenciaDocenteApp() {
   const hasta       = document.getElementById('aud-hasta').value;
   const movimiento  = document.getElementById('aud-movimiento').checked;
   const reemplazante= document.getElementById('aud-reemplazante').value.trim();
+  const modulos     = parseInt(document.getElementById('aud-modulos').value, 10);
 
   if (!fecha || !curso || !dmVal) {
     audFeedback('⚠️ Completá fecha, curso y docente/materia.', false);
     return;
   }
+  if (!(modulos >= 1 && modulos <= 12)) {
+    audFeedback('⚠️ Indicá cuántos módulos fueron (de 1 a 12).', false);
+    return;
+  }
   const [docente, materia] = dmVal.split('|');
   const btn = document.getElementById('btn-registrar-aud');
+  _audGuardando = true;
   btn.disabled = true; btn.textContent = 'Registrando…';
+  const fin = () => { _audGuardando = false; btn.disabled = false; btn.textContent = 'Registrar'; };
 
   const [y,m,d] = fecha.split('-');
   const fechaBack = d+'/'+m+'/'+y;
@@ -2637,16 +2727,18 @@ function registrarAusenciaDocenteApp() {
   callWebApp({
     accion: 'registrarAusenciaDocente',
     datos: JSON.stringify({
-      fecha: fechaBack, docente, curso, materia, motivo,
+      fecha: fechaBack, docente, curso, materia, motivo, modulos,
       desde, hasta, movimiento, reemplazante,
       usuarioNombre: currentNombre,
       usuarioRol:    currentRole
     })
   }).then(res => {
-    btn.disabled = false; btn.textContent = 'Registrar';
+    fin();
     if (res.ok) {
-      audFeedback('✅ Registrado: ' + docente + ' – ' + materia + ' el ' + fechaBack, true);
+      audFeedback('✅ Registrado: ' + docente + ' – ' + materia + ' el ' + fechaBack + (res.registrados > 1 ? ' (' + res.registrados + ' módulos)' : ''), true);
       document.getElementById('aud-docente-materia').value = '';
+      document.getElementById('aud-mod-wrap').style.display = 'none';
+      document.getElementById('aud-mod-hint').style.display = 'none';
       document.getElementById('aud-desde').value = '';
       document.getElementById('aud-hasta').value = '';
       document.getElementById('aud-movimiento').checked = false;
@@ -2655,7 +2747,7 @@ function registrarAusenciaDocenteApp() {
     } else {
       audFeedback('⚠️ ' + (res.error || 'Error al registrar'), false);
     }
-  }).catch(() => { btn.disabled=false; btn.textContent='Registrar'; audFeedback('⚠️ Error de conexión', false); });
+  }).catch(() => { fin(); audFeedback('⚠️ Error de conexión', false); });
 }
 
 function cargarHistorialAud() {
@@ -2690,7 +2782,7 @@ function cargarHistorialAud() {
               · Reg. por ${r.registradoPor}
             </div>
           </div>
-          <button onclick='audAbrirEdicion(${JSON.stringify(r)})'
+          <button class="aud-reg" onclick='audAbrirEdicion(${JSON.stringify(r)})'
             style="flex-shrink:0;background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px;border-radius:6px;color:#555"
             title="Editar">✏️</button>
         </div>`).join('');
@@ -3066,20 +3158,30 @@ function audSetModo(modo) {
   document.getElementById('aud-modo-btn-curso').style.color        = esCurso ? '#fff' : '#1a9e5c';
   document.getElementById('aud-modo-btn-docente').style.background = esCurso ? 'transparent' : '#1a9e5c';
   document.getElementById('aud-modo-btn-docente').style.color      = esCurso ? '#1a9e5c' : '#fff';
-  if (!esCurso && !_audDocentesCargados) {
-    const sel = document.getElementById('aud-sel-docente');
-    sel.innerHTML = '<option value="">Cargando…</option>';
-    callWebApp({ accion: 'obtenerTodosDocentes' }).then(res => {
-      if (res && res.ok && res.docentes.length) {
-        sel.innerHTML = '<option value="">— Seleccioná —</option>' +
-          res.docentes.map(d => '<option value="' + d + '">' + d + '</option>').join('');
-        _audDocentesCargados = true;
-      } else {
-        sel.innerHTML = '<option value="">Error al cargar docentes</option>';
-      }
-    }).catch(() => { sel.innerHTML = '<option value="">Error de conexión</option>'; });
-  }
+  if (!esCurso && !_audDocentesCargados) audCargarDocentesTodos();
 }
+
+// Lista de docentes del modo "todos los cursos". Con fecha: solo los que tenían horario ese día.
+let _audDocReq = 0;
+function audCargarDocentesTodos() {
+  const sel = document.getElementById('aud-sel-docente');
+  const previo = sel.value;
+  sel.innerHTML = '<option value="">Cargando…</option>';
+  const req = ++_audDocReq;
+  callWebApp({ accion: 'obtenerTodosDocentes', fecha: _audFechaBack('aud-fecha-doc') }).then(res => {
+    if (req !== _audDocReq) return;
+    if (res && res.ok && res.docentes.length) {
+      sel.innerHTML = '<option value="">— Seleccioná —</option>' +
+        res.docentes.map(d => '<option value="' + d + '">' + d + '</option>').join('');
+      if (previo && res.docentes.indexOf(previo) !== -1) sel.value = previo;
+      _audDocentesCargados = true;
+    } else {
+      sel.innerHTML = '<option value="">' + (res && res.ok ? 'Ningún docente tiene horario ese día' : 'Error al cargar docentes') + '</option>';
+    }
+    audVerificarCursosDocente();
+  }).catch(() => { if (req === _audDocReq) sel.innerHTML = '<option value="">Error de conexión</option>'; });
+}
+function audCambioFechaDoc() { audCargarDocentesTodos(); }
 
 function audVerificarCursosDocente() {
   const docente = document.getElementById('aud-sel-docente').value;
@@ -3106,7 +3208,9 @@ function audVerificarCursosDocente() {
   }).catch(function() { lista.innerHTML = '<span style="color:#1a9e5c;font-size:12px">Error de conexión</span>'; });
 }
 
+let _audTodosGuardando = false;
 function audRegistrarTodos() {
+  if (_audTodosGuardando) return;   // ya está registrando: se ignoran los clics repetidos
   const docente      = document.getElementById('aud-sel-docente').value;
   const fecha        = document.getElementById('aud-fecha-doc').value;
   const motivo       = document.getElementById('aud-motivo-doc').value;
@@ -3120,10 +3224,12 @@ function audRegistrarTodos() {
     fb.style.background = ok ? '#e8f5e9' : '#fff0f0';
     fb.style.color = ok ? '#2e7d32' : '#1a9e5c';
   };
-  if (!docente) return mostrarFb('⚠️ Selección un docente.', false);
+  if (!docente) return mostrarFb('⚠️ Seleccioná un docente.', false);
   if (!fecha)   return mostrarFb('⚠️ Seleccioná la fecha.', false);
   const btn = document.getElementById('btn-registrar-todos');
+  _audTodosGuardando = true;
   btn.disabled = true; btn.textContent = 'Registrando…';
+  const fin = function() { _audTodosGuardando = false; btn.disabled = false; btn.textContent = 'Registrar todos'; };
   const p = fecha.split('-');
   const fechaBack  = p[2]+'/'+p[1]+'/'+p[0];
   const desdeBack  = desde ? desde.split('-').reverse().join('/') : '';
@@ -3136,11 +3242,11 @@ function audRegistrarTodos() {
       usuarioNombre: currentNombre, usuarioRol: currentRole
     })
   }).then(function(res) {
-    btn.disabled = false; btn.textContent = 'Registrar todos';
+    fin();
     if (res && res.ok) {
       var msg = res.registrados > 0
-        ? '✅ ' + res.registrados + ' ausencia' + (res.registrados>1?'s':'') + ' registrada' + (res.registrados>1?'s':'') + ': ' + res.detalles.join(', ') + (res.omitidos > 0 ? ' (' + res.omitidos + ' ya existían)' : '')
-        : '⚠️ Todos los registros ya existían para esa fecha.';
+        ? '✅ ' + res.registrados + ' ausencia' + (res.registrados>1?'s':'') + ' registrada' + (res.registrados>1?'s':'') + ': ' + res.detalles.join(', ') + (res.omitidos > 0 ? ' (' + res.omitidos + ' ya ' + (res.omitidos>1?'estaban registradas':'estaba registrada') + ')' : '')
+        : '⚠️ Ya estaba registrada: ese docente ya tiene cargadas todas las ausencias de ese día.';
       mostrarFb(msg, res.registrados > 0);
       document.getElementById('aud-doc-desde').value = '';
       document.getElementById('aud-doc-hasta').value = '';
@@ -3151,9 +3257,153 @@ function audRegistrarTodos() {
       mostrarFb('❌ ' + ((res && res.error) ? res.error : 'Error al registrar'), false);
     }
   }).catch(function() {
-    btn.disabled = false; btn.textContent = 'Registrar todos';
+    fin();
     mostrarFb('❌ Error de conexión', false);
   });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ASISTENCIA DE ROBÓTICA Y TÉCNICAS DE ESTUDIO
+//  Registro propio (no sale de la asistencia general). Cargan directivos y preceptores; el resto consulta.
+// ═══════════════════════════════════════════════════════════════════════
+let amMateria = 'ROBOTICA', amDatos = null, amEstados = {}, amOcupado = false, amReq = 0;
+const AM_NOMBRES = { 'ROBOTICA': '🤖 Robótica', 'TECNICAS DE ESTUDIO': '📖 Técnicas de Estudio' };
+function amEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function amAbrir(mat) {
+  if (mat) amMateria = mat;
+  showSection('asist-materias', document.getElementById('nav-asist-materias'));
+}
+function amSetMateria(mat) {
+  amMateria = mat;
+  amPintarChips();
+  amCargar();
+}
+function amPintarChips() {
+  document.querySelectorAll('#am-chips .curso-chip').forEach(c => c.classList.toggle('active', c.getAttribute('data-mat') === amMateria));
+  document.getElementById('am-titulo').textContent = AM_NOMBRES[amMateria] + ' — Asistencia';
+}
+function amInicializar() {
+  const sel = document.getElementById('am-curso');
+  if (!sel.options.length) {
+    let cursos = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+    if (currentRole === 'preceptor' && currentCursos && currentCursos.length) {
+      const mios = currentCursos.map(c => String(c).replace(/[°\s]/g, '').toUpperCase());
+      cursos = cursos.filter(c => mios.indexOf(c) !== -1);
+    }
+    sel.innerHTML = '<option value="">— Curso —</option>' + cursos.map(c => '<option value="' + c + '">' + c.charAt(0) + '° ' + c.charAt(1) + '</option>').join('');
+  }
+  const f = document.getElementById('am-fecha');
+  if (!f.value) f.value = fechaHoy();
+  amPintarChips();
+  amCargar();
+}
+function amPuedeCargar() { return !!(amDatos && amDatos.puedeCargar); }
+function amCargar() {
+  const curso = document.getElementById('am-curso').value;
+  const fecha = _audFechaBack('am-fecha');
+  const lista = document.getElementById('am-lista');
+  amDatos = null;
+  document.getElementById('am-resumen').innerHTML = '';
+  document.getElementById('am-fechas').innerHTML = '';
+  document.getElementById('am-aviso').textContent = '';
+  amActualizarBoton();
+  if (!curso || !fecha) {
+    lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.35);font-size:13px">Elegí el curso y la fecha de la clase.</div>';
+    return;
+  }
+  lista.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.35);font-size:13px">Cargando…</div>';
+  const req = ++amReq;
+  callWebApp({ accion: 'obtenerAsistenciaMateriaEsp', curso: curso, materia: amMateria, fecha: fecha }).then(res => {
+    if (req !== amReq) return;
+    if (!res || !res.ok) {
+      lista.innerHTML = '<div style="padding:16px;color:#c62828;font-size:13px">' + amEsc((res && res.error) || 'No se pudo cargar.') + '</div>';
+      return;
+    }
+    amDatos = res; amEstados = {};
+    res.alumnos.forEach(a => { amEstados[a.legajo] = a.estado; });
+    amRender();
+  }).catch(() => { if (req === amReq) lista.innerHTML = '<div style="padding:16px;color:#c62828;font-size:13px">Error de conexión.</div>'; });
+}
+function amRender() {
+  const d = amDatos; if (!d) return;
+  const puede = d.puedeCargar;
+  // aviso sobre la fecha
+  const av = document.getElementById('am-aviso');
+  if (d.esNoLectivo)       { av.style.color = '#c62828'; av.textContent = '⚠️ Esa fecha es un día no lectivo.'; }
+  else if (!d.enHorario)   { av.style.color = '#8a5a00'; av.textContent = '⚠️ ' + d.diaNom.toLowerCase() + ': la materia no figura en el horario de ' + d.curso + (d.diasHorario.length ? ' (figura: ' + d.diasHorario.join(', ').toLowerCase() + ')' : '') + '.'; }
+  else if (d.yaCargada)    { av.style.color = '#2e7d32'; av.textContent = '✅ Clase ya cargada' + (puede ? ': podés corregirla.' : '.'); }
+  else                     { av.style.color = '#666';    av.textContent = 'Clase sin cargar' + (puede ? ': marcá los ausentes y guardá.' : '.'); }
+  // lista de alumnos
+  const col = { P: '#2e7d32', A: '#c62828', T: '#e65100' };
+  const btn = (i, est, txt) => {
+    const sel = amEstados[d.alumnos[i].legajo] === est;
+    return '<button ' + (puede ? '' : 'disabled ') + 'onclick="amSet(' + i + ',\'' + est + '\')" style="min-width:38px;padding:5px 8px;border-radius:7px;border:1.5px solid ' + col[est] + ';background:' + (sel ? col[est] : '#fff') + ';color:' + (sel ? '#fff' : col[est]) + ';font-weight:700;font-size:12px;cursor:' + (puede ? 'pointer' : 'default') + ';font-family:inherit">' + txt + '</button>';
+  };
+  document.getElementById('am-lista').innerHTML = d.alumnos.length ? d.alumnos.map((a, i) =>
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 4px;border-bottom:1px solid #f0e6dc">' +
+      '<div style="font-size:13px;font-weight:600;min-width:0">' + (i + 1) + '. ' + amEsc(a.nombre) + '</div>' +
+      '<div style="display:flex;gap:6px;flex-shrink:0">' + btn(i, 'P', 'P') + btn(i, 'A', 'A') + btn(i, 'T', 'T') + '</div>' +
+    '</div>').join('') +
+    (puede ? '' : '<div style="margin-top:10px;font-size:12px;color:#8a5a00">Solo consulta: esta asistencia la cargan el equipo directivo y los preceptores.</div>')
+    : '<div style="padding:16px;color:#888;font-size:13px">Este curso no tiene alumnos cargados.</div>';
+  // contadores
+  let p = 0, a = 0, t = 0;
+  d.alumnos.forEach(x => { const e = amEstados[x.legajo]; if (e === 'A') a++; else if (e === 'T') t++; else p++; });
+  document.getElementById('am-cnt').innerHTML = '<span style="color:#2e7d32">P: ' + p + '</span> · <span style="color:#c62828">A: ' + a + '</span> · <span style="color:#e65100">T: ' + t + '</span>';
+  amActualizarBoton();
+  // fechas ya cargadas
+  const fe = document.getElementById('am-fechas');
+  fe.innerHTML = d.fechas.length
+    ? '<div style="font-size:11px;font-weight:600;color:#666;margin-bottom:6px">CLASES CARGADAS (' + d.fechas.length + '):</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">' +
+      d.fechas.map(f => '<span onclick="amIrAFecha(\'' + f + '\')" style="cursor:pointer;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:600;background:' + (f === d.fecha ? '#1a9e5c' : '#e8f5e9') + ';color:' + (f === d.fecha ? '#fff' : '#1a9e5c') + '">' + f.slice(0, 5) + '</span>').join('') + '</div>'
+    : '<div style="font-size:12px;color:#888;margin-bottom:12px">Todavía no hay clases cargadas de esta materia en este curso.</div>';
+  // resumen del curso
+  const rs = document.getElementById('am-resumen');
+  if (d.clases > 0) {
+    rs.innerHTML = '<details style="margin-top:14px"><summary style="cursor:pointer;font-size:13px;font-weight:700;color:#1a2744">📊 Resumen del curso (' + d.clases + ' clase' + (d.clases === 1 ? '' : 's') + ' dictada' + (d.clases === 1 ? '' : 's') + ')</summary>' +
+      '<div style="overflow-x:auto;margin-top:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>' +
+      '<th style="text-align:left;padding:5px 8px;background:#e8f5e9;border:1px solid #c8e6d4">Alumno</th><th style="padding:5px 8px;background:#e8f5e9;border:1px solid #c8e6d4">Faltas</th><th style="padding:5px 8px;background:#e8f5e9;border:1px solid #c8e6d4">Tardanzas</th><th style="padding:5px 8px;background:#e8f5e9;border:1px solid #c8e6d4">% asistencia</th></tr></thead><tbody>' +
+      d.resumen.map(r => '<tr><td style="padding:4px 8px;border:1px solid #eee">' + amEsc(r.nombre) + '</td><td style="text-align:center;border:1px solid #eee">' + r.A + '</td><td style="text-align:center;border:1px solid #eee">' + r.T + '</td><td style="text-align:center;border:1px solid #eee;font-weight:700;color:' + (r.pct === null ? '#888' : r.pct >= 75 ? '#2e7d32' : '#c62828') + '">' + (r.pct === null ? '—' : r.pct + '%') + '</td></tr>').join('') +
+      '</tbody></table></div><div style="font-size:11px;color:#888;margin-top:6px">No cuentan los días no lectivos ni las clases en que el docente faltó. Las tardanzas no restan.</div></details>';
+  }
+}
+function amActualizarBoton() {
+  const b = document.getElementById('am-btn-guardar');
+  if (!b) return;
+  b.style.display = amPuedeCargar() ? '' : 'none';
+  b.disabled = amOcupado;
+  b.textContent = amOcupado ? 'Guardando…' : '💾 Guardar';
+}
+function amSet(i, est) {
+  if (!amDatos || !amPuedeCargar()) return;
+  amEstados[amDatos.alumnos[i].legajo] = est;
+  amRender();
+}
+function amIrAFecha(f) {
+  document.getElementById('am-fecha').value = f.split('/').reverse().join('-');
+  amCargar();
+}
+function amGuardar() {
+  if (amOcupado || !amDatos || !amPuedeCargar()) return;
+  const d = amDatos;
+  if (d.esNoLectivo) { showToast('Esa fecha es un día no lectivo.', '⚠️'); return; }
+  if (!d.enHorario && !confirm('Ese día (' + d.diaNom.toLowerCase() + ') la materia no figura en el horario de ' + d.curso + '. ¿Cargar la clase igual?')) return;
+  amOcupado = true; amActualizarBoton();
+  callWebApp({
+    accion: 'guardarAsistenciaMateriaEsp', curso: d.curso, materia: amMateria, fecha: d.fecha,
+    usuarioNombre: currentNombre,
+    lista: d.alumnos.map(a => ({ legajo: a.legajo, estado: amEstados[a.legajo] || 'P' }))
+  }).then(res => {
+    amOcupado = false;
+    if (res && res.ok) {
+      showToast('Guardado: ' + res.ausentes + ' ausente' + (res.ausentes === 1 ? '' : 's') + ', ' + res.tardanzas + ' tardanza' + (res.tardanzas === 1 ? '' : 's') + '.', '✅');
+      if (typeof _mmCache !== 'undefined') _mmCache = {};
+      amCargar();
+    } else {
+      amActualizarBoton();
+      showToast((res && res.error) || 'No se pudo guardar.', '❌');
+    }
+  }).catch(() => { amOcupado = false; amActualizarBoton(); showToast('Error de conexión al guardar.', '❌'); });
 }
 </script>
 
@@ -3951,7 +4201,7 @@ function callWebApp(params) {
   if (currentToken && !params.sesion) params = Object.assign({}, params, { sesion: currentToken });
   // Operaciones de escritura en bloque usan timeout extendido (90s)
   const accionesLentas = ['guardarCalificacionesBloque','guardarAsistencia','registrarActaAccidente',
-    'registrarAusenciaDocenteTodos','bibRegistrarPrestamo','bibMarcarDevuelto',
+    'registrarAusenciaDocenteTodos','guardarAsistenciaMateriaEsp','bibRegistrarPrestamo','bibMarcarDevuelto',
     'subirPlanificacion','obtenerContenidoPlanificacion'];
   const esLenta = accionesLentas.includes(params.accion);
   const timeoutMs = esLenta ? 90000 : 30000;
@@ -4011,8 +4261,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',planificacion:'Mi planificación áulica','planificaciones-dir':'Planificaciones de docentes',constancias:'Constancias',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',planificacion:'Tus planificaciones, para consultarlas cuando quieras','planificaciones-dir':'Consulta y descarga de las planificaciones áulicas',constancias:'Constancias para docentes: jornada escolar y salida educativa',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',planificacion:'Mi planificación áulica','planificaciones-dir':'Planificaciones de docentes',constancias:'Constancias',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','asist-materias':'Asistencia de Robótica y Técnicas de Estudio','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia','asist-materias':'Registro propio de estas dos materias',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',planificacion:'Tus planificaciones, para consultarlas cuando quieras','planificaciones-dir':'Consulta y descarga de las planificaciones áulicas',constancias:'Constancias para docentes: jornada escolar y salida educativa',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -4318,7 +4568,7 @@ function doLogin(name, role, usuario, res){
   const canSeeEOE  = isAdmin || isEOE;
 
   document.getElementById('nav-docente-section').style.display = isStudent ? 'none' : 'block';
-  ['nav-asistencia','nav-calificaciones','nav-reg-ausencias'].forEach(id =>
+  ['nav-asistencia','nav-asist-materias','nav-calificaciones','nav-reg-ausencias'].forEach(id =>
     document.getElementById(id).style.display = isStudent ? 'none' : 'flex');
   document.getElementById('nav-subir').style.display = (isAdmin || isDocente || isPreceptor) && !isStudent ? 'flex' : 'none';
   const panelPost = document.getElementById('panel-nuevo-post');
@@ -4348,6 +4598,7 @@ function doLogin(name, role, usuario, res){
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navAud = document.getElementById('nav-ausencias-docentes');
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  document.body.classList.toggle('sin-registro-aud', !isDirectorEstricto);   // registrar/editar ausencias docentes: solo director, vice y secretaría
   const panelAudInf = document.getElementById('aud-informe-panel');
   if (panelAudInf) panelAudInf.style.display = isAdmin ? 'block' : 'none';
   const navInf = document.getElementById('nav-informe-materias');
@@ -4408,6 +4659,7 @@ function showSection(id,el){
   if(id === 'calendario') renderCalendar();
   if(id === 'calificaciones') setupCalificaciones();
   if(id === 'asistencia') setupAsistencia();
+  if(id === 'asist-materias') amInicializar();
   if(id === 'subir') setupSubir();
   if(id === 'planificacion') planInicializar();
   if(id === 'planificaciones-dir') planDirCargar();
@@ -9892,7 +10144,8 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
   const anio = new Date().getFullYear();
 
   const seccionesAlumnos = res.alumnos.map(a => {
-    if (!a.detalle.length) return '';
+    const esp = a.detalleMateriasEsp || [];
+    if (!a.detalle.length && !esp.length) return '';
 
     const filas = a.detalle.map((d, di) => {
       const estLabel = d.estado === 'A' ? 'Ausente' : d.estado === 'T' ? 'Tarde' : d.estado === 'AP' ? ('Aus. con Presencia' + (d.horaLlegada ? ' (ingresó ' + d.horaLlegada + ')' : '')) : 'Retiro';
@@ -9924,6 +10177,15 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
       return matsHtml;
     }).join('');
 
+    const espHtml = esp.length
+      ? '<div style="font-size:11px;font-weight:700;color:#1a2744;margin:10px 0 4px">Robótica y Técnicas de Estudio (registro propio de asistencia)</div>' +
+        '<table style="width:100%;border-collapse:collapse"><thead><tr>' +
+        ['Fecha', 'Materia', 'Estado'].map(t => '<th style="background:#e8f5e9;color:#1a9e5c;padding:6px 10px;border:1px solid #c8e6d4;font-size:11px;text-align:left">' + t + '</th>').join('') +
+        '</tr></thead><tbody>' + esp.map(f => '<tr' + (f.sinDocente ? ' style="background:#f5f5f5"' : '') + '><td style="padding:5px 10px;font-size:12px;border:1px solid #eee">' + f.fecha + '</td>' +
+          '<td style="padding:5px 10px;font-size:12px;border:1px solid #eee">' + f.materia + '</td>' +
+          '<td style="padding:5px 10px;font-size:12px;border:1px solid #eee;font-weight:700;color:' + (f.sinDocente ? '#8a5a00' : f.estado === 'A' ? '#c62828' : '#e65100') + '">' +
+          (f.sinDocente ? 'Docente ausente: no cuenta' : f.estado === 'A' ? 'Ausente' : 'Tarde (no resta)') + '</td></tr>').join('') + '</tbody></table>'
+      : '';
     return `<div style="margin-bottom:24px;page-break-inside:avoid">
       <div style="background:#1a9e5c;color:#fff;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:13px">
         ${a.nombre} — ${a.totalDiasFalta} día${a.totalDiasFalta!==1?'s':''} de inasistencia
@@ -9940,6 +10202,7 @@ function _generarInformeDetalleInasistencias(res, curso, nombreFiltro) {
         </thead>
         <tbody>${filas}</tbody>
       </table>
+      ${espHtml}
     </div>`;
   }).join('');
 
@@ -10263,9 +10526,15 @@ function _mmPedir(tipo) {
   });
 }
 // Materias cuyo % de asistencia NO se muestra en la pantalla del alumno
-const _MM_OCULTAS = ['ROBOTICA', 'TECNICAS DE ESTUDIO'];
+// Robótica y Técnicas de Estudio tienen asistencia propia (hoja Asist_Materias_Esp). Hasta que las preceptoras la carguen,
+// NO se muestran al alumno ni a la familia (pantalla del alumno, Peri de alumnos y tutores, R.I.T.E.).
+// El equipo directivo y los preceptores sí las ven en sus informes. Para habilitarlas: vaciar esta lista
+// (y poner MATERIAS_ESP_OCULTAS_ALUMNO = false en el Code.gs).
+const _MM_OCULTAS_FAMILIA = ['ROBOTICA', 'TECNICAS DE ESTUDIO'];
 function _mmNorm(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim(); }
-function _mmVisible(m) { return !_MM_OCULTAS.includes(_mmNorm(m && m.materia)); }
+function _mmEsFamilia() { return currentRole === 'alumno' || currentRole === 'tutor'; }
+function _mmVisible(m) { return !(_mmEsFamilia() && _MM_OCULTAS_FAMILIA.includes(_mmNorm(m && m.materia))); }
+function _mmVisibleRite(m) { return !_MM_OCULTAS_FAMILIA.includes(_mmNorm(m && m.materia)); }   // el R.I.T.E. se entrega a la familia
 // Informe de asistencia por materia (staff): saca las materias ocultas de cada alumno
 function _mmOcultarEnInforme(res) {
   if (!res) return res;
@@ -14614,7 +14883,7 @@ const RITE_NOTA = `
 function riteSeccionIntensificar(inasist, resMaterias, resNotas) {
   const esc = _riteEsc;
   const excedio = inasist > RITE_LIMITE;
-  const mats = (resMaterias && resMaterias.ok) ? (resMaterias.materias || []).filter(_mmVisible).sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia)) : null;
+  const mats = (resMaterias && resMaterias.ok) ? (resMaterias.materias || []).filter(_mmVisibleRite).sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia)) : null;
   const bajoAsist = mats ? mats.filter(m => m.estado !== 'OK') : [];                         // menos de 75% de las clases dictadas
   const bajoNota = ((resNotas && resNotas.materias) || []).map(m => {                        // menos de 7 en algún cuatrimestre
     const bajos = [];
