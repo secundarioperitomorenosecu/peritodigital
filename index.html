@@ -2393,7 +2393,7 @@ body.sin-registro-aud .aud-solo{display:block}
         </div>
         <div id="aud-dm-wrap" style="display:none;min-width:220px">
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Docente / Materia</label>
-          <select id="aud-docente-materia" onchange="audActualizarModulos()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+          <select id="aud-docente-materia" onchange="audActualizarModulos();audPreviewRango('curso')" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
             <option value="">Primero seleccioná el curso</option>
           </select>
         </div>
@@ -2411,15 +2411,19 @@ body.sin-registro-aud .aud-solo{display:block}
             <option value="Capacitación">Capacitación</option>
             <option value="Paro/huelga">Paro / Huelga</option>
             <option value="Otro">Otro</option>
+            <option value="Licencia por familiar enfermo">Licencia por familiar enfermo</option>
+            <option value="Licencia gremial">Licencia gremial</option>
+            <option value="Causas particulares">Causas particulares</option>
+            <option value="Licencia por duelo">Licencia por duelo</option>
           </select>
         </div>
         <div>
-          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
-          <input type="date" id="aud-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde (varios días)</label>
+          <input type="date" id="aud-desde" onchange="audPreviewRango('curso')" title="Si fue una licencia de varios días, completá Desde y Hasta: se cargan todos los días con sus módulos" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div>
-          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
-          <input type="date" id="aud-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta (varios días)</label>
+          <input type="date" id="aud-hasta" onchange="audPreviewRango('curso')" title="Si fue una licencia de varios días, completá Desde y Hasta: se cargan todos los días con sus módulos" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px">
           <input type="checkbox" id="aud-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
@@ -2435,6 +2439,7 @@ body.sin-registro-aud .aud-solo{display:block}
         </button>
       </div>
       <div id="aud-mod-hint" style="display:none;margin-top:8px;font-size:11px;color:#666"></div>
+      <div id="aud-rango-prev" style="display:none;margin-top:8px;font-size:12px;padding:8px 12px;border-radius:8px"></div>
       <div id="aud-feedback" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:var(--border-radius-md)"></div>
     </div>
 
@@ -2448,7 +2453,7 @@ body.sin-registro-aud .aud-solo{display:block}
         </div>
         <div style="min-width:220px">
           <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Docente</label>
-          <select id="aud-sel-docente" onchange="audVerificarCursosDocente()" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
+          <select id="aud-sel-docente" onchange="audVerificarCursosDocente();audPreviewRango('doc')" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit;width:100%">
             <option value="">— Seleccioná —</option>
           </select>
         </div>
@@ -2462,15 +2467,19 @@ body.sin-registro-aud .aud-solo{display:block}
             <option value="Capacitación">Capacitación</option>
             <option value="Paro/huelga">Paro / Huelga</option>
             <option value="Otro">Otro</option>
+            <option value="Licencia por familiar enfermo">Licencia por familiar enfermo</option>
+            <option value="Licencia gremial">Licencia gremial</option>
+            <option value="Causas particulares">Causas particulares</option>
+            <option value="Licencia por duelo">Licencia por duelo</option>
           </select>
         </div>
         <div>
-          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde</label>
-          <input type="date" id="aud-doc-desde" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Desde (varios días)</label>
+          <input type="date" id="aud-doc-desde" onchange="audPreviewRango('doc')" title="Si fue una licencia de varios días, completá Desde y Hasta: se cargan todos los días con sus módulos" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div>
-          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta</label>
-          <input type="date" id="aud-doc-hasta" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
+          <label style="font-size:11px;color:var(--color-text-secondary);display:block;margin-bottom:4px">Hasta (varios días)</label>
+          <input type="date" id="aud-doc-hasta" onchange="audPreviewRango('doc')" title="Si fue una licencia de varios días, completá Desde y Hasta: se cargan todos los días con sus módulos" style="font-size:13px;padding:7px 10px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit"/>
         </div>
         <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px">
           <input type="checkbox" id="aud-doc-movimiento" style="width:16px;height:16px;accent-color:#1a9e5c;cursor:pointer"/>
@@ -2485,6 +2494,7 @@ body.sin-registro-aud .aud-solo{display:block}
           Registrar todos
         </button>
       </div>
+      <div id="aud-rango-prev-doc" style="display:none;margin-top:10px;font-size:12px;padding:8px 12px;border-radius:8px"></div>
       <!-- Preview de cursos del docente ese día -->
       <div id="aud-preview-cursos" style="margin-top:12px;display:none">
         <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;font-weight:600">CURSOS QUE TIENE ESE DÍA:</div>
@@ -2581,6 +2591,10 @@ body.sin-registro-aud .aud-solo{display:block}
               <option value="Capacitación">Capacitación</option>
               <option value="Paro/huelga">Paro / Huelga</option>
               <option value="Otro">Otro</option>
+              <option value="Licencia por familiar enfermo">Licencia por familiar enfermo</option>
+              <option value="Licencia gremial">Licencia gremial</option>
+              <option value="Causas particulares">Causas particulares</option>
+              <option value="Licencia por duelo">Licencia por duelo</option>
             </select>
           </div>
           <div style="display:flex;gap:10px">
@@ -2716,6 +2730,7 @@ function audActualizarModulos() {
 }
 
 let _audGuardando = false;
+
 function registrarAusenciaDocenteApp() {
   if (_audGuardando) return;   // ya está registrando: se ignoran los clics repetidos
   const fecha       = document.getElementById('aud-fecha').value;
@@ -2727,12 +2742,17 @@ function registrarAusenciaDocenteApp() {
   const movimiento  = document.getElementById('aud-movimiento').checked;
   const reemplazante= document.getElementById('aud-reemplazante').value.trim();
   const modulos     = parseInt(document.getElementById('aud-modulos').value, 10);
+  const aBack = v => v ? v.split('-').reverse().join('/') : '';
 
-  if (!fecha || !curso || !dmVal) {
+  if ((desde && !hasta) || (!desde && hasta)) { audFeedback('⚠️ Completá Desde y Hasta (o dejá los dos vacíos si fue un solo día).', false); return; }
+  if (desde && hasta && hasta < desde) { audFeedback('⚠️ La fecha Hasta no puede ser anterior a Desde.', false); return; }
+  const hayRango = !!(desde && hasta && desde !== hasta);   // varios días: se cargan todos, con los módulos del horario
+  const fechaEf = hayRango ? desde : (fecha || desde);
+  if (!fechaEf || !curso || !dmVal) {
     audFeedback('⚠️ Completá fecha, curso y docente/materia.', false);
     return;
   }
-  if (!(modulos >= 1 && modulos <= 12)) {
+  if (!hayRango && !(modulos >= 1 && modulos <= 12)) {
     audFeedback('⚠️ Indicá cuántos módulos fueron (de 1 a 12).', false);
     return;
   }
@@ -2741,25 +2761,26 @@ function registrarAusenciaDocenteApp() {
   _audGuardando = true;
   btn.disabled = true; btn.textContent = 'Registrando…';
   const fin = () => { _audGuardando = false; btn.disabled = false; btn.textContent = 'Registrar'; };
-
-  const [y,m,d] = fecha.split('-');
-  const fechaBack = d+'/'+m+'/'+y;
+  const fechaBack = aBack(fechaEf);
 
   callWebApp({
     accion: 'registrarAusenciaDocente',
     datos: JSON.stringify({
       fecha: fechaBack, docente, curso, materia, motivo, modulos,
-      desde, hasta, movimiento, reemplazante,
+      desde: aBack(desde), hasta: aBack(hasta), movimiento, reemplazante,
       usuarioNombre: currentNombre,
       usuarioRol:    currentRole
     })
   }).then(res => {
     fin();
     if (res.ok) {
-      audFeedback('✅ Registrado: ' + docente + ' – ' + materia + ' el ' + fechaBack + (res.registrados > 1 ? ' (' + res.registrados + ' módulos)' : ''), true);
+      audFeedback('✅ Registrado: ' + docente + ' – ' + materia + (res.esRango
+        ? ' del ' + aBack(desde) + ' al ' + aBack(hasta) + ' (' + res.registrados + ' módulo' + (res.registrados === 1 ? '' : 's') + ' en ' + res.dias + ' día' + (res.dias === 1 ? '' : 's') + ')'
+        : ' el ' + fechaBack + (res.registrados > 1 ? ' (' + res.registrados + ' módulos)' : '')), true);
       document.getElementById('aud-docente-materia').value = '';
       document.getElementById('aud-mod-wrap').style.display = 'none';
       document.getElementById('aud-mod-hint').style.display = 'none';
+      document.getElementById('aud-rango-prev').style.display = 'none';
       document.getElementById('aud-desde').value = '';
       document.getElementById('aud-hasta').value = '';
       document.getElementById('aud-movimiento').checked = false;
@@ -2961,7 +2982,7 @@ function audExportarExcel(registros, desde, hasta) {
 
 // ── Informe de ausencias por docente: horas, motivos y cuadro comparativo ──
 // Cada registro de Ausencias_Docentes es un módulo de clase (una hora): las "horas" son la cantidad de registros.
-const AUD_INF_MOTIVOS = ['Enfermedad','Licencia médica','Licencia personal','Capacitación','Paro/huelga','Sin aviso','Otro'];
+const AUD_INF_MOTIVOS = ['Enfermedad','Licencia médica','Licencia personal','Capacitación','Paro/huelga','Sin aviso','Otro','Licencia por familiar enfermo','Licencia gremial','Causas particulares','Licencia por duelo'];
 let _audInf = null;
 
 function audInfEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -3230,6 +3251,7 @@ function audVerificarCursosDocente() {
 }
 
 let _audTodosGuardando = false;
+
 function audRegistrarTodos() {
   if (_audTodosGuardando) return;   // ya está registrando: se ignoran los clics repetidos
   const docente      = document.getElementById('aud-sel-docente').value;
@@ -3245,32 +3267,42 @@ function audRegistrarTodos() {
     fb.style.background = ok ? '#e8f5e9' : '#fff0f0';
     fb.style.color = ok ? '#2e7d32' : '#1a9e5c';
   };
+  const aBack = v => v ? v.split('-').reverse().join('/') : '';
   if (!docente) return mostrarFb('⚠️ Seleccioná un docente.', false);
-  if (!fecha)   return mostrarFb('⚠️ Seleccioná la fecha.', false);
+  if ((desde && !hasta) || (!desde && hasta)) return mostrarFb('⚠️ Completá Desde y Hasta (o dejá los dos vacíos si fue un solo día).', false);
+  if (desde && hasta && hasta < desde) return mostrarFb('⚠️ La fecha Hasta no puede ser anterior a Desde.', false);
+  const hayRango = !!(desde && hasta && desde !== hasta);   // varios días: se cargan todos, con todos los módulos de cada día
+  const fechaEf = hayRango ? desde : (fecha || desde);
+  if (!fechaEf) return mostrarFb('⚠️ Seleccioná la fecha (o Desde y Hasta si fueron varios días).', false);
   const btn = document.getElementById('btn-registrar-todos');
   _audTodosGuardando = true;
   btn.disabled = true; btn.textContent = 'Registrando…';
   const fin = function() { _audTodosGuardando = false; btn.disabled = false; btn.textContent = 'Registrar todos'; };
-  const p = fecha.split('-');
-  const fechaBack  = p[2]+'/'+p[1]+'/'+p[0];
-  const desdeBack  = desde ? desde.split('-').reverse().join('/') : '';
-  const hastaBack  = hasta ? hasta.split('-').reverse().join('/') : '';
+  const fechaBack = aBack(fechaEf);
   callWebApp({
     accion: 'registrarAusenciaDocenteTodos',
     datos: JSON.stringify({
       fecha: fechaBack, docente, motivo,
-      desde: desdeBack, hasta: hastaBack, movimiento, reemplazante,
+      desde: aBack(desde), hasta: aBack(hasta), movimiento, reemplazante,
       usuarioNombre: currentNombre, usuarioRol: currentRole
     })
   }).then(function(res) {
     fin();
     if (res && res.ok) {
-      var msg = res.registrados > 0
-        ? '✅ ' + res.registrados + ' ausencia' + (res.registrados>1?'s':'') + ' registrada' + (res.registrados>1?'s':'') + ': ' + res.detalles.join(', ') + (res.omitidos > 0 ? ' (' + res.omitidos + ' ya ' + (res.omitidos>1?'estaban registradas':'estaba registrada') + ')' : '')
-        : '⚠️ Ya estaba registrada: ese docente ya tiene cargadas todas las ausencias de ese día.';
+      var s = function(n, a, b) { return n === 1 ? a : b; };
+      var msg;
+      if (res.registrados > 0) {
+        msg = res.esRango
+          ? '✅ ' + res.registrados + ' módulo' + s(res.registrados, '', 's') + ' registrado' + s(res.registrados, '', 's') + ' en ' + res.dias + ' día' + s(res.dias, '', 's') + ' (del ' + aBack(desde) + ' al ' + aBack(hasta) + '): ' + res.detalles.join(' · ')
+          : '✅ ' + res.registrados + ' ausencia' + s(res.registrados, '', 's') + ' registrada' + s(res.registrados, '', 's') + ': ' + res.detalles.join(', ');
+        if (res.omitidos > 0) msg += ' (' + res.omitidos + ' módulo' + s(res.omitidos, ' ya estaba registrado', 's ya estaban registrados') + ')';
+      } else {
+        msg = '⚠️ Ya estaba registrada: ese docente ya tiene cargados todos sus módulos' + (res.esRango ? ' en esos días.' : ' de ese día.');
+      }
       mostrarFb(msg, res.registrados > 0);
       document.getElementById('aud-doc-desde').value = '';
       document.getElementById('aud-doc-hasta').value = '';
+      document.getElementById('aud-rango-prev-doc').style.display = 'none';
       document.getElementById('aud-doc-movimiento').checked = false;
       document.getElementById('aud-doc-reemplazante').value = '';
       cargarHistorialAud();
@@ -3281,6 +3313,38 @@ function audRegistrarTodos() {
     fin();
     mostrarFb('❌ Error de conexión', false);
   });
+}
+
+// Vista previa cuando se completan Desde y Hasta: cuántos días y módulos se van a cargar
+var _audPrevReq = { curso: 0, doc: 0 };
+function audPreviewRango(modo) {
+  var esDoc = modo === 'doc';
+  var desde = document.getElementById(esDoc ? 'aud-doc-desde' : 'aud-desde').value;
+  var hasta = document.getElementById(esDoc ? 'aud-doc-hasta' : 'aud-hasta').value;
+  var box   = document.getElementById(esDoc ? 'aud-rango-prev-doc' : 'aud-rango-prev');
+  var docente, curso = '', materia = '';
+  if (esDoc) { docente = document.getElementById('aud-sel-docente').value; }
+  else {
+    var dm = document.getElementById('aud-docente-materia').value;
+    if (dm) { docente = dm.split('|')[0]; materia = dm.split('|')[1]; curso = document.getElementById('aud-curso').value; }
+  }
+  if (!desde || !hasta || desde === hasta || !docente) { box.style.display = 'none'; return; }
+  var aBack = function(v) { return v.split('-').reverse().join('/'); };
+  box.style.display = 'block'; box.style.background = '#f5f5f5'; box.style.color = '#555'; box.textContent = 'Calculando los días y módulos…';
+  var req = ++_audPrevReq[modo];
+  callWebApp({ accion: 'previsualizarAusenciaRango', docente: docente, desde: aBack(desde), hasta: aBack(hasta), curso: curso, materia: materia }).then(function(res) {
+    if (req !== _audPrevReq[modo]) return;
+    if (!res || !res.ok) { box.style.background = '#fff0f0'; box.style.color = '#c62828'; box.textContent = '⚠️ ' + ((res && res.error) || 'No se pudo calcular.'); return; }
+    var sk = [];
+    if (res.saltados && res.saltados.finde) sk.push(res.saltados.finde + ' de fin de semana');
+    if (res.saltados && res.saltados.noLectivos) sk.push(res.saltados.noLectivos + ' no lectivo' + (res.saltados.noLectivos === 1 ? '' : 's'));
+    if (!res.dias) { box.style.background = '#fff8e1'; box.style.color = '#8a5a00'; box.textContent = '⚠️ El docente no tiene clases en esos días según el horario.'; return; }
+    if (res.aCargar === 0) { box.style.background = '#fff8e1'; box.style.color = '#8a5a00'; box.textContent = '⚠️ Ya estaba todo registrado: esos ' + res.modulos + ' módulos ya están cargados.'; return; }
+    box.style.background = '#e8f5e9'; box.style.color = '#1b5e20';
+    box.textContent = '📅 Se van a cargar ' + res.aCargar + ' módulo' + (res.aCargar === 1 ? '' : 's') + ' en ' + res.dias + ' día' + (res.dias === 1 ? '' : 's') + ' con clases' +
+      (res.yaCargados ? ' (ya había ' + res.yaCargados + ' cargados)' : '') + (sk.length ? '. Se saltean: ' + sk.join(' y ') : '') +
+      (esDoc ? '.' : '. En varios días se usan los módulos del horario de cada día.');
+  }).catch(function() { if (req === _audPrevReq[modo]) box.style.display = 'none'; });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -4333,7 +4397,7 @@ function callWebApp(params) {
   if (currentToken && !params.sesion) params = Object.assign({}, params, { sesion: currentToken });
   // Operaciones de escritura en bloque usan timeout extendido (90s)
   const accionesLentas = ['guardarCalificacionesBloque','guardarAsistencia','registrarActaAccidente',
-    'registrarAusenciaDocenteTodos','guardarAsistenciaMateriaEsp','bibRegistrarPrestamo','bibMarcarDevuelto',
+    'registrarAusenciaDocenteTodos','registrarAusenciaDocente','guardarAsistenciaMateriaEsp','bibRegistrarPrestamo','bibMarcarDevuelto',
     'subirPlanificacion','obtenerContenidoPlanificacion'];
   const esLenta = accionesLentas.includes(params.accion);
   const timeoutMs = esLenta ? 90000 : 30000;
