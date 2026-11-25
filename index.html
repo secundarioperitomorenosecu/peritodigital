@@ -7480,24 +7480,28 @@ function periInicializar(res) {
   if (navPeri) navPeri.style.display = esAlumno ? 'flex' : 'none';
   if (!esAlumno) { periEsconderTodo(); return; }
   _periEsTutor = !!(res && res.esTutor);
-  if (_periUsuario !== currentUser) { _periUsuario = currentUser; _periMsgs = []; _periCache = {}; }
+  if (_periUsuario !== currentUser) { _periUsuario = currentUser; _periMsgs = []; _periCache = {}; _periNov = null; _periNovPromesa = null; }
   periConstruir();
   if (periOculto()) { periEsconderTodo(); return; }
   const l = document.getElementById('peri-launcher');
   const p = document.getElementById('peri-panel');
   if (p) p.style.display = 'none';
   if (l) l.style.display = 'block';
-  try {
-    if (!sessionStorage.getItem('peri:globo')) {
+  const mostrarGlobo = (texto) => {
+    try {
+      if (sessionStorage.getItem('peri:globo')) return;
       sessionStorage.setItem('peri:globo', '1');
       const g = document.getElementById('peri-globo');
-      if (g) { g.style.display = 'block'; setTimeout(() => { g.style.display = 'none'; }, 9000); }
-    }
-  } catch (e) {}
+      if (g) { g.textContent = texto || '¡Hola! Soy Peri 👋 ¿Te ayudo?'; g.style.display = 'block'; setTimeout(() => { g.style.display = 'none'; }, 9000); }
+    } catch (e) {}
+  };
+  // Preceptores, directivos y RL: si hay cumpleaños o novedades en el mural, el globito lo avisa
+  if (periTieneNovedades()) periCargarNovedades().then(nov => mostrarGlobo(periTextoGlobo(nov))).catch(() => mostrarGlobo());
+  else mostrarGlobo();
 }
 
 function periLimpiar() {
-  _periMsgs = []; _periUsuario = ''; _periCache = {}; _periEscribiendo = false; _periEsTutor = false;
+  _periMsgs = []; _periUsuario = ''; _periCache = {}; _periEscribiendo = false; _periEsTutor = false; _periNov = null; _periNovPromesa = null;
   periEsconderTodo();
   const navPeri = document.getElementById('nav-peri'); if (navPeri) navPeri.style.display = 'none';
 }
@@ -7958,6 +7962,72 @@ function periChipsPersonal() {
   ];
   return l;
 }
+// ── Novedades para preceptores, directivos y RL: cumpleaños de alumnos + novedades del mural ──
+let _periNov = null, _periNovPromesa = null;
+function periTieneNovedades() { return periEsPersonal() && (periTipo() === 'preceptor' || periTipo() === 'directivo'); }
+function periCargarNovedades(forzar) {
+  if (!periTieneNovedades()) return Promise.resolve(null);
+  if (!forzar && _periNovPromesa) return _periNovPromesa;
+  _periNovPromesa = Promise.all([
+    callWebApp({ accion: 'obtenerCumpleanos' }).catch(function() { return null; }),
+    callWebApp({ accion: 'obtenerPublicaciones', curso: 'todos', soloActivas: true, usuario: currentUser }).catch(function() { return null; })
+  ]).then(function(r) {
+    var c = r[0], m = r[1];
+    var cumples = (c && c.ok && c.cumples) ? c.cumples : [];
+    var mural = (m && m.ok && m.publicaciones) ? m.publicaciones : [];
+    // Las mismas "sin leer" que cuenta el globito del menú Mural (no cuenta las propias)
+    var vistas = _muralLeerVistas();
+    mural = mural.filter(function(p) { return vistas.indexOf(String(p.id)) === -1 && !_muralEsPropia(p); });
+    // La preceptora ve lo general y lo de sus cursos; dirección y RL ven todo
+    if (periTipo() === 'preceptor') {
+      var mios = periCursosNorm(currentCursos);
+      mural = mural.filter(function(p) { return _muralEsDeCurso(p, '') || mios.some(function(cu) { return _muralEsDeCurso(p, cu); }); });
+    }
+    _periNov = { cumples: cumples, mural: mural };
+    return _periNov;
+  });
+  return _periNovPromesa;
+}
+function periTextoGlobo(nov) {
+  if (!nov) return null;
+  if (nov.cumples.length && nov.mural.length) return '🎂 Hay cumpleaños y novedades en el mural';
+  if (nov.cumples.length) return nov.cumples.some(function(c) { return c.cuando === 'hoy'; }) ? '🎂 ¡Hoy hay cumpleaños!' : '🎂 Hubo cumpleaños el finde';
+  if (nov.mural.length) return '📌 Hay novedades en el mural';
+  return null;
+}
+function periHtmlNovedades(nov) {
+  var h = '';
+  var corto = function(t) { t = String(t || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); return t.length > 70 ? t.slice(0, 67) + '…' : t; };
+  if (nov.cumples.length) {
+    h += '🎂 <b>Cumpleaños</b><br>' + nov.cumples.slice(0, 10).map(function(c) {
+      return '🎈 <b>' + periEsc(periTitulo(c.nombre)) + '</b> (' + periEsc(c.curso.charAt(0) + '°' + c.curso.charAt(1)) + ') ' +
+        (c.cuando === 'hoy' ? 'cumple <b>' + c.edad + '</b> años hoy' : 'cumplió ' + c.edad + ' años ' + periEsc(c.cuando));
+    }).join('<br>') + (nov.cumples.length > 10 ? '<br>…y ' + (nov.cumples.length - 10) + ' más' : '');
+  }
+  if (nov.mural.length) {
+    var n = nov.mural.length;
+    h += (h ? '<br><br>' : '') + '📌 <b>Mural</b>: ' + n + ' novedad' + (n === 1 ? '' : 'es') + ' sin leer<br>' + nov.mural.slice(0, 5).map(function(p) {
+      return '• ' + (p.tipo ? '<b>' + periEsc(p.tipo) + '</b>: ' : '') + periEsc(corto(p.titulo || p.descripcion)) + (p.curso ? ' <small>(' + periEsc(p.curso) + ')</small>' : '');
+    }).join('<br>') + (n > 5 ? '<br>…y ' + (n - 5) + ' más' : '');
+  }
+  return h;
+}
+// Segundo mensaje del saludo: solo si hay algo para contar
+function periNovedadesMensaje() {
+  return periCargarNovedades().then(function(nov) {
+    if (!nov || (!nov.cumples.length && !nov.mural.length)) return;
+    periDecir(periHtmlNovedades(nov), { img: 'feliz' });
+    periChips([periChipIrP('mural')].filter(Boolean).concat(periChipsPersonal().filter(function(c) { return c.sec !== 'mural'; })));
+  }).catch(function() {});
+}
+function periCumplesP() {
+  return callWebApp({ accion: 'obtenerCumpleanos' }).then(function(res) {
+    if (!res || !res.ok) { periDecir(periErr(res), { img: 'sorpresa' }); periChips(periChipsPersonal()); return; }
+    if (!res.cumples.length) periDecir('Hoy no hay cumpleaños' + (periTipo() === 'preceptor' ? ' en tus cursos' : '') + ' 🎈', { img: 'feliz' });
+    else periDecir(periHtmlNovedades({ cumples: res.cumples, mural: [] }), { img: 'feliz' });
+    periChips(periChipsPersonal());
+  });
+}
 function periBienvenidaPersonal() {
   const n = String(currentNombre || '');
   const nombre = n.indexOf(',') !== -1 ? ', ' + periEsc(periPrimerNombre()) : '';
@@ -7968,6 +8038,7 @@ function periBienvenidaPersonal() {
   else h += 'Puedo buscar a un alumno por apellido y mostrarte su asistencia y sus notas, contarte cómo viene la asistencia de hoy, qué docentes faltan, qué alumnos están en riesgo, los próximos eventos, tus mensajes sin leer o llevarte a cualquier parte del portal. ¿Qué necesitás?';
   periDecir(h, { img: 'hola' });
   periChips(periChipsPersonal());
+  if (periTieneNovedades()) periNovedadesMensaje();   // cumpleaños y novedades del mural, si hay
 }
 function periAyudaPersonal() {
   const tipo = periTipo();
@@ -7976,6 +8047,7 @@ function periAyudaPersonal() {
   else if (tipo === 'docente') h += '📚 tus <b>cursos y materias</b><br>';
   else h += '📋 la <b>asistencia de hoy</b> por curso<br>🚫 los <b>docentes ausentes</b> de hoy<br>⚠️ los <b>alumnos en riesgo</b> de un curso (por ejemplo <i>«en riesgo 3A»</i>)<br>';
   h = h.replace('Te puedo ayudar con:<br>', 'Te puedo ayudar con:<br>🔎 buscar a un <b>alumno por apellido</b> (por ejemplo <i>«notas de Pérez»</i>) y mostrarte su asistencia y sus notas<br>📄 generar el <b>R.I.T.E.</b> de cualquier alumno (por ejemplo <i>«RITE de Pérez»</i>)<br>');
+  if (periTieneNovedades()) h += '🎂 los <b>cumpleaños</b> de hoy y las <b>novedades del mural</b><br>';
   h += '📅 los próximos <b>eventos</b> del colegio<br>💬 tus <b>mensajes</b> sin leer<br>🧭 llevarte a cualquier pantalla del portal';
   periDecir(h, { img: 'escucha' });
   periChips(periChipsPersonal());
@@ -7995,6 +8067,7 @@ function periResponderPersonal(texto) {
 
   if (periTiene(t, ['ocultar','ocultate','sacate','desaparece','no mostrar','molesta','no quiero ver a peri'])) return periPreguntaOcultar();
   if (toks.length <= 4 && periTiene(t, ['hola','buenas','buen dia','buenos dias','buenas tardes','buenas noches','que tal','hey'])) return periSaludo();
+  if (periTieneNovedades() && periTiene(t, ['cumple','cumples','cumpleanos','cumpleanero','cumpleaneros'])) return periCumplesP();
   // Búsqueda de un alumno por apellido ("notas de Pérez", "buscar Gómez", "asistencia de Rojas María")
   const ca = periConsultaAlumno(t);
   if (ca.disparador && !ca.reservado) {
