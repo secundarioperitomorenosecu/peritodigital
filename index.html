@@ -621,6 +621,7 @@ body.sin-registro-aud .aud-solo{display:block}
       <div class="nav-item" id="nav-seguimiento-faltas" onclick="showSection('seguimiento-faltas',this)" style="display:none"><span class="nav-icon">📋</span> Seguimiento Faltas</div>
       <div class="nav-item" id="nav-ausencias-docentes" onclick="showSection('ausencias-docentes',this)" style="display:none"><span class="nav-icon">🚫</span> Ausencias Docentes</div>
       <div class="nav-item" id="nav-legajo-control" onclick="showSection('legajo-control',this)" style="display:none"><span class="nav-icon">🗂️</span> Control de Legajo</div>
+      <div class="nav-item" id="nav-excepciones" onclick="showSection('excepciones',this)" style="display:none"><span class="nav-icon">🛡️</span> Regularidad</div>
       <div class="nav-item" id="nav-informe-materias" onclick="showSection('informe-materias',this)" style="display:none"><span class="nav-icon">📊</span> Informe por Materia</div>
       <div class="nav-item" id="nav-dias-no-lectivos" onclick="showSection('dias-no-lectivos',this)" style="display:none"><span class="nav-icon">📅</span> Días No Lectivos</div>
       <div class="nav-item" id="nav-mensajes" onclick="showSection('mensajes',this)" style="display:none"><span class="nav-icon">💬</span> Mensajes <span id="badge-mensajes" style="display:none;background:#1a9e5c;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px">0</span></div>
@@ -1203,6 +1204,24 @@ body.sin-registro-aud .aud-solo{display:block}
           </div>
           <div id="leg-info" style="font-size:12px;color:#666;margin-bottom:8px"></div>
           <div id="leg-lista" style="overflow-x:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGULARIDAD (excepciones) -->
+    <div id="sec-excepciones" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>🛡️ Regularidad</h3>
+          <span id="ex-resumen" style="font-size:12px;font-weight:700;color:#555"></span>
+        </div>
+        <div class="panel-body">
+          <div style="font-size:13px;color:#555;margin-bottom:12px">Alumnos que superan el límite de inasistencias pero mantienen la regularidad por decisión de Dirección: no aparecen en <b>Intensificar por inasistencias</b> ni en los alertas críticos, y no se les avisa que excedieron el límite. Las faltas reales se siguen mostrando.</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <select id="ex-curso" onchange="exCargar()" style="padding:8px 14px;background:#ffffff;border:1px solid #e8d5c4;border-radius:9px;color:#1a1a1a;font-family:inherit;font-size:13px"></select>
+            <label style="font-size:12px;display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="ex-solo" checked onchange="exRender()"> Solo con 20 o más faltas o con excepción</label>
+          </div>
+          <div id="ex-lista" style="overflow-x:auto"></div>
         </div>
       </div>
     </div>
@@ -3462,6 +3481,100 @@ function legResumenCurso() {
   document.getElementById('leg-resumen').textContent = legTab.reduce((n, c) => n + c.completos, 0) + ' de ' + legTab.reduce((n, c) => n + c.alumnos, 0) + ' legajos completos';
   legPintarTablero();
 }
+// ═══════════════════════════════════════════════════════════════════════
+//  REGULARIDAD — Dirección puede mantener la regularidad de un alumno que supera el límite de faltas
+// ═══════════════════════════════════════════════════════════════════════
+let exDatos = null, exReq = 0;
+function exEsEditor() { return ['director', 'vicedirector', 'secretary', 'secretario'].indexOf(currentRole) !== -1; }
+function exInicializar() {
+  const sel = document.getElementById('ex-curso');
+  if (!sel.options.length) {
+    let cursos = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+    if (currentRole === 'preceptor' && currentCursos && currentCursos.length) {
+      const mios = currentCursos.map(c => String(c).replace(/[°\s]/g, '').toUpperCase());
+      cursos = cursos.filter(c => mios.indexOf(c) !== -1);
+    }
+    sel.innerHTML = cursos.map(c => '<option value="' + c + '">' + c.charAt(0) + '° ' + c.charAt(1) + '</option>').join('');
+  }
+  exCargar();
+}
+function exCargar() {
+  const curso = document.getElementById('ex-curso').value;
+  const cont = document.getElementById('ex-lista');
+  exDatos = null;
+  if (!curso) { cont.innerHTML = '<div style="padding:20px;color:#888;font-size:13px">No tenés cursos asignados.</div>'; return; }
+  cont.innerHTML = '<div style="text-align:center;padding:30px;color:rgba(0,0,0,.35);font-size:13px">Cargando…</div>';
+  const req = ++exReq;
+  callWebApp({ accion: 'obtenerExcepcionesRegularidad', curso: curso }).then(res => {
+    if (req !== exReq) return;
+    if (!res || !res.ok) { cont.innerHTML = '<div style="padding:16px;color:#c62828;font-size:13px">' + amEsc((res && res.error) || 'No se pudo cargar.') + '</div>'; return; }
+    exDatos = res; exRender();
+  }).catch(() => { if (req === exReq) cont.innerHTML = '<div style="padding:16px;color:#c62828;font-size:13px">Error de conexión.</div>'; });
+}
+function exRender() {
+  const d = exDatos; if (!d) return;
+  const solo = document.getElementById('ex-solo').checked;
+  const filas = d.alumnos.map((a, i) => ({ a: a, i: i })).filter(x => !solo || x.a.faltas >= 20 || x.a.excepcion);
+  const nEx = d.alumnos.filter(a => a.excepcion).length, nSup = d.alumnos.filter(a => a.faltas >= d.limite && !a.excepcion).length;
+  document.getElementById('ex-resumen').textContent = nEx + ' con excepción · ' + nSup + ' superan el límite sin excepción';
+  const th = 'style="padding:7px 10px;background:#e8f5e9;border-bottom:2px solid #c8e6d4;font-size:11px;color:#1a2744;text-align:left;white-space:nowrap"';
+  document.getElementById('ex-lista').innerHTML = '<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr><th ' + th + '>Alumno</th><th ' + th + '>Faltas</th><th ' + th + '>Situación</th>' + (d.puedeEditar ? '<th ' + th + '></th>' : '') + '</tr></thead><tbody>' +
+    (filas.length ? filas.map(x => {
+      const a = x.a, e = a.excepcion, sup = a.faltas >= d.limite;
+      const sit = e ? '<span style="color:#1a7a44;font-weight:700">🛡️ Mantiene la regularidad</span> <span style="color:#555">· ' + amEsc(e.motivo) + (e.desde ? ' · desde ' + amEsc(e.desde) : '') + '</span>' + (e.obs ? '<div style="font-size:11px;color:#888">' + amEsc(e.obs) + '</div>' : '')
+        : sup ? '<span style="color:#c62828;font-weight:700">⚠️ Superó el límite de ' + d.limite + '</span>' : '<span style="color:#888">Regular</span>';
+      const btn = !d.puedeEditar ? '' : '<td style="padding:5px 10px;border-bottom:1px solid #f0e6dc;text-align:right">' + (e
+        ? '<button onclick="exQuitar(' + x.i + ')" style="padding:5px 11px;font-size:11px;border-radius:8px;border:1px solid #c62828;background:#fff;color:#c62828;cursor:pointer;font-family:inherit;font-weight:600">Quitar</button>'
+        : '<button onclick="exAbrirModal(\'' + a.legajo + '\',\'' + amEsc(a.nombre).replace(/'/g, '') + '\',\'' + d.curso + '\',exCargar)" style="padding:5px 11px;font-size:11px;border-radius:8px;border:1px solid #1a9e5c;background:#1a9e5c;color:#fff;cursor:pointer;font-family:inherit;font-weight:600">Mantener regularidad</button>') + '</td>';
+      return '<tr><td style="padding:6px 10px;border-bottom:1px solid #f0e6dc;font-weight:600">' + amEsc(a.nombre) + '</td><td style="padding:6px 10px;border-bottom:1px solid #f0e6dc;font-weight:700;color:' + (sup ? '#c62828' : '#555') + '">' + a.faltas + '</td><td style="padding:6px 10px;border-bottom:1px solid #f0e6dc">' + sit + '</td>' + btn + '</tr>';
+    }).join('') : '<tr><td colspan="4" style="padding:20px;text-align:center;color:#888">Ningún alumno de este curso llega a 20 faltas ni tiene excepción.</td></tr>') + '</tbody></table>';
+}
+function exQuitar(i) {
+  const a = exDatos.alumnos[i];
+  if (!confirm('¿Quitar la excepción de ' + a.nombre + '? Volverá a figurar en los alertas y en Intensificación si corresponde.')) return;
+  exGuardar({ curso: exDatos.curso, legajo: a.legajo, activa: false }, exCargar);
+}
+function exGuardar(datos, alTerminar) {
+  callWebApp(Object.assign({ accion: 'guardarExcepcionRegularidad', usuarioNombre: currentNombre }, datos)).then(res => {
+    if (res && res.ok) { showToast(datos.activa ? 'Se mantiene la regularidad del alumno.' : 'Se quitó la excepción.', '✅'); if (alTerminar) alTerminar(); }
+    else showToast((res && res.error) || 'No se pudo guardar.', '❌');
+  }).catch(() => showToast('Error de conexión: no se guardó.', '❌'));
+}
+// Ventana para elegir el motivo (Salud / Familiar / Otro) y escribir una observación
+function exAbrirModal(legajo, nombre, curso, alTerminar) {
+  let m = document.getElementById('ex-modal');
+  if (!m) { m = document.createElement('div'); m.id = 'ex-modal'; document.body.appendChild(m); }
+  m.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center';
+  m.innerHTML = '<div style="background:#fff;border-radius:12px;padding:20px 22px;width:90%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.28);font-family:inherit">' +
+    '<div style="font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:4px">🛡️ Mantener la regularidad</div>' +
+    '<div style="font-size:13px;color:#555;margin-bottom:12px">' + nombre + '</div>' +
+    '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px">Motivo</label>' +
+    '<select id="ex-motivo" style="width:100%;padding:8px 10px;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px;margin-bottom:10px"><option value="Salud">Salud</option><option value="Familiar">Familiar</option><option value="Otro">Otro</option></select>' +
+    '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px">Observación (por ejemplo, N° de acta o nota)</label>' +
+    '<textarea id="ex-obs" rows="3" maxlength="300" style="width:100%;padding:8px 10px;border:1px solid #e8d5c4;border-radius:9px;font-family:inherit;font-size:13px;resize:vertical"></textarea>' +
+    '<div style="font-size:11px;color:#888;margin:8px 0 14px">No aparecerá en Intensificar por inasistencias ni en los alertas críticos, y no se le avisará que excedió el límite. Podés quitar la excepción cuando quieras.</div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end"><button id="ex-cancelar" style="padding:8px 14px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer;font-family:inherit">Cancelar</button>' +
+    '<button id="ex-ok" style="padding:8px 14px;border-radius:8px;border:none;background:#1a9e5c;color:#fff;cursor:pointer;font-family:inherit;font-weight:600">Guardar</button></div></div>';
+  document.getElementById('ex-cancelar').onclick = () => { m.style.display = 'none'; };
+  document.getElementById('ex-ok').onclick = () => {
+    const motivo = document.getElementById('ex-motivo').value, obs = document.getElementById('ex-obs').value;
+    m.style.display = 'none';
+    exGuardar({ curso: curso, legajo: legajo, activa: true, motivo: motivo, observacion: obs }, alTerminar);
+  };
+}
+// Botón en cada tarjeta de Intensificación y lista de alumnos con excepción
+function _exBotonCard(a, curso) {
+  if (!exEsEditor()) return '';
+  return '<div style="margin-top:8px"><button onclick="exAbrirModal(\'' + a.legajo + '\',\'' + amEsc(a.nombre).replace(/'/g, '') + '\',\'' + curso + '\',cargarResumenCurso)" style="padding:5px 11px;font-size:11px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-family:inherit;font-weight:600">🛡️ Mantener regularidad</button></div>';
+}
+function _exBloqueIntensificacion(res) {
+  const l = res.conExcepcion || [];
+  if (!l.length) return '';
+  return '<div style="margin-top:16px;border:1px solid #c8e6d4;background:#f4fbf6;border-radius:10px;padding:12px 16px">' +
+    '<div style="font-size:12px;font-weight:700;color:#1a7a44;margin-bottom:6px">🛡️ Mantienen la regularidad por decisión de Dirección (' + l.length + ')</div>' +
+    l.map(e => '<div style="font-size:12px;color:#333;padding:2px 0">' + amEsc(e.nombre) + ' <span style="color:#777">· ' + amEsc(e.motivo) + (e.desde ? ' · desde ' + amEsc(e.desde) : '') + (e.obs ? ' · ' + amEsc(e.obs) : '') + '</span>' +
+      (exEsEditor() ? ' <a href="#" onclick="exGuardar({curso:\'' + res.curso + '\',legajo:\'' + e.legajo + '\',activa:false},cargarResumenCurso);return false" style="color:#c62828;font-size:11px">quitar</a>' : '') + '</div>').join('') + '</div>';
+}
 let amMateria = 'ROBOTICA', amDatos = null, amEstados = {}, amOcupado = false, amReq = 0;
 const AM_NOMBRES = { 'ROBOTICA': '🤖 Robótica', 'TECNICAS DE ESTUDIO': '📖 Técnicas de Estudio' };
 function amEsc(v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -4457,8 +4570,8 @@ function callWebApp(params) {
 }
 // ─────────────────────────────────────────────────────────────────────
 
-const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',planificacion:'Mi planificación áulica','planificaciones-dir':'Planificaciones de docentes',constancias:'Constancias',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','asist-materias':'Asistencia de Robótica y Técnicas de Estudio','legajo-control':'Control de Legajo','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
-const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia','asist-materias':'Registro propio de estas dos materias','legajo-control':'Documentación de cada alumno',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',planificacion:'Tus planificaciones, para consultarlas cuando quieras','planificaciones-dir':'Consulta y descarga de las planificaciones áulicas',constancias:'Constancias para docentes: jornada escolar y salida educativa',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
+const SECTIONS={dashboard:'Dashboard',mural:'Mural de Novedades',calendario:'Calendario Escolar',asistencia:'Toma de Asistencia',calificaciones:'Libro de Calificaciones',archivos:'Mis Archivos en Drive',subir:'Subir Material',planificacion:'Mi planificación áulica','planificaciones-dir':'Planificaciones de docentes',constancias:'Constancias',reportes:'Reportes y Estadísticas',usuarios:'Gestión de Usuarios','mi-asistencia':'Mi Asistencia','mis-notas':'Mis Notas','resumen-curso':'Resumen por Curso','resumen-alumno':'Resumen por Alumno',alertas:'Alumnos en Riesgo',evolucion:'Evolución del Alumno',comunicados:'Comunicados',eoe:'Equipo de Orientación Escolar',trayectoria:'Trayectoria educativa',ctrlasist:'Control de asistencia tomada',banos:'Control de Baños','seguimiento-faltas':'Seguimiento de Faltas','ausencias-docentes':'Ausencias Docentes','informe-materias':'Informe de Asistencia por Materia','asist-materias':'Asistencia de Robótica y Técnicas de Estudio','legajo-control':'Control de Legajo','excepciones':'Regularidad','dias-no-lectivos':'Días No Lectivos','mensajes':'Mensajes',biblioteca:'Biblioteca',agenda:'Agenda Directiva'};
+const SUBS={dashboard:'Resumen general del portal',mural:'Publicaciones y avisos por curso',calendario:'Cronograma de actividades',asistencia:'Registro diario de presencia','asist-materias':'Registro propio de estas dos materias','legajo-control':'Documentación de cada alumno','excepciones':'Alumnos que mantienen la regularidad por decisión de Dirección',calificaciones:'Notas y evaluaciones por trimestre',archivos:'Material subido al Google Drive',subir:'Compartir contenido con alumnos',planificacion:'Tus planificaciones, para consultarlas cuando quieras','planificaciones-dir':'Consulta y descarga de las planificaciones áulicas',constancias:'Constancias para docentes: jornada escolar y salida educativa',reportes:'Análisis de actividad e interacción',usuarios:'Administrar accesos al sistema',comunicados:'Mensajes oficiales del colegio',eoe:'Legajos y seguimiento de situaciones',trayectoria:'Seguimiento acumulado del alumno a lo largo de los 6 años',ctrlasist:'Qué días tomó asistencia cada curso',banos:'Registro de salidas al baño por curso','seguimiento-faltas':'Citaciones y concurrencia de familias por inasistencias',biblioteca:'Préstamos y devoluciones de libros',agenda:'Registro mensual de actividades del equipo directivo'};
 let attendanceState={};
 let currentUser = '';
 let currentRole = '';
@@ -4628,6 +4741,7 @@ function buildBottomNav(role) {
     items.push({ id: 'calendario',    icon: '📅', label: 'Calendario' });
   } else {
     items.push({ id: 'asistencia',     icon: '✅', label: 'Asistencia' });
+    items.push({ id: 'asist-materias', icon: '🤖', label: 'Robótica/TdE' });
     items.push({ id: 'calificaciones', icon: '📝', label: 'Notas' });
     items.push({ id: 'mural',          icon: '📋', label: 'Mural' });
     items.push({ id: 'archivos',       icon: '📁', label: 'Archivos' });
@@ -4648,6 +4762,10 @@ function buildBottomNav(role) {
       items.push({ id: 'seguimiento-faltas', icon: '📋', label: 'Faltas' });
     if (isAdmin || isPreceptor)
       items.push({ id: 'ausencias-docentes', icon: '🚫', label: 'Aus. Doc.' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'legajo-control', icon: '🗂️', label: 'Legajo' });
+    if (isAdmin || isPreceptor)
+      items.push({ id: 'excepciones', icon: '🛡️', label: 'Regularidad' });
     if (isAdmin || isPreceptor || isDocente)
       items.push({ id: '__reg-ausencias-ext', icon: '🚫', label: 'Reg. Ausencias', external: 'https://secundarioperitomorenosecu.github.io/asistencia-perito/' });
     if (isAdmin || isPreceptor)
@@ -4794,6 +4912,8 @@ function doLogin(name, role, usuario, res){
   if (navSeg) navSeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
   const navAud = document.getElementById('nav-ausencias-docentes');
   if (navAud) navAud.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';
+  const navEx = document.getElementById('nav-excepciones');
+  if (navEx) navEx.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';   // Dirección marca; RL y preceptoras consultan
   const navLeg = document.getElementById('nav-legajo-control');
   if (navLeg) navLeg.style.display = (isAdmin || isPreceptor) ? 'flex' : 'none';   // preceptoras tildan; dirección y RL controlan
   document.body.classList.toggle('sin-registro-aud', !isDirectorEstricto);   // registrar/editar ausencias docentes: solo director, vice y secretaría
@@ -4859,6 +4979,7 @@ function showSection(id,el){
   if(id === 'asistencia') setupAsistencia();
   if(id === 'asist-materias') amInicializar();
   if(id === 'legajo-control') legInicializar();
+  if(id === 'excepciones') exInicializar();
   if(id === 'subir') setupSubir();
   if(id === 'planificacion') planInicializar();
   if(id === 'planificaciones-dir') planDirCargar();
@@ -10236,7 +10357,7 @@ function cargarResumenCurso() {
       }
       res = _mmOcultarEnIntensificacion(res);
       if (!res.alumnos || res.alumnos.length === 0) {
-        contenido.innerHTML = '<div style="text-align:center;padding:30px;color:#2e7d32">✅ Ningún alumno necesita intensificar en este curso.</div>'; return;
+        contenido.innerHTML = '<div style="text-align:center;padding:30px;color:#2e7d32">✅ Ningún alumno necesita intensificar en este curso.</div>' + _exBloqueIntensificacion(res); return;
       }
       window._intensificacionData = res;
       const tarjetas = res.alumnos.map(a => {
@@ -10257,7 +10378,7 @@ function cargarResumenCurso() {
         return `
           <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:14px 16px;margin-bottom:10px">
             <div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:8px">${a.nombre}</div>
-            ${bloqueNota}${bloqueInasist}
+            ${bloqueNota}${bloqueInasist}${a.materiasPorInasistencia.length ? _exBotonCard(a, curso) : ''}
           </div>`;
       }).join('');
 
@@ -10267,7 +10388,7 @@ function cargarResumenCurso() {
           <button onclick="exportarInformeIntensificacion()" style="padding:6px 13px;font-size:12px;border-radius:8px;border:1px solid #1a9e5c;background:#fff;color:#1a9e5c;cursor:pointer;font-family:inherit;font-weight:600">📄 Exportar informe</button>
           <button onclick="exportarInformeIntensificacionExcel()" style="padding:6px 13px;font-size:12px;border-radius:8px;border:1px solid #1a9e5c;background:#1a9e5c;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;margin-left:8px">📊 Exportar Excel</button>
         </div>
-        ${tarjetas}`;
+        ${tarjetas}${_exBloqueIntensificacion(res)}`;
     });
     return;
   }
@@ -15154,7 +15275,8 @@ const RITE_NOTA = `
 
 function riteSeccionIntensificar(inasist, resMaterias, resNotas) {
   const esc = _riteEsc;
-  const excedio = inasist > RITE_LIMITE;
+  const mantiene = !!(resMaterias && resMaterias.regularidadMantenida);   // Dirección mantiene la regularidad: no se comunica como excedido
+  const excedio = inasist > RITE_LIMITE && !mantiene;
   const mats = (resMaterias && resMaterias.ok) ? (resMaterias.materias || []).filter(_mmVisibleRite).sort((a, b) => a.porcentaje - b.porcentaje || a.materia.localeCompare(b.materia)) : null;
   const bajoAsist = mats ? mats.filter(m => m.estado !== 'OK') : [];                         // menos de 75% de las clases dictadas
   const bajoNota = ((resNotas && resNotas.materias) || []).map(m => {                        // menos de 7 en algún cuatrimestre
@@ -15164,7 +15286,7 @@ function riteSeccionIntensificar(inasist, resMaterias, resNotas) {
   }).filter(Boolean);
   const todas = new Set([...bajoAsist.map(m => _riteClave(m.materia)), ...bajoNota.map(m => _riteClave(m.materia))]);
 
-  const estado = `<div style="font-size:13px;margin:8px 0"><b>Inasistencias institucionales:</b> <span style="font-weight:700;color:${excedio ? '#c0392b' : '#1a7a44'}">${_riteNum(inasist)} de ${RITE_LIMITE}</span> — ${excedio ? '<b>excedió el límite</b>.' : 'no excedió el límite.'}</div>`;
+  const estado = `<div style="font-size:13px;margin:8px 0"><b>Inasistencias institucionales:</b> <span style="font-weight:700;color:${excedio ? '#c0392b' : '#1a7a44'}">${_riteNum(inasist)} de ${RITE_LIMITE}</span> — ${mantiene ? 'regularidad mantenida por decisión de la Dirección.' : excedio ? '<b>excedió el límite</b>.' : 'no excedió el límite.'}</div>`;
 
   let intens = '';
   if (excedio) {
